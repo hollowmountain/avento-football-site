@@ -1,0 +1,21 @@
+name: Cron — закрытие просроченных игр
+
+# Railway Cron — это расписание сервисов-однодневок, а не HTTP-пинговалка,
+# поэтому триггерим наш эндпоинт отсюда (см. docs/ADR/0005). Основная
+# страховка — lazy-sweep внутри приложения, так что пропуск тика не критичен.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    # Не падать в форках без секретов
+    if: ${{ vars.APP_URL != '' }}
+    steps:
+      - name: POST /api/cron/close-expired
+        run: |
+          curl --fail-with-body -sS -X POST \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            "${{ vars.APP_URL }}/api/cron/close-expired"
