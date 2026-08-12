@@ -3,7 +3,8 @@ import { cancelGame } from '@/modules/game/application/cancel-game';
 import { updateGame } from '@/modules/game/application/update-game';
 import { getGameDeps } from '@/modules/game/composition';
 import { lazySweep } from '@/modules/game/lazy-sweep';
-import { gameToSummaryDto, participantToDto } from '@/modules/game/presentation/dto';
+import { gameToSummaryDto } from '@/modules/game/presentation/dto';
+import { getGameView } from '@/modules/game/presentation/get-game-view';
 import { patchGameBodySchema } from '@/modules/game/schemas';
 import { jsonDomainError, jsonError, jsonOk, jsonRateLimited } from '@/shared/errors/api-response';
 import { env } from '@/shared/lib/env';
@@ -19,32 +20,14 @@ const HOST_TOKEN_HEADER = 'x-host-token';
 export async function GET(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   lazySweep();
 
-  const deps = getGameDeps();
   const { code } = await context.params;
-
-  const game = await deps.games.findByCode(code.toUpperCase());
-  if (!game) return jsonError('GAME_NOT_FOUND', 'Игра не найдена', 404);
-
-  const participants = await deps.games.activeParticipants(game.id);
-  const main = participants.filter((p) => p.role === 'MAIN');
-  const waitlist = participants.filter((p) => p.role === 'WAITLIST');
-  const confirmedMain = main.filter((p) => p.attendance === 'CONFIRMED');
-
-  const viewerToken = request.cookies.get(PARTICIPANT_COOKIE)?.value ?? null;
-  const viewerTokenHash = viewerToken ? deps.tokens.hash(viewerToken) : null;
-
-  const hostToken = request.headers.get(HOST_TOKEN_HEADER);
-  const isHost = hostToken ? deps.tokens.verify(hostToken, game.hostTokenHash) : false;
-
-  return jsonOk({
-    game: gameToSummaryDto(game, main.length, confirmedMain.length),
-    participants: main.map((p) => participantToDto(p, viewerTokenHash)),
-    waitlist: waitlist.map((p) => participantToDto(p, viewerTokenHash)),
-    viewer: {
-      isHost,
-      isParticipant: participants.some((p) => p.tokenHash === viewerTokenHash),
-    },
-  });
+  const view = await getGameView(
+    code,
+    request.cookies.get(PARTICIPANT_COOKIE)?.value ?? null,
+    request.headers.get(HOST_TOKEN_HEADER),
+  );
+  if (!view) return jsonError('GAME_NOT_FOUND', 'Игра не найдена', 404);
+  return jsonOk(view);
 }
 
 /** PATCH /api/games/:code — редактирование (нужен host-токен). */

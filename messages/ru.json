@@ -1,0 +1,207 @@
+{
+  "common": {
+    "appName": "Kickoff",
+    "tagline": "Собирай на футбол без регистрации",
+    "loading": "Загрузка…",
+    "copy": "Скопировать",
+    "copied": "Скопировано!",
+    "share": "Поделиться",
+    "linkCopied": "Ссылка скопирована",
+    "cancel": "Отмена",
+    "close": "Закрыть",
+    "error": "Что-то пошло не так. Попробуйте ещё раз.",
+    "openMap": "Открыть на карте"
+  },
+  "header": {
+    "feed": "Игры",
+    "create": "Создать игру",
+    "toggleTheme": "Переключить тему"
+  },
+  "statuses": {
+    "OPEN": "Набор открыт",
+    "FULL": "Состав полон",
+    "CANCELLED_BY_HOST": "Отменена организатором",
+    "CANCELLED_NOT_ENOUGH": "Не набралось игроков",
+    "FINISHED": "Сыграна"
+  },
+  "formats": {
+    "FIVE_A_SIDE": "5×5",
+    "SIX_A_SIDE": "6×6",
+    "SEVEN_A_SIDE": "7×7",
+    "EIGHT_A_SIDE": "8×8",
+    "ELEVEN_A_SIDE": "11×11"
+  },
+  "levels": {
+    "ANY": "Любой уровень",
+    "BEGINNER": "Новички",
+    "INTERMEDIATE": "Средний",
+    "ADVANCED": "Продвинутый"
+  },
+  "positions": {
+    "GOALKEEPER": "Вратарь",
+    "DEFENDER": "Защитник",
+    "MIDFIELDER": "Полузащитник",
+    "FORWARD": "Нападающий",
+    "ANY": "Без разницы"
+  },
+  "attendance": {
+    "CONFIRMED": "Точно приду",
+    "MAYBE": "Под вопросом"
+  },
+  "reliability": {
+    "new": "🆕 новичок",
+    "score": "⭐ {percent}% надёжность"
+  },
+  "feed": {
+    "title": "Ближайшие игры",
+    "empty": "Пока нет открытых игр. Создайте первую!",
+    "loadMore": "Показать ещё",
+    "filters": {
+      "city": "Город",
+      "cityPlaceholder": "Любой город",
+      "format": "Формат",
+      "anyFormat": "Любой формат",
+      "level": "Уровень",
+      "anyLevel": "Любой уровень",
+      "onlyFree": "Только со свободными местами",
+      "sort": "Сортировка",
+      "soonest": "Скоро начнётся",
+      "fewSlots": "Мало мест осталось",
+      "apply": "Показать"
+    },
+    "card": {
+      "players": "{main} из {max}",
+      "freeSlots": "свободно мест: {count}",
+      "needMore": "нужно ещё {count}",
+      "waitlist": "лист ожидания",
+      "perPerson": "≈ {price} с человека",
+      "free": "бесплатно"
+    }
+  },
+  "game": {
+    "notFound": "Игра не найдена",
+    "countdown": {
+      "starts": "До начала",
+      "started": "Игра началась",
+      "days": "{count} дн",
+      "hours": "{count} ч",
+      "minutes": "{count} мин"
+    },
+    "roster": "Состав",
+    "rosterProgress": "{main} из {max} игроков",
+    "needMoreBanner": "Для игры нужно минимум {min}. Не хватает ещё {count} — зовите друзей!",
+    "viable": "Минимум набран — игра состоится",
+    "waitlistTitle": "Лист ожидания",
+    "waitlistHint": "Если кто-то откажется, первый из очереди попадёт в состав автоматически",
+    "empty": "Пока никто не записался. Будьте первым!",
+    "join": "Я иду!",
+    "joinWaitlist": "В лист ожидания",
+    "leave": "Не смогу прийти",
+    "leaveLate": "Уже поздно отменять без последствий: это повлияет на ваш индекс надёжности. Всё равно отказаться?",
+    "leaveConfirm": "Точно отказаться от участия?",
+    "youAreIn": "Вы записаны",
+    "youAreWaitlisted": "Вы в листе ожидания (№{order})",
+    "promoted": "{nickname} поднят из листа ожидания",
+    "priceTitle": "Стоимость",
+    "pricePerPitch": "Поле: {price}",
+    "perPersonNow": "Сейчас по {price} с человека",
+    "priceFree": "Игра бесплатная",
+    "detailsTitle": "Детали",
+    "duration": "{count} минут",
+    "cancelDeadline": "Отмена без последствий — до {date}",
+    "addToCalendar": "В календарь",
+    "share": "Поделиться",
+    "qr": "QR-код",
+    "host": {
+      "panel": "Управление игрой",
+      "youAreHost": "Вы — организатор",
+      "shuffle": "Жеребьёвка команд",
+      "reshuffle": "Перегенерировать",
+      "cancelGame": "Отменить игру",
+      "cancelConfirm": "Игра будет отменена для всех участников. Это действие необратимо. Продолжить?",
+      "cancelled": "Игра отменена",
+      "notEnoughForShuffle": "Нужно минимум два подтверждённых игрока"
+    },
+    "teams": {
+      "title": "Составы команд",
+      "teamA": "Команда А",
+      "teamB": "Команда Б",
+      "generatedHint": "Команды сбалансированы по позициям и уровню"
+    },
+    "weather": {
+      "rainHint": "дождь ☔ — возьмите вторые бутсы"
+    }
+  },
+  "createForm": {
+    "title": "Новая игра",
+    "sections": {
+      "what": "Что и когда",
+      "where": "Где играем",
+      "params": "Параметры",
+      "confirm": "Подтверждение"
+    },
+    "fields": {
+      "title": "Название",
+      "titlePlaceholder": "Вечерний футбол на Динамо",
+      "description": "Описание",
+      "descriptionPlaceholder": "Раздевалки есть, мяч приносит Саша…",
+      "startsAt": "Дата и время начала",
+      "duration": "Длительность, минут",
+      "format": "Формат",
+      "skillLevel": "Уровень игры",
+      "venueName": "Площадка",
+      "venuePlaceholder": "Манеж «Динамо»",
+      "address": "Адрес",
+      "addressPlaceholder": "Ленинградский пр-т, 36",
+      "city": "Город",
+      "latitude": "Широта",
+      "longitude": "Долгота",
+      "coordsHint": "Скопируйте координаты точки из Яндекс.Карт или Google Maps",
+      "minPlayers": "Минимум игроков",
+      "maxPlayers": "Максимум игроков",
+      "price": "Стоимость поля, ₽",
+      "priceHint": "0 — бесплатная игра. Стоимость делится на всех подтверждённых",
+      "cancelDeadline": "Дедлайн отмены",
+      "cancelDeadlineHint": "После этого времени отказ испортит индекс надёжности игрока",
+      "hostName": "Ваше имя"
+    },
+    "submit": "Создать игру",
+    "submitting": "Создаём…",
+    "success": {
+      "title": "Игра создана!",
+      "codeLabel": "Код игры",
+      "tokenTitle": "Секретный токен управления",
+      "tokenWarning": "Сохраните его сейчас — он показывается только один раз. По нему можно редактировать и отменять игру с любого устройства.",
+      "tokenSaved": "Токен также сохранён в этом браузере",
+      "goToGame": "К странице игры",
+      "copyLink": "Скопировать ссылку-приглашение"
+    }
+  },
+  "joinForm": {
+    "title": "Запись на игру",
+    "name": "Имя",
+    "namePlaceholder": "Александр",
+    "nickname": "Никнейм",
+    "nicknamePlaceholder": "Санёк",
+    "nicknameHint": "Так вас увидят другие игроки",
+    "position": "Позиция",
+    "skillLevel": "Ваш уровень",
+    "attendance": "Статус",
+    "submit": "Записаться",
+    "submitting": "Записываем…",
+    "joined": "Вы записаны!",
+    "waitlisted": "Мест нет — вы в листе ожидания"
+  },
+  "errors": {
+    "RATE_LIMITED": "Слишком много запросов",
+    "GAME_NOT_FOUND": "Игра не найдена",
+    "NICKNAME_TAKEN": "Такой никнейм уже занят",
+    "ALREADY_JOINED": "Вы уже записаны",
+    "GAME_NOT_JOINABLE": "Запись на игру закрыта",
+    "FORM_REJECTED": "Форма устарела — обновите страницу",
+    "VALIDATION_FAILED": "Проверьте правильность полей",
+    "FORBIDDEN": "Нет доступа",
+    "DUPLICATE_GAME": "Похожая игра уже есть рядом на это время",
+    "HOST_GAME_LIMIT": "У вас уже есть активные игры — сначала проведите их"
+  }
+}

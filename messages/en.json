@@ -1,0 +1,207 @@
+{
+  "common": {
+    "appName": "Kickoff",
+    "tagline": "Pickup football without sign-up",
+    "loading": "Loading…",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "share": "Share",
+    "linkCopied": "Link copied",
+    "cancel": "Cancel",
+    "close": "Close",
+    "error": "Something went wrong. Please try again.",
+    "openMap": "Open map"
+  },
+  "header": {
+    "feed": "Games",
+    "create": "Create game",
+    "toggleTheme": "Toggle theme"
+  },
+  "statuses": {
+    "OPEN": "Open",
+    "FULL": "Full",
+    "CANCELLED_BY_HOST": "Cancelled by host",
+    "CANCELLED_NOT_ENOUGH": "Not enough players",
+    "FINISHED": "Finished"
+  },
+  "formats": {
+    "FIVE_A_SIDE": "5v5",
+    "SIX_A_SIDE": "6v6",
+    "SEVEN_A_SIDE": "7v7",
+    "EIGHT_A_SIDE": "8v8",
+    "ELEVEN_A_SIDE": "11v11"
+  },
+  "levels": {
+    "ANY": "Any level",
+    "BEGINNER": "Beginners",
+    "INTERMEDIATE": "Intermediate",
+    "ADVANCED": "Advanced"
+  },
+  "positions": {
+    "GOALKEEPER": "Goalkeeper",
+    "DEFENDER": "Defender",
+    "MIDFIELDER": "Midfielder",
+    "FORWARD": "Forward",
+    "ANY": "Any position"
+  },
+  "attendance": {
+    "CONFIRMED": "Coming for sure",
+    "MAYBE": "Maybe"
+  },
+  "reliability": {
+    "new": "🆕 newcomer",
+    "score": "⭐ {percent}% reliability"
+  },
+  "feed": {
+    "title": "Upcoming games",
+    "empty": "No open games yet. Create the first one!",
+    "loadMore": "Show more",
+    "filters": {
+      "city": "City",
+      "cityPlaceholder": "Any city",
+      "format": "Format",
+      "anyFormat": "Any format",
+      "level": "Level",
+      "anyLevel": "Any level",
+      "onlyFree": "Only with free slots",
+      "sort": "Sort",
+      "soonest": "Starting soon",
+      "fewSlots": "Few slots left",
+      "apply": "Apply"
+    },
+    "card": {
+      "players": "{main} of {max}",
+      "freeSlots": "free slots: {count}",
+      "needMore": "{count} more needed",
+      "waitlist": "waitlist",
+      "perPerson": "≈ {price} per player",
+      "free": "free"
+    }
+  },
+  "game": {
+    "notFound": "Game not found",
+    "countdown": {
+      "starts": "Starts in",
+      "started": "Game has started",
+      "days": "{count}d",
+      "hours": "{count}h",
+      "minutes": "{count}m"
+    },
+    "roster": "Roster",
+    "rosterProgress": "{main} of {max} players",
+    "needMoreBanner": "At least {min} players needed. {count} more to go — invite friends!",
+    "viable": "Minimum reached — game is on",
+    "waitlistTitle": "Waitlist",
+    "waitlistHint": "If someone drops out, the first in line is promoted automatically",
+    "empty": "Nobody signed up yet. Be the first!",
+    "join": "I'm in!",
+    "joinWaitlist": "Join waitlist",
+    "leave": "Can't make it",
+    "leaveLate": "It's past the deadline: this will affect your reliability score. Leave anyway?",
+    "leaveConfirm": "Leave this game?",
+    "youAreIn": "You're in",
+    "youAreWaitlisted": "You're on the waitlist (#{order})",
+    "promoted": "{nickname} promoted from waitlist",
+    "priceTitle": "Price",
+    "pricePerPitch": "Pitch: {price}",
+    "perPersonNow": "Now {price} per player",
+    "priceFree": "Free game",
+    "detailsTitle": "Details",
+    "duration": "{count} minutes",
+    "cancelDeadline": "Free cancellation until {date}",
+    "addToCalendar": "Add to calendar",
+    "share": "Share",
+    "qr": "QR code",
+    "host": {
+      "panel": "Game management",
+      "youAreHost": "You are the host",
+      "shuffle": "Shuffle teams",
+      "reshuffle": "Reshuffle",
+      "cancelGame": "Cancel game",
+      "cancelConfirm": "The game will be cancelled for everyone. This cannot be undone. Continue?",
+      "cancelled": "Game cancelled",
+      "notEnoughForShuffle": "At least two confirmed players required"
+    },
+    "teams": {
+      "title": "Teams",
+      "teamA": "Team A",
+      "teamB": "Team B",
+      "generatedHint": "Teams are balanced by position and level"
+    },
+    "weather": {
+      "rainHint": "rain ☔ — bring spare boots"
+    }
+  },
+  "createForm": {
+    "title": "New game",
+    "sections": {
+      "what": "What and when",
+      "where": "Where",
+      "params": "Settings",
+      "confirm": "Confirmation"
+    },
+    "fields": {
+      "title": "Title",
+      "titlePlaceholder": "Evening football at Dinamo",
+      "description": "Description",
+      "descriptionPlaceholder": "Lockers available, Alex brings the ball…",
+      "startsAt": "Start date and time",
+      "duration": "Duration, minutes",
+      "format": "Format",
+      "skillLevel": "Game level",
+      "venueName": "Venue",
+      "venuePlaceholder": "Dinamo arena",
+      "address": "Address",
+      "addressPlaceholder": "Leningradsky ave, 36",
+      "city": "City",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "coordsHint": "Copy point coordinates from Google Maps",
+      "minPlayers": "Min players",
+      "maxPlayers": "Max players",
+      "price": "Pitch price",
+      "priceHint": "0 — free game. The price is split between confirmed players",
+      "cancelDeadline": "Cancellation deadline",
+      "cancelDeadlineHint": "Dropping out after this time hurts the player's reliability score",
+      "hostName": "Your name"
+    },
+    "submit": "Create game",
+    "submitting": "Creating…",
+    "success": {
+      "title": "Game created!",
+      "codeLabel": "Game code",
+      "tokenTitle": "Secret management token",
+      "tokenWarning": "Save it now — it is shown only once. It lets you edit and cancel the game from any device.",
+      "tokenSaved": "The token is also saved in this browser",
+      "goToGame": "Open game page",
+      "copyLink": "Copy invite link"
+    }
+  },
+  "joinForm": {
+    "title": "Sign up",
+    "name": "Name",
+    "namePlaceholder": "Alex",
+    "nickname": "Nickname",
+    "nicknamePlaceholder": "Alex10",
+    "nicknameHint": "Other players will see this",
+    "position": "Position",
+    "skillLevel": "Your level",
+    "attendance": "Status",
+    "submit": "Sign up",
+    "submitting": "Signing up…",
+    "joined": "You're in!",
+    "waitlisted": "No slots left — you're on the waitlist"
+  },
+  "errors": {
+    "RATE_LIMITED": "Too many requests",
+    "GAME_NOT_FOUND": "Game not found",
+    "NICKNAME_TAKEN": "This nickname is taken",
+    "ALREADY_JOINED": "You are already signed up",
+    "GAME_NOT_JOINABLE": "Sign-up is closed",
+    "FORM_REJECTED": "The form expired — refresh the page",
+    "VALIDATION_FAILED": "Check the highlighted fields",
+    "FORBIDDEN": "Access denied",
+    "DUPLICATE_GAME": "A similar game already exists nearby at this time",
+    "HOST_GAME_LIMIT": "You already have active games — finish them first"
+  }
+}
