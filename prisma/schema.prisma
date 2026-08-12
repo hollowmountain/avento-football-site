@@ -72,6 +72,8 @@ model Game {
   hostTokenHash   String // хеш токена, plain-токен не хранится
   hostName        String
   createdIpHash   String // хеш IP + соль, сам IP не хранится (GDPR)
+  // Хеш анонимного identity-токена создателя (лимит одновременных игр на организатора)
+  creatorTokenHash String?
   teamsSnapshot   Json? // результат жеребьёвки
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
@@ -81,6 +83,7 @@ model Game {
   @@index([startsAt, status])
   @@index([city, startsAt])
   @@index([hostTokenHash, startsAt])
+  @@index([creatorTokenHash, startsAt])
 }
 
 model Participant {
@@ -90,6 +93,8 @@ model Participant {
   name          String
   nickname      String
   position      Position
+  // Самооценка уровня — участвует в балансировке команд
+  skillLevel    SkillLevel      @default(ANY)
   attendance    Attendance
   role          ParticipantRole
   waitlistOrder Int?
