@@ -43,6 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: LayoutProps<'/'>) {
   const locale = await getLocale();
+  const tCommon = await getTranslations('common');
 
   return (
     <html
@@ -54,11 +55,11 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
         <NextIntlClientProvider>
           <Providers>
             <SiteHeader />
-            <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">
+            <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 lg:max-w-4xl">
               <PageTransition>{children}</PageTransition>
             </main>
             <footer className="text-muted-foreground border-t py-5 text-center">
-              <span className="eyebrow">Kickoff</span>
+              <span className="eyebrow">{tCommon('appName')}</span>
             </footer>
           </Providers>
         </NextIntlClientProvider>

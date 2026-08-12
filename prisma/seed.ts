@@ -12,7 +12,7 @@ const hash = (token: string) => createHmac('sha256', pepper).update(token).diges
 
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const code = () =>
-  `KCK-${Array.from({ length: 4 }, () => ALPHABET[randomInt(ALPHABET.length)]).join('')}`;
+  `AVA-${Array.from({ length: 4 }, () => ALPHABET[randomInt(ALPHABET.length)]).join('')}`;
 
 const hoursFromNow = (h: number) => new Date(Date.now() + h * 3_600_000);
 

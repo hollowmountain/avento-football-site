@@ -48,7 +48,7 @@ Anti-abuse: мутирующие формы требуют `formToken` (`{ts, si
   "website": ""
 }
 // 201
-{ "ok": true, "data": { "game": { "code": "KCK-7F2A", /* GameDto */ }, "hostToken": "…показывается один раз…" } }
+{ "ok": true, "data": { "game": { "code": "AVA-7F2A", /* GameDto */ }, "hostToken": "…показывается один раз…" } }
 ```
 
 Ошибки: `400 BAD_REQUEST|FORM_REJECTED|VALIDATION_FAILED|CAPTCHA_FAILED`,

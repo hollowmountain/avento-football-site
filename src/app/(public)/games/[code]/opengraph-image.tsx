@@ -12,7 +12,7 @@ import { getGameView } from '@/modules/game/presentation/get-game-view';
 export const runtime = 'nodejs';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
-export const alt = 'Kickoff — сбор на футбол';
+export const alt = 'AVENTO ASCENT — сбор на футбол';
 
 const FORMAT_LABELS: Record<string, string> = {
   FIVE_A_SIDE: '5×5',
@@ -70,7 +70,9 @@ export default async function OpengraphImage({ params }: { params: Promise<{ cod
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', fontFamily: 'SofiaCondensed', fontSize: 44 }}>KICKOFF</div>
+        <div style={{ display: 'flex', fontFamily: 'SofiaCondensed', fontSize: 44 }}>
+          AVENTO ASCENT
+        </div>
         <div
           style={{
             display: 'flex',

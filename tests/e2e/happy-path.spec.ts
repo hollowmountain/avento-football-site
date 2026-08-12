@@ -23,10 +23,10 @@ test('создание игры → приглашение → вступлен�
 
   await expect(hostPage.getByText('Игра создана!')).toBeVisible();
   const code = (await hostPage
-    .getByText(/^KCK-[A-HJ-NP-Z2-9]{4}$/)
+    .getByText(/^AVA-[A-HJ-NP-Z2-9]{4}$/)
     .first()
     .textContent())!;
-  expect(code).toMatch(/^KCK-/);
+  expect(code).toMatch(/^AVA-/);
 
   // Секретный токен показан
   await expect(hostPage.getByText('Секретный токен управления')).toBeVisible();
@@ -76,7 +76,7 @@ test('создание игры → приглашение → вступлен�
 test('несуществующая игра показывает 404-страницу', async ({ page }) => {
   // Из-за стриминга metadata Next отдаёт браузеру 200 + noindex + 404-разметку
   // (краулерам с блокирующей metadata уходит настоящий 404) — проверяем UI.
-  await page.goto('/games/KCK-XXXX');
+  await page.goto('/games/AVA-XXXX');
   await expect(page.getByText('404')).toBeVisible();
   await expect(page.getByText('Игра не найдена')).toBeVisible();
 });

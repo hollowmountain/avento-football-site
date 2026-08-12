@@ -1,7 +1,7 @@
 import { getRequestConfig } from 'next-intl/server';
 
 /**
- * next-intl без i18n-роутинга: ссылки остаются короткими (/games/KCK-7F2A),
+ * next-intl без i18n-роутинга: ссылки остаются короткими (/games/AVA-7F2A),
  * локаль по умолчанию — ru; en подключается cookie NEXT_LOCALE (заготовка).
  */
 export const SUPPORTED_LOCALES = ['ru', 'en'] as const;

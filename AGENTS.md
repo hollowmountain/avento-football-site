@@ -8,7 +8,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Kickoff — платформа сбора на футбол
+# AVENTO ASCENT — платформа сбора на футбол
 
 Next.js 16 + Prisma 7 (driver adapter pg, клиент генерируется в
 `src/generated/prisma`) + PostgreSQL. Полное описание архитектуры —

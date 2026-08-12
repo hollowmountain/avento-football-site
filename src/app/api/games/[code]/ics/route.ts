@@ -53,11 +53,11 @@ export async function GET(request: NextRequest, context: RouteContext): Promise<
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Kickoff//Pickup Football//RU',
+    'PRODID:-//AVENTO ASCENT//Pickup Football//RU',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    `UID:${game.code}@kickoff`,
+    `UID:${game.code}@avento-ascent`,
     `DTSTAMP:${toIcsUtc(deps.clock.now())}`,
     `DTSTART:${toIcsUtc(game.startsAt)}`,
     `DTEND:${toIcsUtc(endsAt)}`,
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest, context: RouteContext): Promise<
   return new Response(body, {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
-      'Content-Disposition': `attachment; filename="kickoff-${game.code}.ics"`,
+      'Content-Disposition': `attachment; filename="avento-${game.code}.ics"`,
       'Cache-Control': 'no-cache',
     },
   });

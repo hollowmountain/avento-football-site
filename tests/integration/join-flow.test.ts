@@ -34,7 +34,7 @@ function joinInput(gameCode: string, n: number) {
 describe('create → join → waitlist → leave → промоушен', () => {
   it('полный happy path', async () => {
     const { game } = unwrap(await createGame(deps, gameDraft({ maxPlayers: 4 })));
-    expect(game.code).toMatch(/^KCK-/);
+    expect(game.code).toMatch(/^AVA-/);
     expect(game.status).toBe('OPEN');
 
     // Заполняем основной состав
@@ -137,7 +137,7 @@ describe('create → join → waitlist → leave → промоушен', () => 
   });
 
   it('несуществующая игра — GAME_NOT_FOUND', async () => {
-    const result = await joinGame(deps, joinInput('KCK-ZZZZ', 1));
+    const result = await joinGame(deps, joinInput('AVA-ZZZZ', 1));
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe('GAME_NOT_FOUND');
   });

@@ -15,7 +15,7 @@ import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Pill } from '@/shared/ui/pill';
 import { Progress } from '@/shared/ui/progress';
-import type { TeamsSnapshot } from '../domain/types';
+import type { TeamMember, TeamsSnapshot } from '../domain/types';
 import type { formTokenSchema } from '../schemas';
 import type { GameViewData } from './api-types';
 import { Countdown } from './countdown';
@@ -280,8 +280,20 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
           <CardContent className="flex flex-col gap-3 pt-0">
             <span className="eyebrow text-muted-foreground">{t('teams.title')}</span>
             <TeamsBoard
-              key={game.teamsSnapshot.generatedAt}
+              key={`${game.teamsSnapshot.generatedAt}:${data.participants.length}`}
               snapshot={game.teamsSnapshot}
+              unassigned={data.participants
+                .filter(
+                  (p) =>
+                    !game.teamsSnapshot!.teamA.some((m) => m.participantId === p.id) &&
+                    !game.teamsSnapshot!.teamB.some((m) => m.participantId === p.id),
+                )
+                .map((p) => ({
+                  participantId: p.id,
+                  nickname: p.nickname,
+                  position: p.position as TeamMember['position'],
+                  skillLevel: p.skillLevel as TeamMember['skillLevel'],
+                }))}
               onChange={
                 isHost && isActive
                   ? (teamA, teamB) => setTeamsMutation.mutate({ teamA, teamB })

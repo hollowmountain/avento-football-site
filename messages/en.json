@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Kickoff",
+    "appName": "AVENTO ASCENT",
     "tagline": "Pickup football without sign-up",
     "loading": "Loading…",
     "copy": "Copy",
@@ -134,7 +134,9 @@
       "title": "Teams",
       "teamA": "Team A",
       "teamB": "Team B",
-      "generatedHint": "Teams are balanced by position and level"
+      "generatedHint": "Teams are balanced by position and level",
+      "unassigned": "Not in teams yet",
+      "tapHint": "Tap a player to move them to the other team"
     },
     "weather": {
       "rainHint": "rain ☔ — bring spare boots"

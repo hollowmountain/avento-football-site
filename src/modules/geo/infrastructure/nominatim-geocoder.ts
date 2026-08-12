@@ -38,7 +38,7 @@ export function createNominatimGeocoder(appUrl: string): Geocoder {
     const response = await fetch(url, {
       headers: {
         // Nominatim требует идентифицировать приложение
-        'User-Agent': `Kickoff pickup football (${appUrl})`,
+        'User-Agent': `AVENTO ASCENT pickup football (${appUrl})`,
         Accept: 'application/json',
       },
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),

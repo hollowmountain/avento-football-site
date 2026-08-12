@@ -42,7 +42,7 @@ describe('hashIp', () => {
 });
 
 describe('generateGameCode', () => {
-  it('код соответствует формату KCK-XXXX без похожих символов', () => {
+  it('код соответствует формату AVA-XXXX без похожих символов', () => {
     for (let i = 0; i < 200; i += 1) {
       expect(generateGameCode()).toMatch(GAME_CODE_PATTERN);
     }
