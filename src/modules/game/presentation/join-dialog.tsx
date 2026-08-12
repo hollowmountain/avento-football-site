@@ -88,13 +88,17 @@ export function JoinDialog({ gameCode, isFull, formToken, onJoined }: JoinDialog
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" className="flex-1" variant={isFull ? 'secondary' : 'default'}>
+        <Button
+          size="lg"
+          className="display flex-1 text-base tracking-wide"
+          variant={isFull ? 'secondary' : 'default'}
+        >
           {isFull ? tGame('joinWaitlist') : tGame('join')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogTitle className="display text-2xl">{t('title')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4" noValidate>
           {/* Honeypot */}
@@ -196,7 +200,12 @@ export function JoinDialog({ gameCode, isFull, formToken, onJoined }: JoinDialog
               )}
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            size="lg"
+            className="display w-full text-base tracking-wide"
+            disabled={isSubmitting}
+          >
             {isSubmitting ? t('submitting') : t('submit')}
           </Button>
         </form>

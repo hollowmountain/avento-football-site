@@ -50,7 +50,11 @@
   },
   "reliability": {
     "new": "🆕 newcomer",
-    "score": "⭐ {percent}% reliability"
+    "score": "⭐ {percent}% reliability",
+    "newChip": "new",
+    "scoreChip": "{percent}%",
+    "scoreTitle": "Shows up for {percent}% of games they join",
+    "newTitle": "Fewer than three games — no stats yet"
   },
   "feed": {
     "title": "Upcoming games",
@@ -85,7 +89,10 @@
       "started": "Game has started",
       "days": "{count}d",
       "hours": "{count}h",
-      "minutes": "{count}m"
+      "minutes": "{count}m",
+      "unitDays": "days",
+      "unitHours": "hrs",
+      "unitMinutes": "min"
     },
     "roster": "Roster",
     "rosterProgress": "{main} of {max} players",
@@ -104,6 +111,7 @@
     "promoted": "{nickname} promoted from waitlist",
     "priceTitle": "Price",
     "pricePerPitch": "Pitch: {price}",
+    "perPersonLabel": "Now per player",
     "perPersonNow": "Now {price} per player",
     "priceFree": "Free game",
     "detailsTitle": "Details",

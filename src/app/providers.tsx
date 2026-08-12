@@ -18,8 +18,9 @@ export function Providers({ children }: { children: ReactNode }) {
       }),
   );
 
+  // Тёмная тема — основной мир направления «Табло»; светлая остаётся выбором
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>
         {children}
         <Toaster position="top-center" richColors />

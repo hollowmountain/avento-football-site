@@ -77,12 +77,12 @@ export function FeedClient({ initialData }: { initialData: GamesListData }) {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">{t('title')}</h1>
+      <h1 className="display text-3xl">{t('title')}</h1>
 
       {/* Фильтры */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" role="search">
         <div className="space-y-1">
-          <Label htmlFor="feed-city" className="text-xs">
+          <Label htmlFor="feed-city" className="eyebrow text-muted-foreground">
             {t('filters.city')}
           </Label>
           <Input
@@ -97,7 +97,7 @@ export function FeedClient({ initialData }: { initialData: GamesListData }) {
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">{t('filters.format')}</Label>
+          <Label className="eyebrow text-muted-foreground">{t('filters.format')}</Label>
           <Select
             value={filters.format}
             onValueChange={(format) => setFilters((f) => ({ ...f, format }))}
@@ -116,7 +116,7 @@ export function FeedClient({ initialData }: { initialData: GamesListData }) {
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">{t('filters.level')}</Label>
+          <Label className="eyebrow text-muted-foreground">{t('filters.level')}</Label>
           <Select
             value={filters.skillLevel}
             onValueChange={(skillLevel) => setFilters((f) => ({ ...f, skillLevel }))}
@@ -135,7 +135,7 @@ export function FeedClient({ initialData }: { initialData: GamesListData }) {
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">{t('filters.sort')}</Label>
+          <Label className="eyebrow text-muted-foreground">{t('filters.sort')}</Label>
           <Select
             value={filters.sort}
             onValueChange={(sort) =>
@@ -184,7 +184,7 @@ export function FeedClient({ initialData }: { initialData: GamesListData }) {
           {query.hasNextPage ? (
             <Button
               variant="outline"
-              className="w-full"
+              className="display w-full tracking-wide"
               disabled={query.isFetchingNextPage}
               onClick={() => void query.fetchNextPage()}
             >

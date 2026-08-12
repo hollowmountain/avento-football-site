@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { apiFetch } from '@/shared/lib/api-client';
-import { Badge } from '@/shared/ui/badge';
+import { Pill } from '@/shared/ui/pill';
 
 type WeatherData =
   | { available: false }
@@ -30,9 +30,9 @@ export function WeatherBadge({ gameCode }: { gameCode: string }) {
   if (!weather?.available) return null;
 
   return (
-    <Badge variant="outline" className="font-normal">
+    <Pill tone={weather.isWet ? 'accent' : 'default'}>
       {weather.emoji} {weather.temperatureC}°C
-      {weather.isWet ? ` — ${t('rainHint')}` : ''}
-    </Badge>
+      {weather.isWet ? ` · ${t('rainHint')}` : ''}
+    </Pill>
   );
 }

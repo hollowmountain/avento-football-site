@@ -3,7 +3,10 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
-/** Обратный отсчёт до начала игры; обновляется раз в 30 секунд. */
+/**
+ * Табло обратного отсчёта — главный элемент страницы игры.
+ * Обновляется раз в 30 секунд; цифры моноширинные, чтобы не дёргались.
+ */
 export function Countdown({ startsAtIso }: { startsAtIso: string }) {
   const t = useTranslations('game.countdown');
   const [now, setNow] = useState(() => Date.now());
@@ -14,24 +17,40 @@ export function Countdown({ startsAtIso }: { startsAtIso: string }) {
   }, []);
 
   const msLeft = new Date(startsAtIso).getTime() - now;
+
   if (msLeft <= 0) {
-    return <span className="text-muted-foreground text-sm">{t('started')}</span>;
+    return (
+      <p className="eyebrow text-muted-foreground border-y py-3 text-center">{t('started')}</p>
+    );
   }
 
   const totalMinutes = Math.floor(msLeft / 60_000);
-  const days = Math.floor(totalMinutes / (60 * 24));
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-  const minutes = totalMinutes % 60;
-
-  const parts = [
-    days > 0 ? t('days', { count: days }) : null,
-    days > 0 || hours > 0 ? t('hours', { count: hours }) : null,
-    days === 0 ? t('minutes', { count: minutes }) : null,
-  ].filter(Boolean);
+  const cells = [
+    { value: Math.floor(totalMinutes / (60 * 24)), unit: t('unitDays') },
+    { value: Math.floor((totalMinutes % (60 * 24)) / 60), unit: t('unitHours') },
+    { value: totalMinutes % 60, unit: t('unitMinutes') },
+  ];
 
   return (
-    <span className="text-sm tabular-nums" suppressHydrationWarning>
-      {t('starts')}: {parts.join(' ')}
-    </span>
+    <div
+      className="border-border bg-border grid grid-cols-3 gap-px border-y"
+      role="timer"
+      aria-label={t('starts')}
+    >
+      {cells.map((cell) => (
+        <div
+          key={cell.unit}
+          className="bg-background flex flex-col items-center gap-0.5 py-3"
+          suppressHydrationWarning
+        >
+          {/* lamp, а не primary: в светлой теме чистый янтарь на бумаге
+              даёт контраст ~1.6:1 и цифры перестают читаться */}
+          <span className="text-lamp font-mono text-4xl leading-none font-bold">
+            {String(cell.value).padStart(2, '0')}
+          </span>
+          <span className="eyebrow text-muted-foreground">{cell.unit}</span>
+        </div>
+      ))}
+    </div>
   );
 }

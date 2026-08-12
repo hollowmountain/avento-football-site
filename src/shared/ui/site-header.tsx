@@ -8,17 +8,19 @@ export async function SiteHeader() {
   const tCommon = await getTranslations('common');
 
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 sticky top-0 z-40">
-      <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-2 px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <span aria-hidden>⚽</span>
-          <span>{tCommon('appName')}</span>
+    <header className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
+      <div className="mx-auto flex h-14 w-full max-w-3xl items-center gap-2 px-4">
+        <Link
+          href="/"
+          className="display focus-visible:ring-ring rounded-sm text-2xl leading-none tracking-tight focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+        >
+          {tCommon('appName')}
         </Link>
-        <nav className="flex items-center gap-1">
+        <nav className="ml-auto flex items-center gap-1">
           <Button asChild variant="ghost" size="sm">
             <Link href="/">{t('feed')}</Link>
           </Button>
-          <Button asChild size="sm">
+          <Button asChild size="sm" className="display tracking-wide">
             <Link href="/games/new">{t('create')}</Link>
           </Button>
           <ThemeToggle />

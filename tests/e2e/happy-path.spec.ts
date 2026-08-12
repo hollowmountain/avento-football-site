@@ -36,7 +36,9 @@ test('создание игры → приглашение → вступлен�
   await hostPage.getByRole('link', { name: 'К странице игры' }).click();
   await expect(hostPage.getByRole('heading', { name: 'E2E: вечерний матч' })).toBeVisible();
   await expect(hostPage.getByText('Управление игрой')).toBeVisible();
-  await expect(hostPage.getByText('0 из 10 игроков')).toBeVisible();
+  // Счётчик состава выводится как «0 / 10»; полная фраза живёт в aria-label
+  // прогресс-бара, поэтому проверяем её — заодно стережём доступность
+  await expect(hostPage.getByLabel('0 из 10 игроков')).toBeVisible();
 
   // --- Игрок открывает ссылку в «другом браузере» ---
   const playerContext = await browser.newContext();
@@ -54,11 +56,11 @@ test('создание игры → приглашение → вступлен�
 
   await expect(playerPage.getByText('Вы записаны', { exact: true })).toBeVisible();
   await expect(playerPage.getByText('e2e-player')).toBeVisible();
-  await expect(playerPage.getByText('1 из 10 игроков')).toBeVisible();
+  await expect(playerPage.getByLabel('1 из 10 игроков')).toBeVisible();
 
   // --- Организатор видит игрока БЕЗ перезагрузки (SSE) ---
   await expect(hostPage.getByText('e2e-player')).toBeVisible({ timeout: 10_000 });
-  await expect(hostPage.getByText('1 из 10 игроков')).toBeVisible();
+  await expect(hostPage.getByLabel('1 из 10 игроков')).toBeVisible();
 
   // --- Игрок отказывается ---
   playerPage.once('dialog', (dialog) => void dialog.accept());
@@ -66,7 +68,7 @@ test('создание игры → приглашение → вступлен�
   await expect(playerPage.getByRole('button', { name: 'Я иду!' })).toBeVisible();
 
   // Организатор снова видит пустой состав (SSE)
-  await expect(hostPage.getByText('0 из 10 игроков')).toBeVisible({ timeout: 10_000 });
+  await expect(hostPage.getByLabel('0 из 10 игроков')).toBeVisible({ timeout: 10_000 });
 
   await hostContext.close();
   await playerContext.close();

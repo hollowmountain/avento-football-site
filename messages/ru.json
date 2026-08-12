@@ -50,7 +50,11 @@
   },
   "reliability": {
     "new": "🆕 новичок",
-    "score": "⭐ {percent}% надёжность"
+    "score": "⭐ {percent}% надёжность",
+    "newChip": "новичок",
+    "scoreChip": "{percent}%",
+    "scoreTitle": "Приходит на {percent}% игр, на которые записался",
+    "newTitle": "Меньше трёх игр — статистики пока нет"
   },
   "feed": {
     "title": "Ближайшие игры",
@@ -85,7 +89,10 @@
       "started": "Игра началась",
       "days": "{count} дн",
       "hours": "{count} ч",
-      "minutes": "{count} мин"
+      "minutes": "{count} мин",
+      "unitDays": "дн",
+      "unitHours": "час",
+      "unitMinutes": "мин"
     },
     "roster": "Состав",
     "rosterProgress": "{main} из {max} игроков",
@@ -104,6 +111,7 @@
     "promoted": "{nickname} поднят из листа ожидания",
     "priceTitle": "Стоимость",
     "pricePerPitch": "Поле: {price}",
+    "perPersonLabel": "Сейчас с человека",
     "perPersonNow": "Сейчас по {price} с человека",
     "priceFree": "Игра бесплатная",
     "detailsTitle": "Детали",

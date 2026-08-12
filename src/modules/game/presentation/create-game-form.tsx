@@ -154,7 +154,7 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-6" noValidate>
-      <h1 className="text-2xl font-bold">{t('title')}</h1>
+      <h1 className="display text-3xl">{t('title')}</h1>
 
       {/* Honeypot: скрытое поле-ловушка для ботов */}
       <input
@@ -168,7 +168,7 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('sections.what')}</CardTitle>
+          <CardTitle className="display text-xl">{t('sections.what')}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5 sm:col-span-2">
@@ -253,7 +253,7 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('sections.where')}</CardTitle>
+          <CardTitle className="display text-xl">{t('sections.where')}</CardTitle>
           <CardDescription>{t('fields.coordsHint')}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -307,7 +307,7 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('sections.params')}</CardTitle>
+          <CardTitle className="display text-xl">{t('sections.params')}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
@@ -357,7 +357,12 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
         </CardContent>
       </Card>
 
-      <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+      <Button
+        type="submit"
+        size="lg"
+        className="display w-full text-base tracking-wide"
+        disabled={isSubmitting}
+      >
         {isSubmitting ? t('submitting') : t('submit')}
       </Button>
     </form>
@@ -379,11 +384,13 @@ function CreatedGameScreen({ created }: { created: CreatedGame }) {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">{t('title')}</h1>
+      <h1 className="display text-3xl">{t('title')}</h1>
       <Card>
         <CardHeader>
-          <CardDescription>{t('codeLabel')}</CardDescription>
-          <CardTitle className="font-mono text-3xl tracking-wider">{created.game.code}</CardTitle>
+          <CardDescription className="eyebrow">{t('codeLabel')}</CardDescription>
+          <CardTitle className="text-lamp font-mono text-4xl tracking-wider">
+            {created.game.code}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>

@@ -4,12 +4,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Направление «Табло»: вечерний манеж под прожекторами.
+ * Янтарь работает как единственный акцент — заливкой только у главного
+ * действия, всё остальное держится на контуре и моноширинных цифрах.
+ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sofia);
+  --font-mono: var(--font-mono-digits);
+  --font-heading: var(--font-sofia-condensed);
+  --font-display: var(--font-sofia-condensed);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-lamp: var(--lamp);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,73 +57,85 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Светлая тема — «день»: тёплая бумага вместо белизны.
+ * Янтарь остаётся заливкой у кнопки (тёмный текст поверх читается),
+ * но янтарь-как-текст затемнён до --lamp, иначе контраста не хватает.
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #f6f3ec;
+  --foreground: #16191c;
+  --card: #ffffff;
+  --card-foreground: #16191c;
+  --popover: #ffffff;
+  --popover-foreground: #16191c;
+  --primary: #ffb020;
+  --primary-foreground: #17120a;
+  --secondary: #eae5da;
+  --secondary-foreground: #16191c;
+  --muted: #efebe1;
+  --muted-foreground: #5c6469;
+  --accent: #eae5da;
+  --accent-foreground: #16191c;
+  --destructive: #bf2b34;
+  --border: #d9d3c5;
+  --input: #d9d3c5;
+  --ring: #8f5b00;
+  --success: #1b7a46;
+  --success-foreground: #ffffff;
+  --lamp: #8f5b00;
+  --chart-1: #ffb020;
+  --chart-2: #1b7a46;
+  --chart-3: #5c6469;
+  --chart-4: #bf2b34;
+  --chart-5: #16191c;
+  --radius: 0.375rem;
+  --sidebar: #efebe1;
+  --sidebar-foreground: #16191c;
+  --sidebar-primary: #ffb020;
+  --sidebar-primary-foreground: #17120a;
+  --sidebar-accent: #eae5da;
+  --sidebar-accent-foreground: #16191c;
+  --sidebar-border: #d9d3c5;
+  --sidebar-ring: #8f5b00;
 }
 
+/* Тёмная тема — основной мир направления, включена по умолчанию */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0d1013;
+  --foreground: #f2ede3;
+  --card: #161b20;
+  --card-foreground: #f2ede3;
+  --popover: #161b20;
+  --popover-foreground: #f2ede3;
+  --primary: #ffb020;
+  --primary-foreground: #17120a;
+  --secondary: #22282e;
+  --secondary-foreground: #f2ede3;
+  --muted: #161b20;
+  --muted-foreground: #a2aab1;
+  --accent: #22282e;
+  --accent-foreground: #f2ede3;
+  --destructive: #f0616b;
+  --border: #262d33;
+  --input: #2b333a;
+  --ring: #ffb020;
+  --success: #5fd98c;
+  --success-foreground: #0d1013;
+  --lamp: #ffb020;
+  --chart-1: #ffb020;
+  --chart-2: #5fd98c;
+  --chart-3: #a2aab1;
+  --chart-4: #f0616b;
+  --chart-5: #f2ede3;
+  --sidebar: #0a0d0f;
+  --sidebar-foreground: #f2ede3;
+  --sidebar-primary: #ffb020;
+  --sidebar-primary-foreground: #17120a;
+  --sidebar-accent: #22282e;
+  --sidebar-accent-foreground: #f2ede3;
+  --sidebar-border: #262d33;
+  --sidebar-ring: #ffb020;
 }
 
 @layer base {
@@ -126,5 +147,38 @@
   }
   html {
     @apply font-sans;
+  }
+  /* Цифры не должны плясать при обновлении состава и отсчёта */
+  .font-mono,
+  table,
+  time {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* Надзаголовок: моноширинный капс с разрядкой — «служебная» строка табло */
+  .eyebrow {
+    @apply font-mono text-[0.68rem] tracking-[0.16em] uppercase;
+  }
+
+  /* Заголовок в характере направления: узкий тяжёлый капс */
+  .display {
+    @apply font-display font-extrabold uppercase tracking-[0.01em];
+  }
+
+  /* Тонкие световые полосы прожекторов по верху страницы */
+  .floodlight {
+    background-image:
+      radial-gradient(
+        60% 100% at 15% -10%,
+        color-mix(in srgb, var(--primary) 12%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        60% 100% at 85% -10%,
+        color-mix(in srgb, var(--primary) 8%, transparent),
+        transparent 60%
+      );
   }
 }

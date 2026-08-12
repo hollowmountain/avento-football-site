@@ -11,11 +11,10 @@ import { useGameEvents } from '@/shared/hooks/use-game-events';
 import { useHostToken } from '@/shared/hooks/use-host-token';
 import { ApiRequestError, apiFetch } from '@/shared/lib/api-client';
 import { formatGameDate, formatMoneyMinor, formatShortDate } from '@/shared/lib/format';
-import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Card, CardContent } from '@/shared/ui/card';
+import { Pill } from '@/shared/ui/pill';
 import { Progress } from '@/shared/ui/progress';
-import { Separator } from '@/shared/ui/separator';
 import type { TeamsSnapshot } from '../domain/types';
 import type { formTokenSchema } from '../schemas';
 import type { GameViewData } from './api-types';
@@ -31,14 +30,6 @@ interface GamePageClientProps {
   formToken: z.infer<typeof formTokenSchema>;
 }
 
-const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  OPEN: 'default',
-  FULL: 'secondary',
-  CANCELLED_BY_HOST: 'destructive',
-  CANCELLED_NOT_ENOUGH: 'destructive',
-  FINISHED: 'outline',
-};
-
 export function GamePageClient({ code, initialData, formToken }: GamePageClientProps) {
   const t = useTranslations('game');
   const tStatuses = useTranslations('statuses');
@@ -50,8 +41,6 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
 
   const queryClient = useQueryClient();
   const hostToken = useHostToken(code);
-  // Момент открытия страницы: достаточно для проверок «игра началась» /
-  // «дедлайн прошёл» (живое обновление даёт Countdown и рефетчи)
   const [openedAt] = useState(() => Date.now());
 
   const query = useQuery({
@@ -61,8 +50,6 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
         headers: hostToken ? { 'x-host-token': hostToken } : {},
       }),
     initialData,
-    // SSR-данные сразу считаются устаревшими: первый рендер мгновенный,
-    // но клиент тут же дотягивает свежее состояние (в т.ч. isHost по токену)
     initialDataUpdatedAt: 0,
     refetchOnWindowFocus: true,
   });
@@ -76,7 +63,6 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['game', code] });
 
-  // Live-обновления: SSE-событие → перезапрос состояния (notify-then-fetch)
   useGameEvents(code, () => void invalidate());
 
   const onApiError = (error: unknown) => {
@@ -131,7 +117,7 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
     onSuccess: () => void invalidate(),
     onError: (error) => {
       onApiError(error);
-      void invalidate(); // откат оптимистичного перемещения
+      void invalidate();
     },
   });
 
@@ -148,8 +134,9 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
 
   const leave = () => {
     const pastDeadline = new Date(game.cancelDeadline).getTime() <= Date.now();
-    const message = pastDeadline ? t('leaveLate') : t('leaveConfirm');
-    if (window.confirm(message)) leaveMutation.mutate();
+    if (window.confirm(pastDeadline ? t('leaveLate') : t('leaveConfirm'))) {
+      leaveMutation.mutate();
+    }
   };
 
   const cancelGame = () => {
@@ -157,90 +144,91 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
   };
 
   const mapUrl = `https://yandex.ru/maps/?pt=${game.longitude},${game.latitude}&z=16&l=map`;
+  const rosterLabel = t('rosterProgress', { main: game.mainCount, max: game.maxPlayers });
 
   return (
-    <div className="space-y-6">
-      {/* Шапка */}
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={STATUS_VARIANTS[game.status] ?? 'outline'}>
-            {tStatuses(game.status)}
-          </Badge>
-          <Badge variant="outline">{tFormats(game.format)}</Badge>
-          <Badge variant="outline">{tLevels(game.skillLevel)}</Badge>
+    <div className="flex flex-col gap-5">
+      {/* Шапка: статус, название, место */}
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Pill tone={isActive ? 'accent' : 'muted'}>{tStatuses(game.status)}</Pill>
+          <Pill>{tFormats(game.format)}</Pill>
+          <Pill>{tLevels(game.skillLevel)}</Pill>
           {isActive && !started ? <WeatherBadge gameCode={code} /> : null}
-          <span className="text-muted-foreground ml-auto font-mono text-xs">{game.code}</span>
+          <span className="text-muted-foreground ml-auto font-mono text-xs tracking-wider">
+            {game.code}
+          </span>
         </div>
-        <h1 className="text-2xl font-bold">{game.title}</h1>
+
+        <h1 className="display text-3xl leading-[1.05] text-balance sm:text-4xl">{game.title}</h1>
+
+        {isActive && !started ? <Countdown startsAtIso={game.startsAt} /> : null}
+
         <p className="text-muted-foreground text-sm">
           {formatGameDate(game.startsAt, game.timezone)} ·{' '}
           {t('duration', { count: game.durationMinutes })}
+          <br />
+          {game.venueName} · {game.city}
         </p>
-        {isActive && !started ? <Countdown startsAtIso={game.startsAt} /> : null}
-      </div>
+      </section>
 
-      {/* Прогресс состава */}
+      {/* Состав */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-baseline justify-between text-base">
-            <span>{t('roster')}</span>
-            <span className="text-muted-foreground text-sm font-normal">
-              {t('rosterProgress', { main: game.mainCount, max: game.maxPlayers })}
+        <CardContent className="flex flex-col gap-3 pt-0">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="eyebrow text-muted-foreground">{t('roster')}</span>
+            <span className="font-mono text-sm">
+              <b className="text-lg font-bold">{game.mainCount}</b>
+              <span className="text-muted-foreground"> / {game.maxPlayers}</span>
             </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Progress
-            value={(game.mainCount / game.maxPlayers) * 100}
-            aria-label={t('rosterProgress', { main: game.mainCount, max: game.maxPlayers })}
-          />
+          </div>
+
+          <Progress value={(game.mainCount / game.maxPlayers) * 100} aria-label={rosterLabel} />
+
           {isActive ? (
             game.needMore > 0 ? (
-              <p className="text-amber-600 dark:text-amber-400 text-sm" aria-live="polite">
+              <p className="text-lamp text-sm" aria-live="polite">
                 {t('needMoreBanner', { min: game.minPlayers, count: game.needMore })}
               </p>
             ) : (
-              <p className="text-emerald-600 dark:text-emerald-400 text-sm" aria-live="polite">
+              <p className="text-success text-sm" aria-live="polite">
                 {t('viable')}
               </p>
             )
           ) : null}
 
-          <ul className="space-y-1.5" aria-live="polite">
+          <ul className="flex flex-col" aria-live="polite">
             {data.participants.length === 0 ? (
-              <li className="text-muted-foreground text-sm">{t('empty')}</li>
+              <li className="text-muted-foreground py-2 text-sm">{t('empty')}</li>
             ) : (
-              data.participants.map((participant) => (
-                <ParticipantRow
+              data.participants.map((participant, index) => (
+                <PlayerRow
                   key={participant.id}
                   participant={participant}
+                  number={index + 1}
                   positionLabel={tPositions(participant.position)}
-                  attendanceLabel={participant.attendance === 'MAYBE' ? tAttendance('MAYBE') : null}
+                  maybeLabel={participant.attendance === 'MAYBE' ? tAttendance('MAYBE') : null}
                 />
               ))
             )}
           </ul>
 
           {data.waitlist.length > 0 ? (
-            <>
-              <Separator />
-              <div>
-                <p className="mb-1.5 text-sm font-medium">{t('waitlistTitle')}</p>
-                <p className="text-muted-foreground mb-2 text-xs">{t('waitlistHint')}</p>
-                <ul className="space-y-1.5">
-                  {data.waitlist.map((participant) => (
-                    <ParticipantRow
-                      key={participant.id}
-                      participant={participant}
-                      positionLabel={tPositions(participant.position)}
-                      attendanceLabel={
-                        participant.attendance === 'MAYBE' ? tAttendance('MAYBE') : null
-                      }
-                    />
-                  ))}
-                </ul>
-              </div>
-            </>
+            <div className="border-t pt-3">
+              <p className="eyebrow text-muted-foreground">{t('waitlistTitle')}</p>
+              <p className="text-muted-foreground mt-1 mb-2 text-xs">{t('waitlistHint')}</p>
+              <ul className="flex flex-col">
+                {data.waitlist.map((participant) => (
+                  <PlayerRow
+                    key={participant.id}
+                    participant={participant}
+                    number={participant.waitlistOrder ?? 0}
+                    positionLabel={tPositions(participant.position)}
+                    maybeLabel={participant.attendance === 'MAYBE' ? tAttendance('MAYBE') : null}
+                  />
+                ))}
+              </ul>
+            </div>
           ) : null}
         </CardContent>
       </Card>
@@ -252,7 +240,7 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
             <Button
               size="lg"
               variant="outline"
-              className="flex-1"
+              className="display flex-1 tracking-wide"
               onClick={leave}
               disabled={leaveMutation.isPending}
             >
@@ -277,21 +265,20 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
           </Button>
         </div>
       ) : null}
+
       {you ? (
-        <p className="text-muted-foreground text-sm" aria-live="polite">
+        <p className="eyebrow text-lamp" aria-live="polite">
           {you.role === 'WAITLIST'
             ? t('youAreWaitlisted', { order: you.waitlistOrder ?? 0 })
             : t('youAreIn')}
         </p>
       ) : null}
 
-      {/* Команды после жеребьёвки (организатор может перетаскивать игроков) */}
+      {/* Составы команд */}
       {game.teamsSnapshot ? (
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">{t('teams.title')}</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-3 pt-0">
+            <span className="eyebrow text-muted-foreground">{t('teams.title')}</span>
             <TeamsBoard
               key={game.teamsSnapshot.generatedAt}
               snapshot={game.teamsSnapshot}
@@ -301,31 +288,31 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
                   : null
               }
             />
-            <p className="text-muted-foreground mt-3 text-xs">{t('teams.generatedHint')}</p>
+            <p className="text-muted-foreground text-xs">{t('teams.generatedHint')}</p>
           </CardContent>
         </Card>
       ) : null}
 
       {/* Стоимость */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">{t('priceTitle')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-1 text-sm">
+        <CardContent className="flex flex-wrap items-baseline justify-between gap-2 pt-0">
           {game.pricePerPitch === 0 ? (
-            <p>{t('priceFree')}</p>
+            <span className="text-sm">{t('priceFree')}</span>
           ) : (
             <>
-              <p>
-                {t('pricePerPitch', { price: formatMoneyMinor(game.pricePerPitch, game.currency) })}
-              </p>
-              {game.perPersonPrice !== null ? (
-                <p className="font-medium" aria-live="polite">
-                  {t('perPersonNow', {
-                    price: formatMoneyMinor(game.perPersonPrice, game.currency),
+              <div className="flex flex-col">
+                <span className="eyebrow text-muted-foreground">{t('perPersonLabel')}</span>
+                <span className="text-muted-foreground text-xs">
+                  {t('pricePerPitch', {
+                    price: formatMoneyMinor(game.pricePerPitch, game.currency),
                   })}
-                </p>
-              ) : null}
+                </span>
+              </div>
+              <span className="display text-lamp text-2xl" aria-live="polite">
+                {game.perPersonPrice !== null
+                  ? formatMoneyMinor(game.perPersonPrice, game.currency)
+                  : '—'}
+              </span>
             </>
           )}
         </CardContent>
@@ -333,10 +320,8 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
 
       {/* Детали */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">{t('detailsTitle')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+        <CardContent className="flex flex-col gap-2 pt-0 text-sm">
+          <span className="eyebrow text-muted-foreground">{t('detailsTitle')}</span>
           <p className="font-medium">{game.venueName}</p>
           <p className="text-muted-foreground">
             {game.city}, {game.address}
@@ -345,35 +330,35 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
             href={mapUrl}
             target="_blank"
             rel="noreferrer noopener"
-            className="text-primary inline-flex items-center gap-1 underline-offset-4 hover:underline"
+            className="text-lamp inline-flex items-center gap-1 underline-offset-4 hover:underline"
           >
             <MapPin className="size-4" aria-hidden /> {tCommon('openMap')}
           </a>
-          {game.description ? <p className="whitespace-pre-line pt-2">{game.description}</p> : null}
-          <p className="text-muted-foreground pt-2 text-xs">
+          {game.description ? <p className="pt-1 whitespace-pre-line">{game.description}</p> : null}
+          <p className="text-muted-foreground pt-1 text-xs">
             {t('cancelDeadline', { date: formatShortDate(game.cancelDeadline, game.timezone) })}
           </p>
         </CardContent>
       </Card>
 
-      {/* Панель организатора */}
+      {/* Управление игрой */}
       {isHost && isActive ? (
-        <Card className="border-primary/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">{t('host.panel')}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onClick={() => shuffleMutation.mutate()}
-              disabled={shuffleMutation.isPending}
-            >
-              <Shuffle className="size-4" />
-              {game.teamsSnapshot ? t('host.reshuffle') : t('host.shuffle')}
-            </Button>
-            <Button variant="destructive" onClick={cancelGame} disabled={cancelMutation.isPending}>
-              <XCircle className="size-4" /> {t('host.cancelGame')}
-            </Button>
+        <Card className="border-primary/40">
+          <CardContent className="flex flex-col gap-3 pt-0">
+            <span className="eyebrow text-lamp">{t('host.panel')}</span>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => shuffleMutation.mutate()}
+                disabled={shuffleMutation.isPending}
+              >
+                <Shuffle className="size-4" />
+                {game.teamsSnapshot ? t('host.reshuffle') : t('host.shuffle')}
+              </Button>
+              <Button variant="outline" onClick={cancelGame} disabled={cancelMutation.isPending}>
+                <XCircle className="size-4" /> {t('host.cancelGame')}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : null}
@@ -381,42 +366,47 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
   );
 }
 
-function ParticipantRow({
+/** Строка состава: номер как на футболке, позиция, индекс надёжности. */
+function PlayerRow({
   participant,
+  number,
   positionLabel,
-  attendanceLabel,
+  maybeLabel,
 }: {
   participant: ParticipantDto;
+  number: number;
   positionLabel: string;
-  attendanceLabel: string | null;
+  maybeLabel: string | null;
 }) {
-  const tReliability = useTranslations('reliability');
-  const reliabilityLabel =
-    participant.reliability.kind === 'new'
-      ? tReliability('new')
-      : tReliability('score', { percent: participant.reliability.percent });
+  const t = useTranslations('reliability');
+  const isNew = participant.reliability.kind === 'new';
+  const percent = participant.reliability.kind === 'score' ? participant.reliability.percent : 0;
 
   return (
     <li
-      className={`flex flex-wrap items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
-        participant.isYou ? 'bg-primary/10' : ''
+      className={`grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-3 border-b py-2 last:border-b-0 ${
+        participant.isYou ? 'bg-primary/5' : ''
       }`}
     >
-      <span className="font-medium">{participant.nickname}</span>
-      <span className="text-muted-foreground text-xs">{positionLabel}</span>
-      <span className="text-muted-foreground text-xs" title={reliabilityLabel}>
-        {reliabilityLabel}
+      <span className="text-muted-foreground font-mono text-sm">
+        {String(number).padStart(2, '0')}
       </span>
-      {attendanceLabel ? (
-        <Badge variant="outline" className="ml-auto text-xs">
-          {attendanceLabel}
-        </Badge>
-      ) : null}
-      {participant.waitlistOrder !== null ? (
-        <span className="text-muted-foreground ml-auto font-mono text-xs">
-          №{participant.waitlistOrder}
+      <span className="flex min-w-0 flex-col">
+        <span className="truncate text-sm font-semibold">{participant.nickname}</span>
+        {/* Позиция и «под вопросом» — одной строкой: отдельная пилюля
+            съедала место у никнейма и обрезала его до одной буквы */}
+        <span className="text-muted-foreground truncate text-xs">
+          {maybeLabel ? `${positionLabel} · ${maybeLabel.toLowerCase()}` : positionLabel}
         </span>
-      ) : null}
+      </span>
+      <span
+        className={`shrink-0 font-mono text-[0.68rem] tracking-wider ${
+          isNew ? 'text-muted-foreground' : 'text-foreground'
+        }`}
+        title={isNew ? t('newTitle') : t('scoreTitle', { percent })}
+      >
+        {isNew ? t('newChip') : t('scoreChip', { percent })}
+      </span>
     </li>
   );
 }

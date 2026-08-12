@@ -1,11 +1,11 @@
 'use client';
 
-import { MapPin, Users } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { formatGameDate, formatMoneyMinor } from '@/shared/lib/format';
-import { Badge } from '@/shared/ui/badge';
+import { formatMoneyMinor, formatShortDate } from '@/shared/lib/format';
 import { Card, CardContent } from '@/shared/ui/card';
+import { Pill } from '@/shared/ui/pill';
 import { Progress } from '@/shared/ui/progress';
 import type { GameSummaryDto } from './dto';
 
@@ -17,39 +17,38 @@ export function GameCard({ game }: { game: GameSummaryDto }) {
   const tStatuses = useTranslations('statuses');
 
   return (
-    <Link href={`/games/${game.code}`} className="block focus-visible:outline-none group">
-      <Card className="group-focus-visible:ring-ring transition-shadow group-focus-visible:ring-2 hover:shadow-md">
-        <CardContent className="space-y-3 pt-0">
+    <Link href={`/games/${game.code}`} className="group block focus-visible:outline-none">
+      <Card className="group-focus-visible:ring-ring group-hover:border-primary/50 transition-colors group-focus-visible:ring-2">
+        <CardContent className="flex flex-col gap-3 pt-0">
           <div className="flex flex-wrap items-center gap-1.5">
-            <Badge variant="outline">{tFormats(game.format)}</Badge>
-            <Badge variant="outline">{tLevels(game.skillLevel)}</Badge>
-            {game.status === 'FULL' ? <Badge variant="secondary">{tStatuses('FULL')}</Badge> : null}
-            <span className="text-muted-foreground ml-auto text-xs">
-              {formatGameDate(game.startsAt, game.timezone)}
+            <Pill>{tFormats(game.format)}</Pill>
+            <Pill>{tLevels(game.skillLevel)}</Pill>
+            {game.status === 'FULL' ? <Pill tone="muted">{tStatuses('FULL')}</Pill> : null}
+            <span className="text-muted-foreground ml-auto font-mono text-xs">
+              {formatShortDate(game.startsAt, game.timezone)}
             </span>
           </div>
-          <div>
-            <p className="font-semibold">{game.title}</p>
+
+          <div className="flex flex-col gap-0.5">
+            <p className="display text-xl leading-tight text-balance">{game.title}</p>
             <p className="text-muted-foreground flex items-center gap-1 text-sm">
-              <MapPin className="size-3.5" aria-hidden />
+              <MapPin className="size-3.5 shrink-0" aria-hidden />
               {game.city} · {game.venueName}
             </p>
           </div>
-          <div className="space-y-1.5">
+
+          <div className="flex flex-col gap-1.5">
             <Progress value={(game.mainCount / game.maxPlayers) * 100} />
-            <div className="text-muted-foreground flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1">
-                <Users className="size-3.5" aria-hidden />
+            <div className="flex items-baseline justify-between gap-2 text-xs">
+              <span className="text-muted-foreground font-mono">
                 {t('players', { main: game.mainCount, max: game.maxPlayers })}
                 {game.needMore > 0 ? ` · ${t('needMore', { count: game.needMore })}` : ''}
               </span>
-              <span>
+              <span className="text-lamp font-mono">
                 {game.pricePerPitch === 0
                   ? t('free')
                   : game.perPersonPrice !== null
-                    ? t('perPerson', {
-                        price: formatMoneyMinor(game.perPersonPrice, game.currency),
-                      })
+                    ? formatMoneyMinor(game.perPersonPrice, game.currency)
                     : formatMoneyMinor(game.pricePerPitch, game.currency)}
               </span>
             </div>
