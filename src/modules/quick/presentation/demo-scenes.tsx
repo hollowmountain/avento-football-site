@@ -410,7 +410,7 @@ function SceneShare() {
         className="mx-auto flex w-52 flex-col gap-2 rounded-lg p-4"
         style={{ background: '#0d1013' }}
       >
-        <span className="eyebrow" style={{ color: '#ffb020' }}>
+        <span className="eyebrow" style={{ color: '#ff7100' }}>
           {t('share.cardEyebrow')}
         </span>
         <span className="display text-2xl tracking-wide" style={{ color: '#f2ede3' }}>
@@ -432,7 +432,7 @@ function SceneShare() {
               className="display h-3 w-20 rounded-sm"
               style={{ background: color, opacity: 0.85 }}
             />
-            <span className="display digits text-lg" style={{ color: '#ffb020' }}>
+            <span className="display digits text-lg" style={{ color: '#ff7100' }}>
               {points}
             </span>
           </span>

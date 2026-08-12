@@ -12,7 +12,7 @@ const HEIGHT = 1350;
 const INK = '#0d1013';
 const PAPER = '#f2ede3';
 const MUTED = '#a2aab1';
-const AMBER = '#ffb020';
+const AMBER = '#ff7100';
 const LINE = '#262d33';
 
 export interface CardStandingsRow {

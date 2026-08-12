@@ -24,7 +24,7 @@ const FORMAT_LABELS: Record<string, string> = {
 
 const INK = '#0d1013';
 const PANEL = '#161b20';
-const AMBER = '#ffb020';
+const AMBER = '#ff7100';
 const WARM = '#f2ede3';
 const SOFT = '#a2aab1';
 const LINE = '#262d33';

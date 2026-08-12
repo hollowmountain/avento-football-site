@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
-import { Button } from '@/shared/ui/button';
+import { HeaderNav } from '@/shared/ui/header-nav';
 import { ThemeToggle } from '@/shared/ui/theme-toggle';
 
 export async function SiteHeader() {
@@ -16,24 +16,16 @@ export async function SiteHeader() {
         >
           {tCommon('appName')}
         </Link>
-        {/* Оба пункта набраны одинаково — узким капсом одного размера:
-            вперемешку с обычным начертанием строка выглядела разнородной */}
-        <nav className="ml-auto flex items-center gap-1">
-          {/* На мобильном «Игры» скрыты: на ленту ведёт логотип */}
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="display hidden text-sm tracking-wide sm:inline-flex"
-          >
-            <Link href="/">{t('feed')}</Link>
-          </Button>
-          <Button asChild size="sm" className="display text-sm tracking-wide">
-            <Link href="/games/new">{t('create')}</Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm" className="display text-sm tracking-wide">
-            <Link href="/quick">{t('quick')}</Link>
-          </Button>
+        {/* Все пункты — одинаковые «таблетки»; активный раздел затемнён
+            (клиентский HeaderNav следит за pathname) */}
+        <nav className="ml-auto flex items-center gap-1.5">
+          <HeaderNav
+            items={[
+              { href: '/', label: t('feed'), hideOnMobile: true },
+              { href: '/games/new', label: t('create') },
+              { href: '/quick', label: t('quick') },
+            ]}
+          />
           <ThemeToggle />
         </nav>
       </div>
