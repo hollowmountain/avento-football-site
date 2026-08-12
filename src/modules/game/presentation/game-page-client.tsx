@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { z } from 'zod';
+import { useGameEvents } from '@/shared/hooks/use-game-events';
 import { useHostToken } from '@/shared/hooks/use-host-token';
 import { ApiRequestError, apiFetch } from '@/shared/lib/api-client';
 import { formatGameDate, formatMoneyMinor, formatShortDate } from '@/shared/lib/format';
@@ -20,6 +21,7 @@ import type { GameViewData } from './api-types';
 import { Countdown } from './countdown';
 import type { ParticipantDto } from './dto';
 import { JoinDialog } from './join-dialog';
+import { TeamsBoard } from './teams-board';
 
 interface GamePageClientProps {
   code: string;
@@ -72,6 +74,9 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['game', code] });
 
+  // Live-обновления: SSE-событие → перезапрос состояния (notify-then-fetch)
+  useGameEvents(code, () => void invalidate());
+
   const onApiError = (error: unknown) => {
     toast.error(error instanceof ApiRequestError ? error.payload.message : tCommon('error'));
   };
@@ -112,6 +117,20 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
       }),
     onSuccess: () => void invalidate(),
     onError: onApiError,
+  });
+
+  const setTeamsMutation = useMutation({
+    mutationFn: (teams: { teamA: string[]; teamB: string[] }) =>
+      apiFetch<{ teams: TeamsSnapshot }>(`/api/games/${code}/teams`, {
+        method: 'PUT',
+        headers: hostToken ? { 'x-host-token': hostToken } : {},
+        body: JSON.stringify(teams),
+      }),
+    onSuccess: () => void invalidate(),
+    onError: (error) => {
+      onApiError(error);
+      void invalidate(); // откат оптимистичного перемещения
+    },
   });
 
   const share = async () => {
@@ -262,33 +281,22 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
         </p>
       ) : null}
 
-      {/* Команды после жеребьёвки */}
+      {/* Команды после жеребьёвки (организатор может перетаскивать игроков) */}
       {game.teamsSnapshot ? (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">{t('teams.title')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                { label: t('teams.teamA'), members: game.teamsSnapshot.teamA },
-                { label: t('teams.teamB'), members: game.teamsSnapshot.teamB },
-              ].map(({ label, members }) => (
-                <div key={label}>
-                  <p className="mb-1.5 text-sm font-medium">{label}</p>
-                  <ul className="space-y-1">
-                    {members.map((member) => (
-                      <li key={member.participantId} className="text-sm">
-                        {member.nickname}{' '}
-                        <span className="text-muted-foreground text-xs">
-                          {tPositions(member.position)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
+            <TeamsBoard
+              key={game.teamsSnapshot.generatedAt}
+              snapshot={game.teamsSnapshot}
+              onChange={
+                isHost && isActive
+                  ? (teamA, teamB) => setTeamsMutation.mutate({ teamA, teamB })
+                  : null
+              }
+            />
             <p className="text-muted-foreground mt-3 text-xs">{t('teams.generatedHint')}</p>
           </CardContent>
         </Card>
