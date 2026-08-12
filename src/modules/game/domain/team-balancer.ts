@@ -77,11 +77,8 @@ export function balanceTeams(
 
   const teamA: BalancerPlayer[] = [];
   const teamB: BalancerPlayer[] = [];
-  let weightA = 0;
-  let weightB = 0;
 
-  // Змейка: A B | B A | A B ... — внутри пары порядок чередуется,
-  // при равенстве пары вес решает, кто берёт следующего сильного.
+  // Змейка: A B | B A | A B ... — внутри пары порядок чередуется.
   ordered.forEach((player, index) => {
     const round = Math.floor(index / 2);
     const firstInPair = index % 2 === 0;
@@ -96,8 +93,6 @@ export function balanceTeams(
             ? teamA
             : teamB;
     target.push(player);
-    if (target === teamA) weightA += playerWeight(player);
-    else weightB += playerWeight(player);
   });
 
   const toMember = (p: BalancerPlayer) => ({
