@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { z } from 'zod';
+import { WeatherBadge } from '@/modules/weather/presentation/weather-badge';
 import { useGameEvents } from '@/shared/hooks/use-game-events';
 import { useHostToken } from '@/shared/hooks/use-host-token';
 import { ApiRequestError, apiFetch } from '@/shared/lib/api-client';
@@ -21,6 +22,7 @@ import type { GameViewData } from './api-types';
 import { Countdown } from './countdown';
 import type { ParticipantDto } from './dto';
 import { JoinDialog } from './join-dialog';
+import { QrDialog } from './qr-dialog';
 import { TeamsBoard } from './teams-board';
 
 interface GamePageClientProps {
@@ -166,6 +168,7 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
           </Badge>
           <Badge variant="outline">{tFormats(game.format)}</Badge>
           <Badge variant="outline">{tLevels(game.skillLevel)}</Badge>
+          {isActive && !started ? <WeatherBadge gameCode={code} /> : null}
           <span className="text-muted-foreground ml-auto font-mono text-xs">{game.code}</span>
         </div>
         <h1 className="text-2xl font-bold">{game.title}</h1>
@@ -266,6 +269,7 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
           <Button size="lg" variant="outline" onClick={() => void share()}>
             <Share2 className="size-4" /> {t('share')}
           </Button>
+          <QrDialog gameCode={code} title={game.title} />
           <Button size="lg" variant="outline" asChild>
             <a href={`/api/games/${code}/ics`} download>
               <CalendarPlus className="size-4" /> {t('addToCalendar')}
@@ -386,14 +390,23 @@ function ParticipantRow({
   positionLabel: string;
   attendanceLabel: string | null;
 }) {
+  const tReliability = useTranslations('reliability');
+  const reliabilityLabel =
+    participant.reliability.kind === 'new'
+      ? tReliability('new')
+      : tReliability('score', { percent: participant.reliability.percent });
+
   return (
     <li
-      className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
+      className={`flex flex-wrap items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
         participant.isYou ? 'bg-primary/10' : ''
       }`}
     >
       <span className="font-medium">{participant.nickname}</span>
       <span className="text-muted-foreground text-xs">{positionLabel}</span>
+      <span className="text-muted-foreground text-xs" title={reliabilityLabel}>
+        {reliabilityLabel}
+      </span>
       {attendanceLabel ? (
         <Badge variant="outline" className="ml-auto text-xs">
           {attendanceLabel}

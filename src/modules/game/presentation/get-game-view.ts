@@ -22,11 +22,12 @@ export async function getGameView(
 
   const viewerTokenHash = viewerToken ? deps.tokens.hash(viewerToken) : null;
   const isHost = hostToken ? deps.tokens.verify(hostToken, game.hostTokenHash) : false;
+  const profiles = await deps.games.profilesFor(participants.map((p) => p.tokenHash));
 
   return {
     game: gameToSummaryDto(game, main.length, confirmedMain.length),
-    participants: main.map((p) => participantToDto(p, viewerTokenHash)),
-    waitlist: waitlist.map((p) => participantToDto(p, viewerTokenHash)),
+    participants: main.map((p) => participantToDto(p, viewerTokenHash, profiles.get(p.tokenHash))),
+    waitlist: waitlist.map((p) => participantToDto(p, viewerTokenHash, profiles.get(p.tokenHash))),
     viewer: {
       isHost,
       isParticipant:

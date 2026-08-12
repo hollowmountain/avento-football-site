@@ -1,5 +1,7 @@
+import { reliabilityBadge, type ReliabilityBadge } from '@/modules/reliability/domain/score';
 import { splitPrice } from '../domain/price-split';
 import type { GameEntity, ParticipantEntity, TeamsSnapshot } from '../domain/types';
+import type { ParticipantReliability } from '../application/ports';
 
 /**
  * DTO наружу. Хеши токенов и прочие серверные поля сюда не попадают.
@@ -15,6 +17,7 @@ export interface ParticipantDto {
   waitlistOrder: number | null;
   joinedAt: string;
   isYou: boolean;
+  reliability: ReliabilityBadge;
 }
 
 export interface GameDto {
@@ -94,6 +97,7 @@ export function gameToSummaryDto(
 export function participantToDto(
   participant: ParticipantEntity,
   viewerTokenHash: string | null,
+  profile?: ParticipantReliability,
 ): ParticipantDto {
   return {
     id: participant.id,
@@ -106,5 +110,6 @@ export function participantToDto(
     waitlistOrder: participant.waitlistOrder,
     joinedAt: participant.joinedAt.toISOString(),
     isYou: viewerTokenHash !== null && participant.tokenHash === viewerTokenHash,
+    reliability: reliabilityBadge(profile ?? { gamesJoined: 0, gamesAttended: 0, lateCancels: 0 }),
   };
 }

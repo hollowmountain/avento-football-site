@@ -109,11 +109,20 @@ export interface GameListPage {
   nextCursor: string | null;
 }
 
+/** Данные reliability-профиля (живут дольше одной игры). */
+export interface ParticipantReliability {
+  gamesJoined: number;
+  gamesAttended: number;
+  lateCancels: number;
+}
+
 export interface GameRepository {
   findByCode(code: string): Promise<GameEntity | null>;
   /** Активные участники (leftAt IS NULL), MAIN — по порядку вступления, затем waitlist. */
   activeParticipants(gameId: string): Promise<ParticipantEntity[]>;
   activeMainCount(gameId: string): Promise<number>;
+  /** Reliability-профили по хешам токенов (для бейджей). */
+  profilesFor(tokenHashes: string[]): Promise<Map<string, ParticipantReliability>>;
   /**
    * Создание игры. Бросает CodeCollisionError при гонке на unique(code) —
    * вызывающий код генерирует новый код и повторяет.

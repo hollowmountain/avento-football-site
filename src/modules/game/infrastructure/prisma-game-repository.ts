@@ -64,6 +64,23 @@ export class PrismaGameRepository implements GameRepository {
     });
   }
 
+  async profilesFor(tokenHashes: string[]) {
+    if (tokenHashes.length === 0) return new Map();
+    const rows = await this.prisma.participantProfile.findMany({
+      where: { tokenHash: { in: tokenHashes } },
+    });
+    return new Map(
+      rows.map((row) => [
+        row.tokenHash,
+        {
+          gamesJoined: row.gamesJoined,
+          gamesAttended: row.gamesAttended,
+          lateCancels: row.lateCancels,
+        },
+      ]),
+    );
+  }
+
   async create(record: NewGameRecord): Promise<GameEntity> {
     try {
       const row = await this.prisma.game.create({ data: record });
