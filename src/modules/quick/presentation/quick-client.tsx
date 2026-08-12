@@ -16,7 +16,14 @@ import { defaultTeams } from './default-teams';
 import { JournalSection } from './journal-section';
 import { KickoffSection } from './kickoff-section';
 import { MatchScreen } from './match-screen';
-import { resetDay, startDay, useQuickDay, type QuickDay } from './quick-day-store';
+import {
+  finishDay,
+  resetDay,
+  resumeDay,
+  startDay,
+  useQuickDay,
+  type QuickDay,
+} from './quick-day-store';
 import { RosterSection } from './roster-section';
 import { ShareSection } from './share-section';
 import { StandingsSection } from './standings-section';
@@ -29,6 +36,7 @@ export function QuickClient() {
   if (day === undefined) return <div className="min-h-64" aria-busy="true" />;
   if (day === null) return <IntroScreen />;
   if (day.live !== null) return <MatchScreen day={day} live={day.live} />;
+  if (day.finishedAt != null) return <FinishedScreen day={day} />;
   return <DayScreen day={day} />;
 }
 
@@ -64,20 +72,27 @@ function DayScreen({ day }: { day: QuickDay }) {
 
   return (
     <section className="flex flex-col gap-4">
-      <header className="flex items-baseline gap-3">
+      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h1 className="display text-3xl leading-none tracking-tight">{t('title')}</h1>
         <span className="text-muted-foreground text-sm">
           {format.dateTime(new Date(day.startedAt), { day: 'numeric', month: 'long' })}
         </span>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="text-muted-foreground ml-auto"
-          onClick={() => setResetOpen(true)}
-        >
-          {t('reset')}
-        </Button>
+        <span className="ml-auto flex items-center gap-1">
+          {hasMatches ? (
+            <Button type="button" variant="outline" size="sm" onClick={() => finishDay()}>
+              {t('finish')}
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={() => setResetOpen(true)}
+          >
+            {t('reset')}
+          </Button>
+        </span>
       </header>
 
       <RosterSection day={day} />
@@ -89,6 +104,48 @@ function DayScreen({ day }: { day: QuickDay }) {
           <ShareSection day={day} />
         </>
       ) : null}
+
+      {resetOpen ? <ResetDialog onClose={() => setResetOpen(false)} /> : null}
+    </section>
+  );
+}
+
+/** День завершён: только итоги, журнал и шаринг — состав больше не трогаем. */
+function FinishedScreen({ day }: { day: QuickDay }) {
+  const t = useTranslations('quick.day');
+  const format = useFormatter();
+  const [resetOpen, setResetOpen] = useState(false);
+
+  return (
+    <section className="flex flex-col gap-4">
+      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h1 className="display text-3xl leading-none tracking-tight">{t('resultsTitle')}</h1>
+        <span className="text-muted-foreground text-sm">
+          {format.dateTime(new Date(day.startedAt), { day: 'numeric', month: 'long' })}
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground ml-auto"
+          onClick={() => resumeDay()}
+        >
+          {t('resume')}
+        </Button>
+      </header>
+
+      <StandingsSection day={day} />
+      <JournalSection day={day} />
+      <ShareSection day={day} />
+
+      <Button
+        type="button"
+        variant="outline"
+        className="display self-start text-base tracking-wide"
+        onClick={() => setResetOpen(true)}
+      >
+        {t('newDay')}
+      </Button>
 
       {resetOpen ? <ResetDialog onClose={() => setResetOpen(false)} /> : null}
     </section>

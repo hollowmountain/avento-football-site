@@ -3,7 +3,6 @@
 import { Pause, Play, Undo2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { pickLeaving } from '../domain/rotation';
 import type { QuickPlayer, QuickTeam, QuickTeamColorId } from '../domain/types';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';
@@ -344,6 +343,7 @@ function FinishDialog({
   onClose: () => void;
 }) {
   const t = useTranslations('quick.match');
+  const [drawLoserId, setDrawLoserId] = useState<string | null>(null);
   const teamById = new Map(day.teams.map((team) => [team.id, team]));
   const home = teamById.get(live.homeId);
   const away = teamById.get(live.awayId);
@@ -352,22 +352,22 @@ function FinishDialog({
   const nameOf = (id: string | undefined | null) =>
     id !== null && id !== undefined ? (teamById.get(id)?.name ?? '') : '';
 
-  let outcome = t('outcomeStay');
-  let entering: string | null = null;
-  if (day.rotation !== null && day.rotation.waiting.length > 0) {
-    const result = {
-      homeId: live.homeId,
-      awayId: live.awayId,
-      homeGoals: score.home,
-      awayGoals: score.away,
-    };
-    const leaving = pickLeaving(day.rotation, result);
-    const staying = leaving === live.homeId ? live.awayId : live.homeId;
-    outcome =
-      score.home === score.away
-        ? t('outcomeDraw', { team: nameOf(leaving) })
-        : t('outcomeWin', { winner: nameOf(staying), loser: nameOf(leaving) });
-    entering = nameOf(day.rotation.waiting[0]);
+  const hasQueue = day.rotation !== null && day.rotation.waiting.length > 0;
+  const isDraw = score.home === score.away;
+  // Ничью счёт не решает: команды играют суефа, проигравшего отмечаем здесь
+  const needsRps = hasQueue && isDraw;
+  const entering = hasQueue ? nameOf(day.rotation?.waiting[0]) : '';
+
+  let outcome: string | null = null;
+  if (!hasQueue) {
+    outcome = t('outcomeStay');
+  } else if (!isDraw) {
+    const winnerId = score.home > score.away ? live.homeId : live.awayId;
+    const loserId = winnerId === live.homeId ? live.awayId : live.homeId;
+    outcome = t('outcomeWin', { winner: nameOf(winnerId), loser: nameOf(loserId) });
+  } else if (drawLoserId !== null) {
+    const stayingId = drawLoserId === live.homeId ? live.awayId : live.homeId;
+    outcome = t('outcomeWin', { winner: nameOf(stayingId), loser: nameOf(drawLoserId) });
   }
 
   return (
@@ -390,18 +390,47 @@ function FinishDialog({
                   {away?.name}
                 </span>
               </span>
-              <span>{outcome}</span>
-              {entering !== null && entering !== '' ? (
+              {needsRps ? <span>{t('drawPrompt')}</span> : null}
+              {outcome !== null ? <span>{outcome}</span> : null}
+              {outcome !== null && entering !== '' ? (
                 <span>{t('entering', { team: entering })}</span>
               ) : null}
             </div>
           </DialogDescription>
         </DialogHeader>
+
+        {needsRps ? (
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-1.5 text-sm font-medium">{t('drawPick')}</legend>
+            <div className="flex flex-wrap gap-1.5">
+              {[home, away].map((team) =>
+                team === undefined ? null : (
+                  <button
+                    key={team.id}
+                    type="button"
+                    aria-pressed={drawLoserId === team.id}
+                    onClick={() => setDrawLoserId(team.id)}
+                    className={`display focus-visible:ring-ring rounded-md border px-3 py-1.5 text-base tracking-wide transition-colors focus-visible:ring-2 focus-visible:outline-none ${
+                      drawLoserId === team.id
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    style={{ color: teamColorVar(team.colorId) }}
+                  >
+                    {team.name}
+                  </button>
+                ),
+              )}
+            </div>
+          </fieldset>
+        ) : null}
+
         <DialogFooter>
           <Button
             type="button"
+            disabled={needsRps && drawLoserId === null}
             onClick={() => {
-              finishMatch();
+              finishMatch(drawLoserId ?? undefined);
               onClose();
             }}
           >

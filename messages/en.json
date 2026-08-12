@@ -214,7 +214,11 @@
       "reset": "New day",
       "resetTitle": "Start a new day?",
       "resetText": "The current day will be erased: players, matches and the table. This cannot be undone.",
-      "resetAction": "Erase and start over"
+      "resetAction": "Erase and start over",
+      "finish": "Finish the day",
+      "resultsTitle": "Day results",
+      "resume": "Resume the day",
+      "newDay": "Start a new day"
     },
     "roster": {
       "title": "Who came",
@@ -228,7 +232,8 @@
       "remove": "Remove: {name}",
       "teams2": "2 teams",
       "teams3": "3 teams",
-      "waitingHint": "The third team waits its turn and comes on after the match"
+      "teams4": "4 teams",
+      "waitingHint": "Waiting teams come on in queue order"
     },
     "team": {
       "edit": "Name and colour: {team}",
@@ -275,7 +280,8 @@
       "finish": "Finish match",
       "finishTitle": "Confirm the result?",
       "outcomeWin": "{winner} stays on the pitch, {loser} goes to the back of the queue.",
-      "outcomeDraw": "Draw. By the rule of the day, the team that has been on the pitch longer leaves: {team}.",
+      "drawPrompt": "A draw! Play rock-paper-scissors — the loser leaves the pitch.",
+      "drawPick": "Who lost rock-paper-scissors?",
       "outcomeStay": "No queue — the next match is played by the same teams.",
       "entering": "Coming on: {team}",
       "confirm": "Confirm"
@@ -299,7 +305,7 @@
       "diff": "+/−",
       "points": "Pts",
       "rules": "Win +3, draw +1, loss 0. Sorted by points → goal difference → goals scored.",
-      "drawRule": "On a draw, the team that has been on the pitch longer leaves."
+      "drawRule": "On a draw, teams play rock-paper-scissors — the loser leaves the pitch."
     },
     "journal": {
       "title": "Day journal",
@@ -311,7 +317,7 @@
       "autosave": "The day is saved on this device automatically"
     },
     "share": {
-      "title": "Day results",
+      "title": "Share",
       "text": "Share results",
       "card": "Result card",
       "copied": "Results copied — paste into a chat",
@@ -347,7 +353,7 @@
         },
         "teams": {
           "title": "Squads",
-          "text": "2 or 3 teams — the third one waits. Everyone is spread across the teams; tap a player to move them to the next one."
+          "text": "From 2 to 4 teams — the extra ones wait their turn. Everyone is spread across the teams; tap a player to move them to the next one."
         },
         "colors": {
           "title": "Name and colour",
@@ -367,7 +373,7 @@
         },
         "rotation": {
           "title": "Full time",
-          "text": "The winner stays on the pitch, the loser goes to the back of the queue. On a draw, the team that has been on longer leaves."
+          "text": "The winner stays on the pitch, the loser goes to the back of the queue. On a draw — rock-paper-scissors: the loser leaves."
         },
         "standings": {
           "title": "Table of the day",

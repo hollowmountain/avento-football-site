@@ -77,7 +77,7 @@ export function StandingsSection({ day }: { day: QuickDay }) {
           </table>
         </div>
         <p className="text-muted-foreground text-xs">
-          {t('rules')} {day.teams.length === 3 ? t('drawRule') : null}
+          {t('rules')} {day.teams.length >= 3 ? t('drawRule') : null}
         </p>
       </CardContent>
     </Card>

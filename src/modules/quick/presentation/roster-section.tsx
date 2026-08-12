@@ -39,14 +39,17 @@ export function RosterSection({ day }: { day: QuickDay }) {
     setName('');
   };
 
-  // Состав дня фиксируется первым матчем: дальше 2 ⇄ 3 не переключить
+  // Состав дня фиксируется первым матчем: дальше число команд не переключить
   const canSwitchTeams = day.matches.length === 0 && day.live === null;
   const editingTeam = day.teams.find((team) => team.id === editingTeamId) ?? null;
 
-  const switchTo = (count: 2 | 3) => {
+  const switchTo = (count: 2 | 3 | 4) => {
     const usedColors = new Set(day.teams.map((team) => team.colorId));
-    const freeColor = TEAM_COLORS.find((preset) => !usedColors.has(preset.id))?.id ?? 'coral';
-    setTeamCount(count, { name: tDefaults(freeColor), colorId: freeColor });
+    const extras = TEAM_COLORS.filter((preset) => !usedColors.has(preset.id)).map((preset) => ({
+      name: tDefaults(preset.id),
+      colorId: preset.id,
+    }));
+    setTeamCount(count, extras);
   };
 
   return (
@@ -78,8 +81,8 @@ export function RosterSection({ day }: { day: QuickDay }) {
         </form>
 
         {canSwitchTeams ? (
-          <div className="flex items-center gap-1.5" role="group">
-            {([2, 3] as const).map((count) => (
+          <div className="flex flex-wrap items-center gap-1.5" role="group">
+            {([2, 3, 4] as const).map((count) => (
               <Button
                 key={count}
                 type="button"
@@ -88,10 +91,10 @@ export function RosterSection({ day }: { day: QuickDay }) {
                 aria-pressed={day.teams.length === count}
                 onClick={() => switchTo(count)}
               >
-                {t(count === 2 ? 'teams2' : 'teams3')}
+                {t(`teams${count}`)}
               </Button>
             ))}
-            {day.teams.length === 3 ? (
+            {day.teams.length >= 3 ? (
               <span className="text-muted-foreground ml-1 text-xs">{t('waitingHint')}</span>
             ) : null}
           </div>
@@ -102,7 +105,13 @@ export function RosterSection({ day }: { day: QuickDay }) {
         ) : (
           <>
             <div
-              className={`grid gap-3 ${day.teams.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}
+              className={`grid gap-3 ${
+                day.teams.length === 3
+                  ? 'sm:grid-cols-3'
+                  : day.teams.length === 4
+                    ? 'sm:grid-cols-2 lg:grid-cols-4'
+                    : 'sm:grid-cols-2'
+              }`}
             >
               {day.teams.map((team) => (
                 <TeamColumn

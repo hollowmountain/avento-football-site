@@ -35,6 +35,8 @@ export interface LiveMatch {
 export interface QuickDay {
   version: 1;
   startedAt: string;
+  /** Заполнен — день завершён, показываем экран итогов. */
+  finishedAt?: string | null;
   players: QuickPlayer[];
   teams: QuickTeam[];
   rotation: RotationState | null;
@@ -102,6 +104,7 @@ export function startDay(teams: readonly { name: string; colorId: QuickTeamColor
   write({
     version: 1,
     startedAt: new Date().toISOString(),
+    finishedAt: null,
     players: [],
     teams: teams.map((team) => ({ id: crypto.randomUUID(), ...team })),
     rotation: null,
@@ -112,6 +115,16 @@ export function startDay(teams: readonly { name: string; colorId: QuickTeamColor
 
 export function resetDay(): void {
   write(null);
+}
+
+/** Завершить день: дальше только итоги, журнал и шаринг. */
+export function finishDay(): void {
+  update((day) => (day.live !== null ? day : { ...day, finishedAt: new Date().toISOString() }));
+}
+
+/** Передумали: вернуться к игровому дню с экрана итогов. */
+export function resumeDay(): void {
+  update((day) => ({ ...day, finishedAt: null }));
 }
 
 /** Кнопка из демо-тура: начать день, не затирая уже идущий. */
@@ -182,35 +195,36 @@ export function setTeamColor(teamId: string, colorId: QuickTeamColorId): void {
 }
 
 /**
- * Переключение 2 ⇄ 3 команды. Разрешено только до первого матча —
+ * Переключение числа команд (2–4). Разрешено только до первого матча —
  * дальше очередь и таблица уже опираются на состав дня.
  */
 export function setTeamCount(
-  count: 2 | 3,
-  extraTeam: { name: string; colorId: QuickTeamColorId },
+  count: 2 | 3 | 4,
+  extraTeams: readonly { name: string; colorId: QuickTeamColorId }[],
 ): void {
   update((day) => {
     if (day.matches.length > 0 || day.live !== null) return day;
     if (count === day.teams.length) return day;
 
-    if (count === 3) {
-      return {
-        ...day,
-        rotation: null,
-        teams: [...day.teams, { id: crypto.randomUUID(), ...extraTeam }],
-      };
+    if (count > day.teams.length) {
+      const additions = extraTeams
+        .slice(0, count - day.teams.length)
+        .map((team) => ({ id: crypto.randomUUID(), ...team }));
+      if (additions.length < count - day.teams.length) return day;
+      return { ...day, rotation: null, teams: [...day.teams, ...additions] };
     }
 
-    const [a, b, removed] = day.teams;
-    if (a === undefined || b === undefined || removed === undefined) return day;
-    // Игроков распущенной команды раскидываем поровну по оставшимся
-    let flip = 0;
+    // Игроков распущенных команд раскидываем по кругу по оставшимся
+    const kept = day.teams.slice(0, count);
+    const removedIds = new Set(day.teams.slice(count).map((team) => team.id));
+    let index = 0;
     const players = day.players.map((player) => {
-      if (player.teamId !== removed.id) return player;
-      flip += 1;
-      return { ...player, teamId: flip % 2 === 1 ? a.id : b.id };
+      if (player.teamId === null || !removedIds.has(player.teamId)) return player;
+      const target = kept[index % kept.length];
+      index += 1;
+      return { ...player, teamId: target?.id ?? null };
     });
-    return { ...day, rotation: null, teams: [a, b], players };
+    return { ...day, rotation: null, teams: kept, players };
   });
 }
 
@@ -282,8 +296,11 @@ export function liveScore(live: LiveMatch): { home: number; away: number } {
   return { home, away };
 }
 
-/** Подтвердить результат: матч в журнал, очередь двигается по правилу дня. */
-export function finishMatch(): void {
+/**
+ * Подтвердить результат: матч в журнал, очередь двигается по правилу дня.
+ * При ничьей команды играют суефа — проигравшего передаёт диалог завершения.
+ */
+export function finishMatch(drawLoserId?: string): void {
   update((day) => {
     const { live } = day;
     if (live === null) return day;
@@ -299,7 +316,7 @@ export function finishMatch(): void {
     return {
       ...day,
       matches: [...day.matches, match],
-      rotation: applyMatchResult(rotation, result).state,
+      rotation: applyMatchResult(rotation, result, drawLoserId).state,
       live: null,
     };
   });

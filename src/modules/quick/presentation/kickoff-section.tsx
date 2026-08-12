@@ -93,7 +93,7 @@ export function KickoffSection({ day }: { day: QuickDay }) {
         {resting !== null && resting !== '' ? (
           <p className="text-muted-foreground text-sm">{t('rest', { team: resting })}</p>
         ) : null}
-        {day.teams.length === 3 ? (
+        {day.teams.length >= 3 ? (
           <p className="text-muted-foreground text-xs">
             {t('autoSub')}. {tStandings('drawRule')}
           </p>
