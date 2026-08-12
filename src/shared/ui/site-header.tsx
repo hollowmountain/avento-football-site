@@ -16,11 +16,13 @@ export async function SiteHeader() {
         >
           {tCommon('appName')}
         </Link>
+        {/* Оба пункта набраны одинаково — узким капсом одного размера:
+            вперемешку с обычным начертанием строка выглядела разнородной */}
         <nav className="ml-auto flex items-center gap-1">
-          <Button asChild variant="ghost" size="sm">
+          <Button asChild variant="ghost" size="sm" className="display text-sm tracking-wide">
             <Link href="/">{t('feed')}</Link>
           </Button>
-          <Button asChild size="sm" className="display tracking-wide">
+          <Button asChild size="sm" className="display text-sm tracking-wide">
             <Link href="/games/new">{t('create')}</Link>
           </Button>
           <ThemeToggle />

@@ -155,7 +155,7 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
           <Pill>{tFormats(game.format)}</Pill>
           <Pill>{tLevels(game.skillLevel)}</Pill>
           {isActive && !started ? <WeatherBadge gameCode={code} /> : null}
-          <span className="text-muted-foreground ml-auto font-mono text-xs tracking-wider">
+          <span className="text-muted-foreground ml-auto digits text-xs tracking-wider">
             {game.code}
           </span>
         </div>
@@ -177,7 +177,7 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
         <CardContent className="flex flex-col gap-3 pt-0">
           <div className="flex items-baseline justify-between gap-2">
             <span className="eyebrow text-muted-foreground">{t('roster')}</span>
-            <span className="font-mono text-sm">
+            <span className="digits text-sm">
               <b className="text-lg font-bold">{game.mainCount}</b>
               <span className="text-muted-foreground"> / {game.maxPlayers}</span>
             </span>
@@ -388,7 +388,7 @@ function PlayerRow({
         participant.isYou ? 'bg-primary/5' : ''
       }`}
     >
-      <span className="text-muted-foreground font-mono text-sm">
+      <span className="text-muted-foreground digits text-sm">
         {String(number).padStart(2, '0')}
       </span>
       <span className="flex min-w-0 flex-col">
@@ -400,7 +400,7 @@ function PlayerRow({
         </span>
       </span>
       <span
-        className={`shrink-0 font-mono text-[0.68rem] tracking-wider ${
+        className={`shrink-0 digits text-[0.68rem] tracking-wider ${
           isNew ? 'text-muted-foreground' : 'text-foreground'
         }`}
         title={isNew ? t('newTitle') : t('scoreTitle', { percent })}

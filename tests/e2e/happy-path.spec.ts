@@ -13,9 +13,8 @@ test('создание игры → приглашение → вступлен�
   await hostPage.goto('/games/new');
   await hostPage.getByLabel('Название').fill('E2E: вечерний матч');
   await hostPage.getByLabel('Площадка').fill('Стадион Тестовый');
+  // Координаты не вводим: сервер определяет их по адресу
   await hostPage.getByLabel('Адрес').fill('Тестовая улица, 1');
-  await hostPage.getByLabel('Широта').fill(String(55 + Math.random()));
-  await hostPage.getByLabel('Долгота').fill(String(37 + Math.random()));
   await hostPage.getByLabel('Ваше имя').fill('Организатор E2E');
 
   // Time-trap: форма должна прожить минимум 2 секунды до сабмита

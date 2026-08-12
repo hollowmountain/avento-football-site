@@ -38,6 +38,8 @@ export default defineConfig({
       // сам rate limiting покрыт integration-тестами
       RATE_CREATE_GAME_PER_10MIN: '100',
       RATE_CREATE_GAME_PER_DAY: '100',
+      // Без сети: координаты считает детерминированная заглушка
+      GEOCODER: 'stub',
     },
   },
 });

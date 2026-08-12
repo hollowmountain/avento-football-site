@@ -45,6 +45,9 @@ const envSchema = z.object({
   TURNSTILE_SECRET_KEY: z.string().optional(),
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional(),
 
+  // Геокодер адресов: nominatim (по умолчанию) или stub без сети — для тестов
+  GEOCODER: z.enum(['nominatim', 'stub']).default('nominatim'),
+
   WEATHER_CACHE_TTL_MINUTES: z.coerce.number().int().positive().default(60),
   PG_POOL_MAX: z.coerce.number().int().positive().default(10),
 });

@@ -40,7 +40,7 @@ export function QrDialog({ gameCode, title }: { gameCode: string; title: string 
           // eslint-disable-next-line @next/next/no-img-element -- data:URL, next/image не нужен
           <img src={dataUrl} alt={t('qr')} className="w-full rounded-lg" />
         ) : null}
-        <p className="text-muted-foreground text-center font-mono text-sm">{gameCode}</p>
+        <p className="text-muted-foreground text-center digits text-sm">{gameCode}</p>
       </DialogContent>
     </Dialog>
   );

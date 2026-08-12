@@ -13,7 +13,9 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sofia);
-  --font-mono: var(--font-mono-digits);
+  /* Моноширинного шрифта в проекте нет: цифры выравниваем tabular-nums
+     внутри той же суперсемьи, чтобы на экране жили ровно два шрифта */
+  --font-mono: var(--font-sofia);
   --font-heading: var(--font-sofia-condensed);
   --font-display: var(--font-sofia-condensed);
   --color-success: var(--success);
@@ -150,6 +152,7 @@
   }
   /* Цифры не должны плясать при обновлении состава и отсчёта */
   .font-mono,
+  .digits,
   table,
   time {
     font-variant-numeric: tabular-nums;
@@ -157,14 +160,82 @@
 }
 
 @layer components {
-  /* Надзаголовок: моноширинный капс с разрядкой — «служебная» строка табло */
+  /* Надзаголовок: «служебная» строка табло — капс с широкой разрядкой */
   .eyebrow {
-    @apply font-mono text-[0.68rem] tracking-[0.16em] uppercase;
+    @apply text-[0.7rem] font-medium tracking-[0.16em] uppercase;
+  }
+
+  /* Цифры: та же семья, но выровненные по ширине и слегка разрежённые */
+  .digits {
+    @apply tracking-[0.02em];
+    font-variant-numeric: tabular-nums;
   }
 
   /* Заголовок в характере направления: узкий тяжёлый капс */
   .display {
     @apply font-display font-extrabold uppercase tracking-[0.01em];
+  }
+
+  /*
+   * Появление страницы: прожектор «включается» — по верху проходит
+   * янтарная линия, затем контент проявляется снизу вверх.
+   * Работает и при заходе, и при любом переходе (ключ по маршруту).
+   */
+  .page-enter {
+    animation: content-in 420ms cubic-bezier(0.16, 0.84, 0.3, 1) both;
+  }
+
+  .page-enter::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    width: 100%;
+    z-index: 50;
+    transform-origin: left;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--primary) 40%,
+      var(--primary) 60%,
+      transparent
+    );
+    animation: sweep 620ms cubic-bezier(0.4, 0, 0.2, 1) both;
+    pointer-events: none;
+  }
+
+  @keyframes sweep {
+    0% {
+      transform: scaleX(0);
+      opacity: 1;
+    }
+    70% {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scaleX(1);
+      opacity: 0;
+    }
+  }
+
+  @keyframes content-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-enter,
+    .page-enter::before {
+      animation: none;
+    }
   }
 
   /* Тонкие световые полосы прожекторов по верху страницы */

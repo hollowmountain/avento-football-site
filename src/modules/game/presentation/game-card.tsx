@@ -24,7 +24,7 @@ export function GameCard({ game }: { game: GameSummaryDto }) {
             <Pill>{tFormats(game.format)}</Pill>
             <Pill>{tLevels(game.skillLevel)}</Pill>
             {game.status === 'FULL' ? <Pill tone="muted">{tStatuses('FULL')}</Pill> : null}
-            <span className="text-muted-foreground ml-auto font-mono text-xs">
+            <span className="text-muted-foreground ml-auto digits text-xs">
               {formatShortDate(game.startsAt, game.timezone)}
             </span>
           </div>
@@ -40,11 +40,11 @@ export function GameCard({ game }: { game: GameSummaryDto }) {
           <div className="flex flex-col gap-1.5">
             <Progress value={(game.mainCount / game.maxPlayers) * 100} />
             <div className="flex items-baseline justify-between gap-2 text-xs">
-              <span className="text-muted-foreground font-mono">
+              <span className="text-muted-foreground digits">
                 {t('players', { main: game.mainCount, max: game.maxPlayers })}
                 {game.needMore > 0 ? ` · ${t('needMore', { count: game.needMore })}` : ''}
               </span>
-              <span className="text-lamp font-mono">
+              <span className="text-lamp digits">
                 {game.pricePerPitch === 0
                   ? t('free')
                   : game.perPersonPrice !== null

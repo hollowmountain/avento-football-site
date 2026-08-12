@@ -22,6 +22,20 @@ afterAll(async () => {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+describe('check не тратит квоту', () => {
+  it('повторные check проходят, consume — только до лимита', async () => {
+    const key = `test:${Date.now()}:check`;
+    // Сто проверок подряд не должны занять единственное место
+    for (let i = 0; i < 5; i += 1) {
+      expect((await pg.check(key, 1, 60)).allowed).toBe(true);
+    }
+    expect((await pg.consume(key, 1, 60)).allowed).toBe(true);
+    // Место занято: и check, и consume это видят
+    expect((await pg.check(key, 1, 60)).allowed).toBe(false);
+    expect((await pg.consume(key, 1, 60)).allowed).toBe(false);
+  });
+});
+
 describe('PgRateLimiter (fallback-хранилище)', () => {
   it('пускает до лимита и отсекает сверх него с внятным Retry-After', async () => {
     const key = `test:${Date.now()}:basic`;
@@ -54,6 +68,9 @@ describe('PgRateLimiter (fallback-хранилище)', () => {
 describe('FallbackRateLimiter (политика отказа)', () => {
   const broken = {
     consume(): Promise<RateLimitDecision> {
+      return Promise.reject(new Error('storage down'));
+    },
+    check(): Promise<RateLimitDecision> {
       return Promise.reject(new Error('storage down'));
     },
   };

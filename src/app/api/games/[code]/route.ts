@@ -6,6 +6,8 @@ import { lazySweep } from '@/modules/game/lazy-sweep';
 import { gameToSummaryDto } from '@/modules/game/presentation/dto';
 import { getGameView } from '@/modules/game/presentation/get-game-view';
 import { patchGameBodySchema } from '@/modules/game/schemas';
+import { resolveCoordinates } from '@/modules/geo/application/resolve-coordinates';
+import { getGeocoder } from '@/modules/geo/composition';
 import { jsonDomainError, jsonError, jsonOk, jsonRateLimited } from '@/shared/errors/api-response';
 import { env } from '@/shared/lib/env';
 import { PARTICIPANT_COOKIE, clientIpHash, getRateLimiter } from '@/shared/security/api-guard';
@@ -55,10 +57,32 @@ export async function PATCH(request: NextRequest, context: RouteContext): Promis
     });
   }
 
+  // Адрес поменяли — пересчитываем координаты, иначе поедут погода и карта
+  let patch = parsed.data;
+  if (parsed.data.address !== undefined || parsed.data.city !== undefined) {
+    const existing = await deps.games.findByCode(code.toUpperCase());
+    const coordinates = existing
+      ? await resolveCoordinates(getGeocoder(), {
+          venueName: parsed.data.venueName ?? existing.venueName,
+          address: parsed.data.address ?? existing.address,
+          city: parsed.data.city ?? existing.city,
+        })
+      : null;
+    if (!coordinates) {
+      return jsonError(
+        'ADDRESS_NOT_FOUND',
+        'Не удалось найти это место на карте. Проверьте адрес и город.',
+        400,
+        { details: [{ field: 'address', message: 'адрес не найден' }] },
+      );
+    }
+    patch = { ...patch, ...coordinates };
+  }
+
   const result = await updateGame(deps, {
     gameCode: code.toUpperCase(),
     hostToken,
-    patch: parsed.data,
+    patch,
   });
   if (!result.ok) return jsonDomainError(result.error);
 

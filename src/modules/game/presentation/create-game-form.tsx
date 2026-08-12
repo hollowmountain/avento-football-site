@@ -5,7 +5,7 @@ import { Check, Copy, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, type UseFormSetError } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { ApiRequestError, apiFetch } from '@/shared/lib/api-client';
@@ -18,6 +18,7 @@ import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { Textarea } from '@/shared/ui/textarea';
+import { MAX_START_DAYS_AHEAD } from '../domain/game-rules';
 import { GAME_FORMATS, SKILL_LEVELS, type formTokenSchema } from '../schemas';
 import type { GameDto } from './dto';
 
@@ -39,8 +40,6 @@ const createFormSchema = z
     venueName: z.string().trim().min(2, 'минимум 2 симв.').max(80),
     address: z.string().trim().min(3, 'минимум 3 симв.').max(160),
     city: z.string().trim().min(2, 'минимум 2 симв.').max(60),
-    latitude: z.number({ message: 'число, например 55.7558' }).min(-90).max(90),
-    longitude: z.number({ message: 'число, например 37.6173' }).min(-180).max(180),
     minPlayers: z.number({ message: 'число' }).int().min(2).max(30),
     maxPlayers: z.number({ message: 'число' }).int().min(4).max(30),
     priceRub: z.number({ message: 'число' }).min(0).max(1_000_000),
@@ -55,9 +54,61 @@ const createFormSchema = z
   .refine((d) => new Date(d.startsAtLocal).getTime() > Date.now(), {
     path: ['startsAtLocal'],
     message: 'дата должна быть в будущем',
-  });
+  })
+  // Правила ниже повторяют серверные: без них форма уходит на сервер
+  // и возвращается с общим «данные не прошли проверку» без указания поля
+  .refine(
+    (d) =>
+      new Date(d.startsAtLocal).getTime() <=
+      Date.now() + MAX_START_DAYS_AHEAD * 24 * 60 * 60 * 1000,
+    {
+      path: ['startsAtLocal'],
+      message: `не дальше чем через ${MAX_START_DAYS_AHEAD} дней`,
+    },
+  )
+  .refine(
+    (d) =>
+      !d.cancelDeadlineLocal ||
+      new Date(d.cancelDeadlineLocal).getTime() <= new Date(d.startsAtLocal).getTime(),
+    {
+      path: ['cancelDeadlineLocal'],
+      message: 'не позже начала игры',
+    },
+  );
 
 type FormValues = z.infer<typeof createFormSchema>;
+
+/** Серверные имена полей → имена в форме (даты и цена называются иначе). */
+const SERVER_FIELD_MAP: Record<string, keyof FormValues> = {
+  title: 'title',
+  description: 'description',
+  startsAt: 'startsAtLocal',
+  cancelDeadline: 'cancelDeadlineLocal',
+  durationMinutes: 'durationMinutes',
+  minPlayers: 'minPlayers',
+  maxPlayers: 'maxPlayers',
+  pricePerPitch: 'priceRub',
+  venueName: 'venueName',
+  address: 'address',
+  city: 'city',
+  hostName: 'hostName',
+};
+
+/** Раскладывает ответ сервера по полям формы. true — что-то удалось показать. */
+function applyServerFieldErrors(details: unknown, setError: UseFormSetError<FormValues>): boolean {
+  if (!Array.isArray(details)) return false;
+  let shown = false;
+  for (const item of details) {
+    if (typeof item !== 'object' || item === null) continue;
+    const { field, message } = item as { field?: unknown; message?: unknown };
+    if (typeof field !== 'string' || typeof message !== 'string') continue;
+    const formField = SERVER_FIELD_MAP[field];
+    if (!formField) continue;
+    setError(formField, { type: 'server', message });
+    shown = true;
+  }
+  return shown;
+}
 
 function defaultStartValue(): string {
   const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -77,6 +128,7 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
     register,
     handleSubmit,
     control,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(createFormSchema),
@@ -125,8 +177,6 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
           cancelDeadline: cancelDeadline.toISOString(),
           venueName: values.venueName,
           address: values.address,
-          latitude: values.latitude,
-          longitude: values.longitude,
           city: values.city,
           hostName: values.hostName,
           website: values.website,
@@ -136,8 +186,14 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
       saveHostToken(data.game.code, data.hostToken);
       setCreated(data);
     } catch (error) {
-      const message = error instanceof ApiRequestError ? error.payload.message : tCommon('error');
-      toast.error(message);
+      if (error instanceof ApiRequestError) {
+        // Сервер присылает список {field, message} — раскладываем его по полям,
+        // чтобы человек видел, что именно поправить, а не общий отказ
+        applyServerFieldErrors(error.payload.details, setError);
+        toast.error(error.payload.message);
+        return;
+      }
+      toast.error(tCommon('error'));
     }
   });
 
@@ -280,28 +336,6 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
             />
             {fieldError('address')}
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="cg-lat">{t('fields.latitude')}</Label>
-            <Input
-              id="cg-lat"
-              type="number"
-              step="any"
-              placeholder="55.7558"
-              {...register('latitude', { valueAsNumber: true })}
-            />
-            {fieldError('latitude')}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="cg-lon">{t('fields.longitude')}</Label>
-            <Input
-              id="cg-lon"
-              type="number"
-              step="any"
-              placeholder="37.6173"
-              {...register('longitude', { valueAsNumber: true })}
-            />
-            {fieldError('longitude')}
-          </div>
         </CardContent>
       </Card>
 
@@ -388,7 +422,7 @@ function CreatedGameScreen({ created }: { created: CreatedGame }) {
       <Card>
         <CardHeader>
           <CardDescription className="eyebrow">{t('codeLabel')}</CardDescription>
-          <CardTitle className="text-lamp font-mono text-4xl tracking-wider">
+          <CardTitle className="text-lamp digits text-4xl tracking-wider">
             {created.game.code}
           </CardTitle>
         </CardHeader>

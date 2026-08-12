@@ -25,6 +25,17 @@ export interface RateLimiter {
     windowSeconds: number,
     failMode: FailMode,
   ): Promise<RateLimitDecision>;
+  /**
+   * Проверка без записи: «пустят ли меня прямо сейчас».
+   * Нужна там, где квоту нельзя тратить на неудачную попытку —
+   * иначе опечатка в форме блокирует человека на весь период окна.
+   */
+  check(
+    key: string,
+    limit: number,
+    windowSeconds: number,
+    failMode: FailMode,
+  ): Promise<RateLimitDecision>;
 }
 
 // ---------- Redis: ZSET + Lua (атомарный sliding window) ----------
@@ -41,8 +52,38 @@ redis.call('PEXPIRE', KEYS[1], ARGV[5])
 return {1, '0'}
 `;
 
+/** Только чтение: сколько попаданий в окне и когда освободится место. */
+const LUA_PEEK = `
+redis.call('ZREMRANGEBYSCORE', KEYS[1], 0, tonumber(ARGV[1]))
+local count = redis.call('ZCARD', KEYS[1])
+if count >= tonumber(ARGV[2]) then
+  local oldest = redis.call('ZRANGE', KEYS[1], 0, 0, 'WITHSCORES')
+  return {0, oldest[2]}
+end
+return {1, '0'}
+`;
+
 export class RedisRateLimiter {
   constructor(private readonly redis: Redis) {}
+
+  async check(key: string, limit: number, windowSeconds: number): Promise<RateLimitDecision> {
+    const now = Date.now();
+    const windowMs = windowSeconds * 1000;
+    const raw = (await this.redis.eval(
+      LUA_PEEK,
+      1,
+      `rl:${key}`,
+      String(now - windowMs),
+      String(limit),
+    )) as [number, string];
+
+    if (raw[0] === 1) return { allowed: true, retryAfterSeconds: 0 };
+    const oldestScore = Number(raw[1]) || now;
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.max(1, Math.ceil((oldestScore + windowMs - now) / 1000)),
+    };
+  }
 
   async consume(key: string, limit: number, windowSeconds: number): Promise<RateLimitDecision> {
     const now = Date.now();
@@ -73,28 +114,42 @@ export class RedisRateLimiter {
 export class PgRateLimiter {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async consume(key: string, limit: number, windowSeconds: number): Promise<RateLimitDecision> {
+  /** Общая часть check/consume: сколько занято и через сколько освободится. */
+  private async peek(
+    key: string,
+    limit: number,
+    windowSeconds: number,
+  ): Promise<RateLimitDecision> {
     const now = new Date();
     const windowStart = new Date(now.getTime() - windowSeconds * 1000);
 
     const count = await this.prisma.rateLimitEvent.count({
       where: { key, createdAt: { gt: windowStart } },
     });
-    if (count >= limit) {
-      const oldest = await this.prisma.rateLimitEvent.findFirst({
-        where: { key, createdAt: { gt: windowStart } },
-        orderBy: { createdAt: 'asc' },
-        select: { createdAt: true },
-      });
-      const oldestMs = oldest?.createdAt.getTime() ?? now.getTime();
-      return {
-        allowed: false,
-        retryAfterSeconds: Math.max(
-          1,
-          Math.ceil((oldestMs + windowSeconds * 1000 - now.getTime()) / 1000),
-        ),
-      };
-    }
+    if (count < limit) return { allowed: true, retryAfterSeconds: 0 };
+
+    const oldest = await this.prisma.rateLimitEvent.findFirst({
+      where: { key, createdAt: { gt: windowStart } },
+      orderBy: { createdAt: 'asc' },
+      select: { createdAt: true },
+    });
+    const oldestMs = oldest?.createdAt.getTime() ?? now.getTime();
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.max(
+        1,
+        Math.ceil((oldestMs + windowSeconds * 1000 - now.getTime()) / 1000),
+      ),
+    };
+  }
+
+  async check(key: string, limit: number, windowSeconds: number): Promise<RateLimitDecision> {
+    return this.peek(key, limit, windowSeconds);
+  }
+
+  async consume(key: string, limit: number, windowSeconds: number): Promise<RateLimitDecision> {
+    const decision = await this.peek(key, limit, windowSeconds);
+    if (!decision.allowed) return decision;
 
     await this.prisma.rateLimitEvent.create({ data: { key } });
     return { allowed: true, retryAfterSeconds: 0 };
@@ -114,6 +169,7 @@ export class PgRateLimiter {
 
 interface InnerLimiter {
   consume(key: string, limit: number, windowSeconds: number): Promise<RateLimitDecision>;
+  check(key: string, limit: number, windowSeconds: number): Promise<RateLimitDecision>;
 }
 
 export class FallbackRateLimiter implements RateLimiter {
@@ -122,14 +178,33 @@ export class FallbackRateLimiter implements RateLimiter {
     private readonly fallback: InnerLimiter | null,
   ) {}
 
-  async consume(
+  consume(
+    key: string,
+    limit: number,
+    windowSeconds: number,
+    failMode: FailMode,
+  ): Promise<RateLimitDecision> {
+    return this.run('consume', key, limit, windowSeconds, failMode);
+  }
+
+  check(
+    key: string,
+    limit: number,
+    windowSeconds: number,
+    failMode: FailMode,
+  ): Promise<RateLimitDecision> {
+    return this.run('check', key, limit, windowSeconds, failMode);
+  }
+
+  private async run(
+    op: 'consume' | 'check',
     key: string,
     limit: number,
     windowSeconds: number,
     failMode: FailMode,
   ): Promise<RateLimitDecision> {
     try {
-      return await this.primary.consume(key, limit, windowSeconds);
+      return await this.primary[op](key, limit, windowSeconds);
     } catch (primaryError) {
       logger.warn(
         { err: primaryError instanceof Error ? primaryError.message : String(primaryError) },
@@ -137,7 +212,7 @@ export class FallbackRateLimiter implements RateLimiter {
       );
       if (this.fallback) {
         try {
-          return await this.fallback.consume(key, limit, windowSeconds);
+          return await this.fallback[op](key, limit, windowSeconds);
         } catch (fallbackError) {
           logger.error(
             { err: fallbackError instanceof Error ? fallbackError.message : String(fallbackError) },

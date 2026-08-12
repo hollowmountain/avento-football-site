@@ -45,7 +45,7 @@ export function Countdown({ startsAtIso }: { startsAtIso: string }) {
         >
           {/* lamp, а не primary: в светлой теме чистый янтарь на бумаге
               даёт контраст ~1.6:1 и цифры перестают читаться */}
-          <span className="text-lamp font-mono text-4xl leading-none font-bold">
+          <span className="text-lamp display digits text-5xl leading-none">
             {String(cell.value).padStart(2, '0')}
           </span>
           <span className="eyebrow text-muted-foreground">{cell.unit}</span>

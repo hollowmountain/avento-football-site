@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { resolveCoordinates } from '@/modules/geo/application/resolve-coordinates';
+import { getGeocoder } from '@/modules/geo/composition';
 import { createGame } from '@/modules/game/application/create-game';
 import { getGameDeps } from '@/modules/game/composition';
 import { lazySweep } from '@/modules/game/lazy-sweep';
@@ -80,8 +82,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
   }
 
-  // Лимиты создания игр (fail-closed: хранилище недоступно → отказ)
-  const per10min = await limiter.consume(
+  // Лимиты создания игр (fail-closed: хранилище недоступно → отказ).
+  // Здесь только ПРОВЕРКА: квота списывается ниже, после успешного создания,
+  // иначе опечатка в форме блокировала бы человека на весь период окна.
+  const per10min = await limiter.check(
     `cg10:${ipHash}`,
     env.RATE_CREATE_GAME_PER_10MIN,
     600,
@@ -93,7 +97,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       per10min.retryAfterSeconds,
     );
   }
-  const perDay = await limiter.consume(
+  const perDay = await limiter.check(
     `cgday:${ipHash}`,
     env.RATE_CREATE_GAME_PER_DAY,
     86_400,
@@ -103,6 +107,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return jsonRateLimited(
       `Вы уже создали ${env.RATE_CREATE_GAME_PER_DAY} игры за сутки. Следующую можно создать через ${humanizeSeconds(perDay.retryAfterSeconds)}.`,
       perDay.retryAfterSeconds,
+    );
+  }
+
+  // Координаты у человека не спрашиваем — определяем по адресу
+  const coordinates = await resolveCoordinates(getGeocoder(), {
+    venueName: parsed.data.venueName,
+    address: parsed.data.address,
+    city: parsed.data.city,
+  });
+  if (!coordinates) {
+    return jsonError(
+      'ADDRESS_NOT_FOUND',
+      'Не удалось найти это место на карте. Проверьте адрес и город.',
+      400,
+      { details: [{ field: 'address', message: 'адрес не найден' }] },
     );
   }
 
@@ -124,8 +143,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     cancelDeadline: parsed.data.cancelDeadline,
     venueName: parsed.data.venueName,
     address: parsed.data.address,
-    latitude: parsed.data.latitude,
-    longitude: parsed.data.longitude,
+    latitude: coordinates.latitude,
+    longitude: coordinates.longitude,
     city: parsed.data.city,
     hostName: parsed.data.hostName,
     creatorToken,
@@ -133,6 +152,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   });
 
   if (!result.ok) return jsonDomainError(result.error);
+
+  // Игра создана — только теперь тратим квоту
+  await Promise.all([
+    limiter.consume(`cg10:${ipHash}`, env.RATE_CREATE_GAME_PER_10MIN, 600, 'closed'),
+    limiter.consume(`cgday:${ipHash}`, env.RATE_CREATE_GAME_PER_DAY, 86_400, 'closed'),
+  ]);
 
   log.info({ code: result.value.game.code }, 'игра создана');
   const response = jsonOk(

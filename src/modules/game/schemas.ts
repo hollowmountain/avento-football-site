@@ -82,8 +82,6 @@ export const createGameBodySchema = z.object({
   cancelDeadline: z.coerce.date(),
   venueName: singleLine(2, 80),
   address: singleLine(3, 160),
-  latitude: z.coerce.number().min(-90).max(90),
-  longitude: z.coerce.number().min(-180).max(180),
   city: singleLine(2, 60),
   hostName: singleLine(2, 60),
   ...antiAbuseFields,
@@ -125,8 +123,6 @@ export const patchGameBodySchema = z
     cancelDeadline: z.coerce.date(),
     venueName: singleLine(2, 80),
     address: singleLine(3, 160),
-    latitude: z.coerce.number().min(-90).max(90),
-    longitude: z.coerce.number().min(-180).max(180),
     city: singleLine(2, 60),
   })
   .partial()
