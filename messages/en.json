@@ -15,6 +15,7 @@
   "header": {
     "feed": "Games",
     "create": "Create game",
+    "quick": "Quick game",
     "toggleTheme": "Toggle theme"
   },
   "statuses": {
@@ -199,6 +200,189 @@
     "submitting": "Signing up…",
     "joined": "You're in!",
     "waitlisted": "No slots left — you're on the waitlist"
+  },
+  "quick": {
+    "title": "Quick game",
+    "intro": {
+      "lead": "Match day right here and now: squads, timer, score and table — no sign-up, no internet.",
+      "storageHint": "The day is saved in this browser automatically",
+      "start": "Start match day",
+      "demo": "See how it works"
+    },
+    "day": {
+      "title": "Match day",
+      "reset": "New day",
+      "resetTitle": "Start a new day?",
+      "resetText": "The current day will be erased: players, matches and the table. This cannot be undone.",
+      "resetAction": "Erase and start over"
+    },
+    "roster": {
+      "title": "Who came",
+      "namePlaceholder": "Player name",
+      "add": "Add",
+      "guest": "Guest",
+      "guestBadge": "guest",
+      "guestAutoName": "Guest {number}",
+      "empty": "Nobody yet: type a name — and the player is on the list.",
+      "tapHint": "Tap a player to move them to the next team",
+      "remove": "Remove: {name}",
+      "teams2": "2 teams",
+      "teams3": "3 teams",
+      "waitingHint": "The third team waits its turn and comes on after the match"
+    },
+    "team": {
+      "edit": "Name and colour: {team}",
+      "editTitle": "Team",
+      "nameLabel": "Name",
+      "colorLabel": "Colour",
+      "done": "Done"
+    },
+    "colors": {
+      "amber": "Amber",
+      "green": "Green",
+      "coral": "Coral",
+      "sky": "Sky",
+      "violet": "Violet",
+      "paper": "White"
+    },
+    "teamDefaults": {
+      "amber": "Yellows",
+      "green": "Greens",
+      "coral": "Reds",
+      "sky": "Blues",
+      "violet": "Violets",
+      "paper": "Whites"
+    },
+    "kickoff": {
+      "chooseTitle": "Who plays first?",
+      "autoSub": "The waiting team comes on automatically",
+      "nextTitle": "Next match",
+      "start": "Start match",
+      "needPlayers": "Add players first — score and scorers are recorded per squad",
+      "rest": "Resting: {team}"
+    },
+    "match": {
+      "number": "Match {number}",
+      "timerStart": "Start",
+      "timerPause": "Pause",
+      "scoreHint": "Tap a team's score to record a goal",
+      "goalFor": "Goal: {team}",
+      "undo": "Undo last goal",
+      "goalsTitle": "Goals",
+      "noGoals": "Still 0:0 — everything ahead",
+      "assist": "assist: {name}",
+      "noScorer": "no scorer",
+      "finish": "Finish match",
+      "finishTitle": "Confirm the result?",
+      "outcomeWin": "{winner} stays on the pitch, {loser} goes to the back of the queue.",
+      "outcomeDraw": "Draw. By the rule of the day, the team that has been on the pitch longer leaves: {team}.",
+      "outcomeStay": "No queue — the next match is played by the same teams.",
+      "entering": "Coming on: {team}",
+      "confirm": "Confirm"
+    },
+    "goalDialog": {
+      "title": "Who scored?",
+      "scorer": "Scorer",
+      "assist": "Assist — optional",
+      "noScorer": "No scorer",
+      "noAssist": "No assist",
+      "save": "Record goal"
+    },
+    "standings": {
+      "title": "Table of the day",
+      "team": "Team",
+      "played": "P",
+      "wins": "W",
+      "draws": "D",
+      "losses": "L",
+      "goals": "Goals",
+      "diff": "+/−",
+      "points": "Pts",
+      "rules": "Win +3, draw +1, loss 0. Sorted by points → goal difference → goals scored.",
+      "drawRule": "On a draw, the team that has been on the pitch longer leaves."
+    },
+    "journal": {
+      "title": "Day journal",
+      "empty": "No matches yet",
+      "matchNumber": "Match {number}",
+      "increase": "Plus one goal: {team}",
+      "decrease": "Minus one goal: {team}",
+      "editHint": "Got the score wrong? Fix it with plus/minus — the table recalculates.",
+      "autosave": "The day is saved on this device automatically"
+    },
+    "share": {
+      "title": "Day results",
+      "text": "Share results",
+      "card": "Result card",
+      "copied": "Results copied — paste into a chat",
+      "downloaded": "Card saved",
+      "failed": "Sharing failed",
+      "textTitle": "Quick game — {date}",
+      "matchesTitle": "Matches:",
+      "tableTitle": "Table:",
+      "tableLine": "{rank}. {team} — {points, plural, one {# point} other {# points}} ({wins} W, {draws} D, {losses} L, {goalsFor}:{goalsAgainst})",
+      "cardEyebrow": "AVENTO ASCENT · QUICK GAME",
+      "cardTitle": "Day results",
+      "cardMore": "and {count, plural, one {# more match} other {# more matches}}"
+    },
+    "demo": {
+      "title": "How the quick game works",
+      "progress": "{current} / {total}",
+      "stepLabel": "Step {number}",
+      "next": "Next",
+      "skip": "Skip",
+      "start": "Start match day",
+      "sample": {
+        "n1": "Ivan",
+        "n2": "Peter",
+        "n3": "Sam",
+        "n4": "Dan",
+        "n5": "Kostya",
+        "n6": "Marat"
+      },
+      "steps": {
+        "arrive": {
+          "title": "Who came",
+          "text": "Add players by name. A guest? One button — same player, just tagged."
+        },
+        "teams": {
+          "title": "Squads",
+          "text": "2 or 3 teams — the third one waits. Everyone is spread across the teams; tap a player to move them to the next one."
+        },
+        "colors": {
+          "title": "Name and colour",
+          "text": "The pencil in a team header: rename it and pick a colour from the palette."
+        },
+        "kickoff": {
+          "title": "Kick-off",
+          "text": "Choose who plays first. The waiting team comes on automatically."
+        },
+        "match": {
+          "title": "Match",
+          "text": "A timer with start and pause, a big score. Tapping a team's score is a goal."
+        },
+        "goal": {
+          "title": "Who scored?",
+          "text": "Scorer and assist — optional, you can record a goal with no scorer. The last goal is easy to undo."
+        },
+        "rotation": {
+          "title": "Full time",
+          "text": "The winner stays on the pitch, the loser goes to the back of the queue. On a draw, the team that has been on longer leaves."
+        },
+        "standings": {
+          "title": "Table of the day",
+          "text": "Win +3, draw +1, loss 0. Sorted by points → goal difference → goals scored."
+        },
+        "journal": {
+          "title": "Day journal",
+          "text": "Every match is saved and any score can be fixed with plus/minus. The whole day lives on this device."
+        },
+        "share": {
+          "title": "Sharing",
+          "text": "A text with the match list and the table — into any chat. Plus a result card as a picture."
+        }
+      }
+    }
   },
   "errors": {
     "RATE_LIMITED": "Too many requests",

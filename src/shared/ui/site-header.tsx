@@ -19,11 +19,20 @@ export async function SiteHeader() {
         {/* Оба пункта набраны одинаково — узким капсом одного размера:
             вперемешку с обычным начертанием строка выглядела разнородной */}
         <nav className="ml-auto flex items-center gap-1">
-          <Button asChild variant="ghost" size="sm" className="display text-sm tracking-wide">
+          {/* На мобильном «Игры» скрыты: на ленту ведёт логотип */}
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="display hidden text-sm tracking-wide sm:inline-flex"
+          >
             <Link href="/">{t('feed')}</Link>
           </Button>
           <Button asChild size="sm" className="display text-sm tracking-wide">
             <Link href="/games/new">{t('create')}</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm" className="display text-sm tracking-wide">
+            <Link href="/quick">{t('quick')}</Link>
           </Button>
           <ThemeToggle />
         </nav>

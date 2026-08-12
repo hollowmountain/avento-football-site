@@ -100,6 +100,13 @@
   --sidebar-accent-foreground: #16191c;
   --sidebar-border: #d9d3c5;
   --sidebar-ring: #8f5b00;
+  /* Цвета команд «Быстрой игры»: на бумаге — затемнённые до читаемости */
+  --quick-team-amber: #8f5b00;
+  --quick-team-green: #1b7a46;
+  --quick-team-coral: #bf2b34;
+  --quick-team-sky: #1d5fa6;
+  --quick-team-violet: #6b3fa6;
+  --quick-team-paper: #5c6469;
 }
 
 /* Тёмная тема — основной мир направления, включена по умолчанию */
@@ -138,6 +145,13 @@
   --sidebar-accent-foreground: #f2ede3;
   --sidebar-border: #262d33;
   --sidebar-ring: #ffb020;
+  /* Цвета команд «Быстрой игры» на чернильном фоне */
+  --quick-team-amber: #ffb020;
+  --quick-team-green: #5fd98c;
+  --quick-team-coral: #f0616b;
+  --quick-team-sky: #6fb7ff;
+  --quick-team-violet: #c08cff;
+  --quick-team-paper: #f2ede3;
 }
 
 @layer base {
