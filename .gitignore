@@ -1,0 +1,47 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# next.js
+.next/
+out/
+
+# production
+build/
+dist/
+
+# env
+.env*
+!.env.example
+
+# local tooling (portable Node/PostgreSQL) and local data
+.tools/
+.local/
+
+# testing
+coverage/
+playwright-report/
+test-results/
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# misc
+*.pem
+.vercel
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# editor
+.idea/
+.vscode/
