@@ -16,14 +16,29 @@ type GamePageProps = PageProps<'/games/[code]'>;
 export async function generateMetadata({ params }: GamePageProps): Promise<Metadata> {
   const { code } = await params;
   const view = await getGameView(code, null, null);
-  if (!view) return {};
+  // notFound здесь (до старта стриминга) даёт настоящий HTTP 404,
+  // а не 200 с 404-разметкой
+  if (!view) notFound();
   const t = await getTranslations('feed.card');
+  const description = `${view.game.venueName}, ${view.game.city} · ${t('players', {
+    main: view.game.mainCount,
+    max: view.game.maxPlayers,
+  })}`;
   return {
     title: view.game.title,
-    description: `${view.game.venueName}, ${view.game.city} · ${t('players', {
-      main: view.game.mainCount,
-      max: view.game.maxPlayers,
-    })}`,
+    description,
+    // opengraph-image.tsx рядом добавляет картинку автоматически
+    openGraph: {
+      title: view.game.title,
+      description,
+      type: 'website',
+      url: `/games/${view.game.code}`,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: view.game.title,
+      description,
+    },
   };
 }
 
