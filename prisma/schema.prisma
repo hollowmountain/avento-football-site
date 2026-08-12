@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum GameStatus {
+  OPEN
+  FULL
+  CANCELLED_BY_HOST
+  CANCELLED_NOT_ENOUGH
+  FINISHED
+}
+
+enum GameFormat {
+  FIVE_A_SIDE
+  SIX_A_SIDE
+  SEVEN_A_SIDE
+  EIGHT_A_SIDE
+  ELEVEN_A_SIDE
+}
+
+enum SkillLevel {
+  ANY
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum Position {
+  GOALKEEPER
+  DEFENDER
+  MIDFIELDER
+  FORWARD
+  ANY
+}
+
+enum Attendance {
+  CONFIRMED
+  MAYBE
+}
+
+enum ParticipantRole {
+  MAIN
+  WAITLIST
+}
+
+model Game {
+  id              String     @id @default(cuid())
+  code            String     @unique // KCK-7F2A
+  title           String
+  description     String?    @db.Text
+  status          GameStatus @default(OPEN)
+  format          GameFormat
+  skillLevel      SkillLevel
+  startsAt        DateTime
+  durationMinutes Int
+  timezone        String     @default("Europe/Moscow") // IANA tz; startsAt хранится в UTC
+  minPlayers      Int
+  maxPlayers      Int
+  pricePerPitch   Int        @default(0) // в минимальных единицах валюты (копейки)
+  currency        String     @default("RUB")
+  cancelDeadline  DateTime
+  venueName       String
+  address         String
+  latitude        Float
+  longitude       Float
+  city            String
+  hostTokenHash   String // хеш токена, plain-токен не хранится
+  hostName        String
+  createdIpHash   String // хеш IP + соль, сам IP не хранится (GDPR)
+  teamsSnapshot   Json? // результат жеребьёвки
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  participants Participant[]
+
+  @@index([startsAt, status])
+  @@index([city, startsAt])
+  @@index([hostTokenHash, startsAt])
+}
+
+model Participant {
+  id            String          @id @default(cuid())
+  gameId        String
+  game          Game            @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  name          String
+  nickname      String
+  position      Position
+  attendance    Attendance
+  role          ParticipantRole
+  waitlistOrder Int?
+  tokenHash     String
+  joinedAt      DateTime        @default(now())
+  leftAt        DateTime?
+  wasLateCancel Boolean         @default(false)
+
+  @@unique([gameId, nickname])
+  @@index([gameId, role, waitlistOrder])
+  @@index([tokenHash])
+}
+
+// Reliability score: живёт дольше одной игры, ключ — хеш participantToken.
+model ParticipantProfile {
+  tokenHash     String   @id
+  gamesJoined   Int      @default(0)
+  gamesAttended Int      @default(0)
+  lateCancels   Int      @default(0)
+  updatedAt     DateTime @updatedAt
+}
+
+// Fallback-хранилище rate limit, когда Redis недоступен или не сконфигурирован.
+model RateLimitEvent {
+  id        String   @id @default(cuid())
+  key       String // "create_game:ip:<hash>"
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  gameId    String?
+  action    String // GAME_CREATED, PARTICIPANT_JOINED, ...
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([gameId, createdAt])
+}
+
+// Кэш ответов Open-Meteo (TTL контролируется по fetchedAt).
+model WeatherCache {
+  key       String   @id // "lat:lon:isoHour"
+  payload   Json
+  fetchedAt DateTime @default(now())
+}

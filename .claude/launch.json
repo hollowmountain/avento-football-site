@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kickoff-dev",
+      "runtimeExecutable": "C:\\Users\\User\\Desktop\\footsite\\.tools\\node\\npm.cmd",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    }
+  ]
+}

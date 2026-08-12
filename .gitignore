@@ -28,6 +28,9 @@ test-results/
 *.tsbuildinfo
 next-env.d.ts
 
+# prisma (клиент генерируется в postinstall)
+src/generated/
+
 # logs
 *.log
 npm-debug.log*
