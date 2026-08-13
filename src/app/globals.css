@@ -281,6 +281,11 @@
     background-size: cover;
     background-position: center;
     opacity: 0.32;
+    /* Лёгкая расфокусировка уводит коллаж на задний план: детали не
+       спорят с текстом. Небольшое увеличение прячет прозрачную кайму,
+       которая иначе появляется по краям от размытия. */
+    filter: blur(3px);
+    transform: scale(1.06);
   }
 
   @media (min-aspect-ratio: 1 / 1) {
