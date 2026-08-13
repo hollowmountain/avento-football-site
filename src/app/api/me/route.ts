@@ -53,6 +53,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     age: parsed.data.age ?? null,
     gender: parsed.data.gender ?? null,
     countryCode: parsed.data.countryCode ?? null,
+    club: parsed.data.club ?? null,
     skillLevel: parsed.data.skillLevel ?? 'ANY',
     deviceTokenHash: deps.tokens.hash(deviceToken),
   });
@@ -102,6 +103,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
     age: parsed.data.age ?? null,
     gender: parsed.data.gender ?? null,
     countryCode: parsed.data.countryCode ?? null,
+    club: parsed.data.club ?? null,
     skillLevel: parsed.data.skillLevel ?? 'ANY',
     deviceTokenHash: deps.tokens.hash(token),
   });

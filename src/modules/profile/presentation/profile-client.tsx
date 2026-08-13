@@ -15,7 +15,9 @@ import { Pill } from '@/shared/ui/pill';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { isValidTag, normalizeTag } from '../domain/tag';
+import { CLUBS } from '../clubs';
 import { GENDERS, PROFILE_SKILL_LEVELS, type ProfileDto } from '../schemas';
+import { ClubBadge } from './clubs';
 import { COUNTRY_CODES, countryName, flagEmoji } from './country';
 import { MyGames } from './my-games';
 
@@ -56,6 +58,7 @@ export function ProfileClient() {
             {profile.countryCode !== null ? (
               <span aria-hidden>{flagEmoji(profile.countryCode)}</span>
             ) : null}
+            {profile.club !== null ? <ClubBadge clubId={profile.club} size={18} /> : null}
             <Pill tone="accent">@{profile.tag}</Pill>
           </span>
         ) : null}
@@ -303,6 +306,7 @@ function ProfileForm({
   );
   const [gender, setGender] = useState<string>(initial?.gender ?? '');
   const [country, setCountry] = useState<string>(initial?.countryCode ?? 'none');
+  const [club, setClub] = useState<string>(initial?.club ?? '');
   const [level, setLevel] = useState<string>(
     initial === undefined || initial.skillLevel === 'ANY' ? '' : initial.skillLevel,
   );
@@ -315,6 +319,7 @@ function ProfileForm({
       age: number | null;
       gender: string | null;
       countryCode: string | null;
+      club: string | null;
       skillLevel: string | null;
     }) =>
       apiFetch<{ profile: ProfileDto; loginCode?: string }>('/api/me', {
@@ -342,6 +347,7 @@ function ProfileForm({
       age: parsedAge !== null && Number.isFinite(parsedAge) ? parsedAge : null,
       gender: gender === '' ? null : gender,
       countryCode: country === 'none' ? null : country,
+      club: club === '' ? null : club,
       skillLevel: level === '' ? null : level,
     });
   };
@@ -455,6 +461,34 @@ function ProfileForm({
           </SelectContent>
         </Select>
         <p className="text-muted-foreground text-xs">{t('countryHint')}</p>
+      </div>
+      <div className="space-y-1.5">
+        <Label>{t('club')}</Label>
+        <div
+          className="grid grid-cols-4 gap-1.5 sm:grid-cols-5"
+          role="group"
+          aria-label={t('club')}
+        >
+          {CLUBS.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              aria-pressed={club === preset.id}
+              onClick={() => setClub(club === preset.id ? '' : preset.id)}
+              className={`focus-visible:ring-ring flex flex-col items-center gap-1 rounded-md border px-1 py-2 transition-colors focus-visible:ring-2 focus-visible:outline-none ${
+                club === preset.id
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border hover:border-primary/50'
+              }`}
+            >
+              <ClubBadge clubId={preset.id} size={28} />
+              <span className="text-muted-foreground w-full truncate text-center text-[0.6rem] leading-tight">
+                {preset.name}
+              </span>
+            </button>
+          ))}
+        </div>
+        <p className="text-muted-foreground text-xs">{t('clubHint')}</p>
       </div>
       <Button
         type="submit"

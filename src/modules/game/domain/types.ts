@@ -91,4 +91,6 @@ export interface ParticipantEntity {
   profileTag: string | null;
   /** Код страны из профиля — флаг рядом с ником. */
   profileCountry: string | null;
+  /** Любимый клуб из профиля — значок рядом с ником. */
+  profileClub: string | null;
 }

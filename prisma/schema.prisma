@@ -69,6 +69,8 @@ model UserProfile {
   gender        Gender?
   // ISO 3166-1 alpha-2 в нижнем регистре — флаг «для красоты»
   countryCode   String?
+  // Любимый клуб (id из палитры клубов) — значок рядом с именем
+  club          String?
   // Уровень игрока: живёт в профиле, подставляется при записи на игры
   skillLevel    SkillLevel @default(ANY)
   loginCodeHash String   @unique

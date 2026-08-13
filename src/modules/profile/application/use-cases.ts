@@ -20,6 +20,7 @@ export interface ProfileInput {
   age: number | null;
   gender: Gender | null;
   countryCode: string | null;
+  club: string | null;
   skillLevel: ProfileSkillLevel;
 }
 
@@ -48,6 +49,7 @@ export async function createProfile(
     age: input.age,
     gender: input.gender,
     countryCode: input.countryCode,
+    club: input.club,
     skillLevel: input.skillLevel,
     loginCodeHash: deps.tokens.hash(loginCode),
     deviceTokenHash: input.deviceTokenHash,
@@ -72,6 +74,7 @@ export async function updateProfile(
     age: input.age,
     gender: input.gender,
     countryCode: input.countryCode,
+    club: input.club,
     skillLevel: input.skillLevel,
   });
   return ok(updated);

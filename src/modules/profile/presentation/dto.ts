@@ -9,6 +9,7 @@ export function profileToDto(profile: ProfileEntity): ProfileDto {
     age: profile.age,
     gender: profile.gender,
     countryCode: profile.countryCode,
+    club: profile.club,
     skillLevel: profile.skillLevel,
     createdAt: profile.createdAt.toISOString(),
   };

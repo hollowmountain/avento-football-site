@@ -8,6 +8,7 @@ export interface NewProfileRecord {
   age: number | null;
   gender: Gender | null;
   countryCode: string | null;
+  club: string | null;
   skillLevel: ProfileSkillLevel;
   loginCodeHash: string;
   /** Хеш анонимного cookie первого устройства. */
@@ -20,6 +21,7 @@ export interface ProfilePatch {
   age?: number | null;
   gender?: Gender | null;
   countryCode?: string | null;
+  club?: string | null;
   skillLevel?: ProfileSkillLevel;
   loginCodeHash?: string;
 }

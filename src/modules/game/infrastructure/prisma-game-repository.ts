@@ -86,7 +86,7 @@ export class PrismaGameRepository implements GameRepository {
       where: { gameId, leftAt: null },
       orderBy: [{ role: 'asc' }, { waitlistOrder: 'asc' }, { joinedAt: 'asc' }],
       // Тег кабинета — для отображения «@tag» рядом с ником
-      include: { profile: { select: { tag: true, countryCode: true } } },
+      include: { profile: { select: { tag: true, countryCode: true, club: true } } },
     });
     return rows.map(toParticipantEntity);
   }

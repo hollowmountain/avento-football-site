@@ -14,6 +14,8 @@ export interface ProfileEntity {
   gender: Gender | null;
   /** ISO 3166-1 alpha-2 в нижнем регистре — флаг «для красоты». */
   countryCode: string | null;
+  /** Любимый клуб (id из палитры клубов). */
+  club: string | null;
   /** Уровень игрока: подставляется при записи, участвует в жеребьёвке. */
   skillLevel: ProfileSkillLevel;
   createdAt: Date;

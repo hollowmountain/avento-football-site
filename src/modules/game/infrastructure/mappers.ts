@@ -34,7 +34,9 @@ export function toGameEntity(row: Game): GameEntity {
 }
 
 export function toParticipantEntity(
-  row: Participant & { profile?: { tag: string; countryCode: string | null } | null },
+  row: Participant & {
+    profile?: { tag: string; countryCode: string | null; club: string | null } | null;
+  },
 ): ParticipantEntity {
   return {
     id: row.id,
@@ -54,5 +56,6 @@ export function toParticipantEntity(
     // Тег есть только у выборок с include: без него участник — «гость»
     profileTag: row.profile?.tag ?? null,
     profileCountry: row.profile?.countryCode ?? null,
+    profileClub: row.profile?.club ?? null,
   };
 }

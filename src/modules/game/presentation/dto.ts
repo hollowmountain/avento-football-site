@@ -22,6 +22,8 @@ export interface ParticipantDto {
   tag: string | null;
   /** Код страны из профиля — флаг рядом с ником. */
   country: string | null;
+  /** Любимый клуб из профиля — значок рядом с ником. */
+  club: string | null;
 }
 
 export interface GameDto {
@@ -121,5 +123,6 @@ export function participantToDto(
     reliability: reliabilityBadge(profile ?? { gamesJoined: 0, gamesAttended: 0, lateCancels: 0 }),
     tag: participant.profileTag,
     country: participant.profileCountry,
+    club: participant.profileClub,
   };
 }

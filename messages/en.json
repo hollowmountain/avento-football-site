@@ -273,6 +273,8 @@
       "countryHint": "Just for looks — shown next to your tag",
       "level": "Skill level",
       "levelHint": "Shown in rosters and used to balance teams in the shuffle",
+      "club": "Favourite club",
+      "clubHint": "The club badge is shown next to your name in rosters",
       "age": "Age",
       "agePlaceholder": "18",
       "gender": "Gender",

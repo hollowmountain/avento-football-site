@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { z } from 'zod';
+import { ClubBadge } from '@/modules/profile/presentation/clubs';
 import { flagEmoji } from '@/modules/profile/presentation/country';
 import { WeatherBadge } from '@/modules/weather/presentation/weather-badge';
 import { useGameEvents } from '@/shared/hooks/use-game-events';
@@ -416,6 +417,9 @@ function PlayerRow({
             <span className="ml-1.5" aria-hidden>
               {flagEmoji(participant.country)}
             </span>
+          ) : null}
+          {participant.club !== null ? (
+            <ClubBadge clubId={participant.club} size={16} className="ml-1.5" />
           ) : null}
           {participant.tag !== null ? (
             <span className="text-lamp ml-1.5 text-xs font-medium">@{participant.tag}</span>

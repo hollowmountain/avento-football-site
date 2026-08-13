@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CLUB_IDS } from './clubs';
 import { TAG_MAX, TAG_MIN, isValidTag, normalizeTag } from './domain/tag';
 
 /** Zod DTO профиля — общие для клиента и сервера. */
@@ -43,6 +44,10 @@ export const profileBodySchema = z.object({
     .pipe(z.string().regex(/^[a-z]{2}$/, 'код страны — две буквы'))
     .nullish(),
   skillLevel: z.enum(PROFILE_SKILL_LEVELS).nullish(),
+  club: z
+    .string()
+    .refine((id) => CLUB_IDS.includes(id), 'неизвестный клуб')
+    .nullish(),
 });
 
 export const loginBodySchema = z.object({
@@ -58,6 +63,7 @@ export interface ProfileDto {
   age: number | null;
   gender: string | null;
   countryCode: string | null;
+  club: string | null;
   skillLevel: string;
   createdAt: string;
 }
