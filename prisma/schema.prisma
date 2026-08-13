@@ -16,6 +16,7 @@ enum GameStatus {
 }
 
 enum GameFormat {
+  FREE
   FIVE_A_SIDE
   SIX_A_SIDE
   SEVEN_A_SIDE

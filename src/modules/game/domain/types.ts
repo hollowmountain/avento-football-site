@@ -6,7 +6,7 @@ export type GameStatus =
   'OPEN' | 'FULL' | 'CANCELLED_BY_HOST' | 'CANCELLED_NOT_ENOUGH' | 'FINISHED';
 
 export type GameFormat =
-  'FIVE_A_SIDE' | 'SIX_A_SIDE' | 'SEVEN_A_SIDE' | 'EIGHT_A_SIDE' | 'ELEVEN_A_SIDE';
+  'FREE' | 'FIVE_A_SIDE' | 'SIX_A_SIDE' | 'SEVEN_A_SIDE' | 'EIGHT_A_SIDE' | 'ELEVEN_A_SIDE';
 
 export type SkillLevel = 'ANY' | 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 

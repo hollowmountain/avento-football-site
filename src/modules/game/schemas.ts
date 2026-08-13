@@ -6,6 +6,8 @@ import { z } from 'zod';
  */
 
 export const GAME_FORMATS = [
+  // «Свободный» первым: это формат по умолчанию — играем как соберёмся
+  'FREE',
   'FIVE_A_SIDE',
   'SIX_A_SIDE',
   'SEVEN_A_SIDE',

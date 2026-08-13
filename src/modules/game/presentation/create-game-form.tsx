@@ -135,7 +135,7 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
     defaultValues: {
       title: '',
       description: '',
-      format: 'FIVE_A_SIDE',
+      format: 'FREE',
       skillLevel: 'ANY',
       startsAtLocal: defaultStart,
       durationMinutes: 90,

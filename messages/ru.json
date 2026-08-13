@@ -26,6 +26,7 @@
     "FINISHED": "Сыграна"
   },
   "formats": {
+    "FREE": "Свободный",
     "FIVE_A_SIDE": "5×5",
     "SIX_A_SIDE": "6×6",
     "SEVEN_A_SIDE": "7×7",

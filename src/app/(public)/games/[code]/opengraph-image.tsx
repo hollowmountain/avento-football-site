@@ -15,6 +15,7 @@ export const contentType = 'image/png';
 export const alt = 'AVENTO ASCENT — сбор на футбол';
 
 const FORMAT_LABELS: Record<string, string> = {
+  FREE: 'Свободный',
   FIVE_A_SIDE: '5×5',
   SIX_A_SIDE: '6×6',
   SEVEN_A_SIDE: '7×7',

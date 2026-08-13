@@ -28,7 +28,7 @@ Anti-abuse: мутирующие формы требуют `formToken` (`{ts, si
 {
   "title": "Вечерний футбол",
   "description": "",
-  "format": "FIVE_A_SIDE",          // FIVE|SIX|SEVEN|EIGHT|ELEVEN_A_SIDE
+  "format": "FREE",                 // FREE|FIVE|SIX|SEVEN|EIGHT|ELEVEN_A_SIDE
   "skillLevel": "ANY",              // ANY|BEGINNER|INTERMEDIATE|ADVANCED
   "startsAt": "2026-08-14T16:00:00.000Z",
   "durationMinutes": 90,
