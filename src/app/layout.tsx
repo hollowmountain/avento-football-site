@@ -45,7 +45,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: LayoutProps<'/'>) {
   const locale = await getLocale();
-  const tCommon = await getTranslations('common');
   const tHeader = await getTranslations('header');
 
   return (
@@ -54,17 +53,14 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
       className={`${sofia.variable} ${sofiaCondensed.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      {/* Отступ снизу на телефоне — под фиксированную панель разделов */}
-      <body className="bg-background text-foreground flex min-h-full flex-col pb-16 sm:pb-0">
+      {/* Отступ снизу на телефоне — под плавающую панель разделов */}
+      <body className="bg-background text-foreground flex min-h-full flex-col pb-24 sm:pb-0">
         <NextIntlClientProvider>
           <Providers>
             <SiteHeader />
             <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 lg:max-w-4xl">
               <PageTransition>{children}</PageTransition>
             </main>
-            <footer className="text-muted-foreground border-t py-5 text-center">
-              <span className="eyebrow">{tCommon('appName')}</span>
-            </footer>
             <MobileTabBar
               items={[
                 { href: '/games/new', label: tHeader('create'), icon: 'create' },
