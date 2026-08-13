@@ -10,6 +10,21 @@ export const DURATION_MIN_MINUTES = 30;
 export const DURATION_MAX_MINUTES = 480;
 /** Отказ позже, чем за N часов до старта, — всегда late-cancel. */
 export const LATE_CANCEL_HOURS = 3;
+/** За сколько часов до начала по умолчанию закрывается свободный отказ. */
+export const DEFAULT_CANCEL_LEAD_HOURS = 6;
+
+/**
+ * Дедлайн свободного отказа по умолчанию: за 6 часов до начала, но никогда
+ * в прошлом. Игру часто создают «на сегодня, через час-два» — там шесть
+ * часов не помещаются, и просроченный дедлайн заставлял фоновую уборку
+ * отменять игру сразу после создания (статус CANCELLED_NOT_ENOUGH,
+ * из-за чего игра пропадала из ленты). В таком случае дедлайном
+ * становится сам старт.
+ */
+export function defaultCancelDeadline(startsAt: Date, now: Date): Date {
+  const lead = new Date(startsAt.getTime() - DEFAULT_CANCEL_LEAD_HOURS * 60 * 60 * 1000);
+  return lead.getTime() > now.getTime() ? lead : startsAt;
+}
 
 export interface GameTimingDraft {
   startsAt: Date;

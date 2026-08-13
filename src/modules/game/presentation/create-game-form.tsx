@@ -20,7 +20,7 @@ import { Label } from '@/shared/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Textarea } from '@/shared/ui/textarea';
-import { MAX_START_DAYS_AHEAD } from '../domain/game-rules';
+import { MAX_START_DAYS_AHEAD, defaultCancelDeadline } from '../domain/game-rules';
 import { GAME_FORMATS, SKILL_LEVELS, type formTokenSchema } from '../schemas';
 import type { GameDto } from './dto';
 
@@ -169,7 +169,7 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
     const startsAt = new Date(values.startsAtLocal);
     const cancelDeadline = values.cancelDeadlineLocal
       ? new Date(values.cancelDeadlineLocal)
-      : new Date(startsAt.getTime() - 6 * 60 * 60 * 1000);
+      : defaultCancelDeadline(startsAt, new Date());
 
     try {
       const data = await apiFetch<CreatedGame>('/api/games', {

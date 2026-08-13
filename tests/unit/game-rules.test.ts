@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   decideJoin,
+  defaultCancelDeadline,
   isLateCancel,
   validateGameDraft,
   type JoinContext,
@@ -122,5 +123,35 @@ describe('isLateCancel', () => {
   it('менее чем за 3 часа до старта — late даже при позднем дедлайне', () => {
     const lateDeadline = new Date('2026-08-12T17:30:00Z');
     expect(isLateCancel(new Date('2026-08-12T16:00:00Z'), lateDeadline, startsAt)).toBe(true);
+  });
+});
+
+describe('defaultCancelDeadline', () => {
+  const now = new Date('2026-08-13T12:00:00Z');
+
+  it('игра завтра — дедлайн за 6 часов до начала', () => {
+    const startsAt = new Date('2026-08-14T19:00:00Z');
+    expect(defaultCancelDeadline(startsAt, now)).toEqual(new Date('2026-08-14T13:00:00Z'));
+  });
+
+  it('игра через 2 часа — дедлайном становится сам старт, а не прошлое', () => {
+    // Регресс: «минус 6 часов» уходило в прошлое, и фоновая уборка
+    // отменяла игру сразу после создания — та пропадала из ленты
+    const startsAt = new Date('2026-08-13T14:00:00Z');
+    expect(defaultCancelDeadline(startsAt, now)).toEqual(startsAt);
+  });
+
+  it('ровно 6 часов до начала — дедлайн не в прошлом', () => {
+    const startsAt = new Date('2026-08-13T18:00:00Z');
+    expect(defaultCancelDeadline(startsAt, now).getTime()).toBeGreaterThanOrEqual(now.getTime());
+  });
+
+  it('дедлайн никогда не позже начала игры', () => {
+    for (const hours of [0.5, 2, 5.9, 6, 24]) {
+      const startsAt = new Date(now.getTime() + hours * 60 * 60 * 1000);
+      expect(defaultCancelDeadline(startsAt, now).getTime()).toBeLessThanOrEqual(
+        startsAt.getTime(),
+      );
+    }
   });
 });

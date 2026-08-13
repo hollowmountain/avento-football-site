@@ -74,6 +74,17 @@ export async function createGame(
     );
   }
 
+  // Просроченный дедлайн отмены фоновая уборка сочла бы поводом отменить
+  // игру сразу после создания. Проверка только здесь: у давно созданных
+  // игр дедлайн уходит в прошлое естественно, и правку это ломать не должно.
+  if (input.cancelDeadline.getTime() <= now.getTime()) {
+    return err(
+      domainError('VALIDATION_FAILED', 'Данные игры не прошли проверку', [
+        { field: 'cancelDeadline', message: 'дедлайн отмены уже прошёл' },
+      ]),
+    );
+  }
+
   const creatorTokenHash = input.creatorToken ? deps.tokens.hash(input.creatorToken) : null;
 
   if (creatorTokenHash && !input.bypassLimits) {
