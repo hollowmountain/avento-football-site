@@ -159,9 +159,10 @@ function LoginCard() {
   });
 
   return (
-    <Card size="sm">
+    // Карточки кабинета — одного ранга: одинаковый кегль заголовка
+    <Card>
       <CardHeader>
-        <CardTitle className="display text-base tracking-wide">{t('title')}</CardTitle>
+        <CardTitle className="display text-xl tracking-wide">{t('title')}</CardTitle>
         <CardDescription>{t('lead')}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -236,9 +237,9 @@ function CodeCard({ onCodeIssued }: { onCodeIssued: (code: string) => void }) {
   });
 
   return (
-    <Card size="sm">
+    <Card>
       <CardHeader>
-        <CardTitle className="display text-base tracking-wide">{t('title')}</CardTitle>
+        <CardTitle className="display text-xl tracking-wide">{t('title')}</CardTitle>
         <CardDescription>{t('lead')}</CardDescription>
       </CardHeader>
       <CardContent>

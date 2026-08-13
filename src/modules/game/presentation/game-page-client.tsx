@@ -404,7 +404,9 @@ function PlayerRow({
   return (
     <li
       className={`grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-3 border-b py-2 last:border-b-0 ${
-        participant.isYou ? 'bg-primary/5' : ''
+        // Своя строка подсвечена во всю ширину карточки: заливка,
+        // обрывающаяся до краёв, читается как случайный отступ
+        participant.isYou ? 'bg-primary/5 -mx-(--card-spacing) px-(--card-spacing)' : ''
       }`}
     >
       <span className="text-muted-foreground digits text-sm">
