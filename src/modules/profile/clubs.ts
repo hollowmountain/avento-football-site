@@ -30,7 +30,6 @@ export const CLUBS: readonly ClubPreset[] = [
   { id: 'krasnodar', name: 'Краснодар', mono: 'КРД' },
   { id: 'akhmat', name: 'Ахмат', mono: 'АХТ' },
   { id: 'astana', name: 'Астана', mono: 'АСТ' },
-  { id: 'bigbro', name: 'BigBro', mono: 'BB' },
 ];
 
 export const CLUB_IDS = CLUBS.map((club) => club.id);
