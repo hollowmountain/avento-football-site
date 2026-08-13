@@ -112,7 +112,9 @@ export const createGameBodySchema = z.object({
 export type CreateGameBody = z.infer<typeof createGameBodySchema>;
 
 export const joinGameBodySchema = z.object({
-  name: singleLine(2, 60),
+  // У владельца кабинета имя и ник берутся из профиля — клиент их не шлёт;
+  // гость обязан прислать оба, это проверяет роут
+  name: singleLine(2, 60).optional(),
   nickname: z
     .string()
     .transform((s) => s.trim())
@@ -122,7 +124,8 @@ export const joinGameBodySchema = z.object({
         .min(2, 'минимум 2 симв.')
         .max(24, 'максимум 24 симв.')
         .regex(/^[\p{L}\p{N} _.-]+$/u, 'только буквы, цифры, пробел и _ . -'),
-    ),
+    )
+    .optional(),
   // Позицию и уровень при записи не спрашиваем: уровень берётся из
   // кабинета участника (у гостей — «не указан»)
   attendance: z.enum(ATTENDANCE).default('CONFIRMED'),

@@ -414,7 +414,10 @@ function PlayerRow({
       </span>
       <span className="flex min-w-0 flex-col">
         <span className="truncate text-sm font-semibold">
-          {participant.nickname}
+          {/* С кабинетом показываем имя из профиля: ник там равен тегу,
+              и строка превращалась в «sun @sun». Гость же назвал ник
+              именно для показа — у него настоящее имя не светим */}
+          {participant.tag !== null ? participant.name : participant.nickname}
           {participant.country !== null ? (
             <FlagIcon code={participant.country} width={16} className="ml-1.5" />
           ) : null}

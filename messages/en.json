@@ -204,7 +204,7 @@
   },
   "joinForm": {
     "title": "Sign up",
-    "asProfile": "Profile found: this signup will be linked to {name} @{tag}",
+    "asProfile": "Signing up as {name} · @{tag}",
     "name": "Name",
     "namePlaceholder": "Alex",
     "nickname": "Nickname",

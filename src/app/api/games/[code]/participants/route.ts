@@ -65,10 +65,20 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
       ? null
       : await profileDeps.profiles.findByDeviceHash(deps.tokens.hash(existingToken));
 
+  // Имя и ник владельца кабинета — из профиля: спрашивать их второй раз
+  // незачем, а заодно нельзя записаться под чужим именем
+  const name = profile?.displayName ?? parsed.data.name;
+  const nickname = profile?.tag ?? parsed.data.nickname;
+  if (name === undefined || nickname === undefined) {
+    return jsonError('BAD_REQUEST', 'Укажите имя и никнейм', 400, {
+      details: [{ field: 'name', message: 'обязательное поле' }],
+    });
+  }
+
   const result = await joinGame(deps, {
     gameCode: code.toUpperCase(),
-    name: parsed.data.name,
-    nickname: parsed.data.nickname,
+    name,
+    nickname,
     position: 'ANY',
     // Уровень — из кабинета: он и в составе виден, и жеребьёвку выравнивает
     skillLevel: profile?.skillLevel ?? 'ANY',

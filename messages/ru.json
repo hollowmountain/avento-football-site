@@ -204,7 +204,7 @@
   },
   "joinForm": {
     "title": "Запись на игру",
-    "asProfile": "Кабинет найден: запись привяжется к профилю {name} @{tag}",
+    "asProfile": "Записываетесь как {name} · @{tag}",
     "name": "Имя",
     "namePlaceholder": "Александр",
     "nickname": "Никнейм",

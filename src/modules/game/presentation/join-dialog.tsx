@@ -127,11 +127,17 @@ function JoinForm({
     },
   });
 
+  const hasProfile = profile !== null;
+
   const onSubmit = handleSubmit(async (values) => {
     try {
+      // У владельца кабинета имя и ник берёт сервер из профиля
+      const body = hasProfile
+        ? { attendance: values.attendance, website: values.website, formToken }
+        : { ...values, formToken };
       const data = await apiFetch<{ participant: ParticipantDto }>(
         `/api/games/${gameCode}/participants`,
-        { method: 'POST', body: JSON.stringify({ ...values, formToken }) },
+        { method: 'POST', body: JSON.stringify(body) },
       );
       toast.success(data.participant.role === 'WAITLIST' ? t('waitlisted') : t('joined'));
       onJoined();
@@ -151,34 +157,36 @@ function JoinForm({
         className="absolute -left-[9999px] h-0 w-0 opacity-0"
         {...register('website')}
       />
-      {profile !== null ? (
-        <p className="text-muted-foreground text-xs">
-          {t('asProfile', { name: profile.displayName, tag: profile.tag })}
-        </p>
-      ) : null}
-      <div className="space-y-1.5">
-        <Label htmlFor="join-name">{t('name')}</Label>
-        <Input id="join-name" placeholder={t('namePlaceholder')} {...register('name')} />
-        {errors.name ? (
-          <p role="alert" className="text-destructive text-xs">
-            {errors.name.message}
-          </p>
-        ) : null}
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="join-nickname">{t('nickname')}</Label>
-        <Input
-          id="join-nickname"
-          placeholder={t('nicknamePlaceholder')}
-          {...register('nickname')}
-        />
-        <p className="text-muted-foreground text-xs">{t('nicknameHint')}</p>
-        {errors.nickname ? (
-          <p role="alert" className="text-destructive text-xs">
-            {errors.nickname.message}
-          </p>
-        ) : null}
-      </div>
+      {/* С кабинетом спрашивать имя и ник незачем — они уже в профиле */}
+      {hasProfile ? (
+        <p className="text-sm">{t('asProfile', { name: profile.displayName, tag: profile.tag })}</p>
+      ) : (
+        <>
+          <div className="space-y-1.5">
+            <Label htmlFor="join-name">{t('name')}</Label>
+            <Input id="join-name" placeholder={t('namePlaceholder')} {...register('name')} />
+            {errors.name ? (
+              <p role="alert" className="text-destructive text-xs">
+                {errors.name.message}
+              </p>
+            ) : null}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="join-nickname">{t('nickname')}</Label>
+            <Input
+              id="join-nickname"
+              placeholder={t('nicknamePlaceholder')}
+              {...register('nickname')}
+            />
+            <p className="text-muted-foreground text-xs">{t('nicknameHint')}</p>
+            {errors.nickname ? (
+              <p role="alert" className="text-destructive text-xs">
+                {errors.nickname.message}
+              </p>
+            ) : null}
+          </div>
+        </>
+      )}
       <div className="space-y-1.5">
         <Label>{t('attendance')}</Label>
         <Controller
