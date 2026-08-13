@@ -49,6 +49,38 @@ enum ParticipantRole {
   WAITLIST
 }
 
+enum Gender {
+  MALE
+  FEMALE
+}
+
+// Личный кабинет: профиль с уникальным тегом (как в Telegram).
+// Пароля нет: устройства привязываются анонимным cookie, вход с нового —
+// по личному коду (хранится только HMAC-хеш, как у host-токенов).
+model UserProfile {
+  id            String   @id @default(cuid())
+  tag           String   @unique // lowercase, 3–20 символов [a-z0-9_]
+  displayName   String
+  age           Int?
+  gender        Gender?
+  loginCodeHash String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  devices      ProfileDevice[]
+  participants Participant[]
+}
+
+// Устройство = анонимный cookie kickoff_pid; один профиль — много устройств.
+model ProfileDevice {
+  tokenHash String      @id
+  profileId String
+  profile   UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@index([profileId])
+}
+
 model Game {
   id              String     @id @default(cuid())
   code            String     @unique // KCK-7F2A
@@ -103,10 +135,14 @@ model Participant {
   joinedAt      DateTime        @default(now())
   leftAt        DateTime?
   wasLateCancel Boolean         @default(false)
+  // Профиль участника (null — гость без кабинета)
+  profileId     String?
+  profile       UserProfile?    @relation(fields: [profileId], references: [id], onDelete: SetNull)
 
   @@unique([gameId, nickname])
   @@index([gameId, role, waitlistOrder])
   @@index([tokenHash])
+  @@index([profileId])
 }
 
 // Reliability score: живёт дольше одной игры, ключ — хеш participantToken.

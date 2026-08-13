@@ -16,6 +16,7 @@
     "feed": "Games",
     "create": "Create game",
     "quick": "Quick game",
+    "profile": "Profile",
     "toggleTheme": "Toggle theme"
   },
   "statuses": {
@@ -189,6 +190,7 @@
   },
   "joinForm": {
     "title": "Sign up",
+    "asProfile": "Profile found: this signup will be linked to {name} @{tag}",
     "name": "Name",
     "namePlaceholder": "Alex",
     "nickname": "Nickname",
@@ -201,6 +203,50 @@
     "submitting": "Signing up…",
     "joined": "You're in!",
     "waitlisted": "No slots left — you're on the waitlist"
+  },
+  "profile": {
+    "title": "Profile",
+    "create": {
+      "title": "Create a profile",
+      "lead": "Fill it in once and sign up for games in one tap. The tag is unique, like in Telegram: it identifies you in rosters and stats."
+    },
+    "edit": {
+      "lead": "Your name and tag are visible to other players in rosters"
+    },
+    "login": {
+      "title": "Already have a profile?",
+      "lead": "Paste the personal code from your other device — the profile moves here.",
+      "placeholder": "Personal code",
+      "submit": "Log in",
+      "done": "Done: the profile is linked to this device"
+    },
+    "code": {
+      "title": "Personal code",
+      "lead": "The code is how you log in on other devices. Keep it like a password.",
+      "issue": "Show a new code",
+      "reissue": "Reissue the code",
+      "issuedTitle": "New personal code",
+      "issuedHint": "Save it now: the code is shown once and the old one no longer works."
+    },
+    "form": {
+      "name": "Full name",
+      "namePlaceholder": "Alex Petrov",
+      "tag": "Tag",
+      "tagPlaceholder": "sanya_10",
+      "tagHint": "3–20 characters: latin letters, digits and “_”, starts with a letter",
+      "age": "Age",
+      "agePlaceholder": "18",
+      "gender": "Gender",
+      "createSubmit": "Create profile",
+      "editSubmit": "Save",
+      "saved": "Saved",
+      "codeTitle": "Profile created! Your personal code",
+      "codeHint": "Save it now: the code is shown once and is needed to log in on other devices."
+    },
+    "genders": {
+      "MALE": "Male",
+      "FEMALE": "Female"
+    }
   },
   "quick": {
     "title": "Quick game",

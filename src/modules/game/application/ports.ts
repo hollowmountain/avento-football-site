@@ -167,6 +167,8 @@ export interface NewParticipantRecord {
   role: 'MAIN' | 'WAITLIST';
   waitlistOrder: number | null;
   tokenHash: string;
+  /** Кабинет участника (null — гость). */
+  profileId: string | null;
 }
 
 export interface ParticipantPatch {
@@ -179,6 +181,7 @@ export interface ParticipantPatch {
   waitlistOrder?: number | null;
   leftAt?: Date | null;
   wasLateCancel?: boolean;
+  profileId?: string | null;
 }
 
 export interface ProfileDelta {

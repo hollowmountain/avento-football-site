@@ -73,4 +73,8 @@ export interface ParticipantEntity {
   joinedAt: Date;
   leftAt: Date | null;
   wasLateCancel: boolean;
+  /** Кабинет участника (null — гость без профиля). */
+  profileId: string | null;
+  /** Тег профиля для отображения (@tag); заполняется выборкой с include. */
+  profileTag: string | null;
 }

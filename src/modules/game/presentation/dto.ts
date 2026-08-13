@@ -18,6 +18,8 @@ export interface ParticipantDto {
   joinedAt: string;
   isYou: boolean;
   reliability: ReliabilityBadge;
+  /** Тег кабинета («vanya» без @); null — гость. */
+  tag: string | null;
 }
 
 export interface GameDto {
@@ -111,5 +113,6 @@ export function participantToDto(
     joinedAt: participant.joinedAt.toISOString(),
     isYou: viewerTokenHash !== null && participant.tokenHash === viewerTokenHash,
     reliability: reliabilityBadge(profile ?? { gamesJoined: 0, gamesAttended: 0, lateCancels: 0 }),
+    tag: participant.profileTag,
   };
 }

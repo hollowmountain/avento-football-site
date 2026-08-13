@@ -28,6 +28,7 @@ function joinInput(gameCode: string, n: number) {
     skillLevel: 'ANY' as const,
     attendance: 'CONFIRMED' as const,
     participantToken: `token-player-${n}`,
+    profileId: null,
   };
 }
 

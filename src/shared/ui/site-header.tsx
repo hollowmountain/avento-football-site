@@ -1,5 +1,7 @@
+import { UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import { Button } from '@/shared/ui/button';
 import { HeaderNav } from '@/shared/ui/header-nav';
 import { ThemeToggle } from '@/shared/ui/theme-toggle';
 
@@ -26,6 +28,11 @@ export async function SiteHeader() {
               { href: '/quick', label: t('quick') },
             ]}
           />
+          <Button asChild variant="ghost" size="icon-sm" aria-label={t('profile')}>
+            <Link href="/me">
+              <UserRound aria-hidden />
+            </Link>
+          </Button>
           <ThemeToggle />
         </nav>
       </div>

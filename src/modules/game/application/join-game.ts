@@ -13,6 +13,8 @@ export interface JoinGameInput {
   attendance: Attendance;
   /** Анонимный токен участника (cookie), plain. */
   participantToken: string;
+  /** Кабинет участника, если у устройства он есть (null — гость). */
+  profileId: string | null;
 }
 
 export interface JoinGameOutput {
@@ -71,6 +73,7 @@ export async function joinGame(
         role: decision.value.role,
         waitlistOrder: decision.value.role === 'WAITLIST' ? decision.value.waitlistOrder : null,
         tokenHash,
+        profileId: input.profileId,
       };
 
       let participant: ParticipantEntity;

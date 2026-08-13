@@ -404,7 +404,12 @@ function PlayerRow({
         {String(number).padStart(2, '0')}
       </span>
       <span className="flex min-w-0 flex-col">
-        <span className="truncate text-sm font-semibold">{participant.nickname}</span>
+        <span className="truncate text-sm font-semibold">
+          {participant.nickname}
+          {participant.tag !== null ? (
+            <span className="text-lamp ml-1.5 text-xs font-medium">@{participant.tag}</span>
+          ) : null}
+        </span>
         {/* Позиция и «под вопросом» — одной строкой: отдельная пилюля
             съедала место у никнейма и обрезала его до одной буквы */}
         <span className="text-muted-foreground truncate text-xs">

@@ -54,6 +54,8 @@ export class PrismaGameRepository implements GameRepository {
     const rows = await this.prisma.participant.findMany({
       where: { gameId, leftAt: null },
       orderBy: [{ role: 'asc' }, { waitlistOrder: 'asc' }, { joinedAt: 'asc' }],
+      // Тег кабинета — для отображения «@tag» рядом с ником
+      include: { profile: { select: { tag: true } } },
     });
     return rows.map(toParticipantEntity);
   }

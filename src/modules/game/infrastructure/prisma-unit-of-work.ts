@@ -58,12 +58,17 @@ class PrismaGameTx implements GameTx {
   async insertParticipant(record: NewParticipantRecord) {
     const row = await this.tx.participant.create({
       data: { ...record, gameId: this.game.id },
+      include: { profile: { select: { tag: true } } },
     });
     return toParticipantEntity(row);
   }
 
   async updateParticipant(id: string, patch: ParticipantPatch) {
-    const row = await this.tx.participant.update({ where: { id }, data: patch });
+    const row = await this.tx.participant.update({
+      where: { id },
+      data: patch,
+      include: { profile: { select: { tag: true } } },
+    });
     return toParticipantEntity(row);
   }
 

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { joinGame } from '@/modules/game/application/join-game';
 import { getGameDeps } from '@/modules/game/composition';
+import { getProfileDeps } from '@/modules/profile/composition';
 import { participantToDto } from '@/modules/game/presentation/dto';
 import { joinGameBodySchema } from '@/modules/game/schemas';
 import { jsonDomainError, jsonError, jsonOk, jsonRateLimited } from '@/shared/errors/api-response';
@@ -57,6 +58,13 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
   const existingToken = request.cookies.get(PARTICIPANT_COOKIE)?.value ?? null;
   const participantToken = existingToken ?? deps.tokens.generate();
 
+  // Кабинет устройства (если заведён): участие привяжется к профилю
+  const profileDeps = getProfileDeps();
+  const profile =
+    existingToken === null
+      ? null
+      : await profileDeps.profiles.findByDeviceHash(deps.tokens.hash(existingToken));
+
   const result = await joinGame(deps, {
     gameCode: code.toUpperCase(),
     name: parsed.data.name,
@@ -65,6 +73,7 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
     skillLevel: parsed.data.skillLevel,
     attendance: parsed.data.attendance,
     participantToken,
+    profileId: profile?.id ?? null,
   });
 
   if (!result.ok) return jsonDomainError(result.error);

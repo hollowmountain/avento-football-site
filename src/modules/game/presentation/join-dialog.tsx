@@ -1,11 +1,13 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import type { ProfileDto } from '@/modules/profile/schemas';
 import { ApiRequestError, apiFetch } from '@/shared/lib/api-client';
 import { Button } from '@/shared/ui/button';
 import {
@@ -19,6 +21,7 @@ import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/shared/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
+import { Skeleton } from '@/shared/ui/skeleton';
 import { ATTENDANCE, POSITIONS, SKILL_LEVELS, type formTokenSchema } from '../schemas';
 import type { ParticipantDto } from './dto';
 
@@ -48,41 +51,16 @@ interface JoinDialogProps {
 export function JoinDialog({ gameCode, isFull, formToken, onJoined }: JoinDialogProps) {
   const t = useTranslations('joinForm');
   const tGame = useTranslations('game');
-  const tPositions = useTranslations('positions');
-  const tLevels = useTranslations('levels');
-  const tAttendance = useTranslations('attendance');
-  const tCommon = useTranslations('common');
   const [open, setOpen] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors, isSubmitting },
-  } = useForm<JoinFormValues>({
-    resolver: zodResolver(joinFormSchema),
-    defaultValues: {
-      name: '',
-      nickname: '',
-      position: 'ANY',
-      skillLevel: 'ANY',
-      attendance: 'CONFIRMED',
-      website: '',
-    },
-  });
-
-  const onSubmit = handleSubmit(async (values) => {
-    try {
-      const data = await apiFetch<{ participant: ParticipantDto }>(
-        `/api/games/${gameCode}/participants`,
-        { method: 'POST', body: JSON.stringify({ ...values, formToken }) },
-      );
-      toast.success(data.participant.role === 'WAITLIST' ? t('waitlisted') : t('joined'));
-      setOpen(false);
-      onJoined();
-    } catch (error) {
-      toast.error(error instanceof ApiRequestError ? error.payload.message : tCommon('error'));
-    }
+  // Кабинет устройства: форма префиллится ФИО и тегом, если профиль есть.
+  // Запрос идёт только после открытия диалога, форма ждёт ответа —
+  // так defaultValues заполняются один раз, без reset() в эффектах.
+  const me = useQuery({
+    queryKey: ['me'],
+    queryFn: () => apiFetch<{ profile: ProfileDto | null }>('/api/me'),
+    enabled: open,
+    staleTime: 60_000,
   });
 
   return (
@@ -100,116 +78,185 @@ export function JoinDialog({ gameCode, isFull, formToken, onJoined }: JoinDialog
         <DialogHeader>
           <DialogTitle className="display text-2xl">{t('title')}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4" noValidate>
-          {/* Honeypot */}
-          <input
-            type="text"
-            tabIndex={-1}
-            autoComplete="off"
-            aria-hidden="true"
-            className="absolute -left-[9999px] h-0 w-0 opacity-0"
-            {...register('website')}
+        {me.isPending ? (
+          <div className="flex flex-col gap-3" aria-busy="true">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        ) : (
+          <JoinForm
+            gameCode={gameCode}
+            formToken={formToken}
+            profile={me.data?.profile ?? null}
+            onJoined={() => {
+              setOpen(false);
+              onJoined();
+            }}
           />
-          <div className="space-y-1.5">
-            <Label htmlFor="join-name">{t('name')}</Label>
-            <Input id="join-name" placeholder={t('namePlaceholder')} {...register('name')} />
-            {errors.name ? (
-              <p role="alert" className="text-destructive text-xs">
-                {errors.name.message}
-              </p>
-            ) : null}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="join-nickname">{t('nickname')}</Label>
-            <Input
-              id="join-nickname"
-              placeholder={t('nicknamePlaceholder')}
-              {...register('nickname')}
-            />
-            <p className="text-muted-foreground text-xs">{t('nicknameHint')}</p>
-            {errors.nickname ? (
-              <p role="alert" className="text-destructive text-xs">
-                {errors.nickname.message}
-              </p>
-            ) : null}
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label>{t('position')}</Label>
-              <Controller
-                control={control}
-                name="position"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {POSITIONS.map((position) => (
-                        <SelectItem key={position} value={position}>
-                          {tPositions(position)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>{t('skillLevel')}</Label>
-              <Controller
-                control={control}
-                name="skillLevel"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SKILL_LEVELS.map((level) => (
-                        <SelectItem key={level} value={level}>
-                          {tLevels(level)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label>{t('attendance')}</Label>
-            <Controller
-              control={control}
-              name="attendance"
-              render={({ field }) => (
-                <RadioGroup
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  className="flex gap-4"
-                >
-                  {ATTENDANCE.map((value) => (
-                    <div key={value} className="flex items-center gap-2">
-                      <RadioGroupItem id={`att-${value}`} value={value} />
-                      <Label htmlFor={`att-${value}`} className="font-normal">
-                        {tAttendance(value)}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              )}
-            />
-          </div>
-          <Button
-            type="submit"
-            size="lg"
-            className="display w-full text-base tracking-wide"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? t('submitting') : t('submit')}
-          </Button>
-        </form>
+        )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function JoinForm({
+  gameCode,
+  formToken,
+  profile,
+  onJoined,
+}: {
+  gameCode: string;
+  formToken: z.infer<typeof formTokenSchema>;
+  profile: ProfileDto | null;
+  onJoined: () => void;
+}) {
+  const t = useTranslations('joinForm');
+  const tPositions = useTranslations('positions');
+  const tLevels = useTranslations('levels');
+  const tAttendance = useTranslations('attendance');
+  const tCommon = useTranslations('common');
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<JoinFormValues>({
+    resolver: zodResolver(joinFormSchema),
+    defaultValues: {
+      name: profile?.displayName ?? '',
+      nickname: profile?.tag ?? '',
+      position: 'ANY',
+      skillLevel: 'ANY',
+      attendance: 'CONFIRMED',
+      website: '',
+    },
+  });
+
+  const onSubmit = handleSubmit(async (values) => {
+    try {
+      const data = await apiFetch<{ participant: ParticipantDto }>(
+        `/api/games/${gameCode}/participants`,
+        { method: 'POST', body: JSON.stringify({ ...values, formToken }) },
+      );
+      toast.success(data.participant.role === 'WAITLIST' ? t('waitlisted') : t('joined'));
+      onJoined();
+    } catch (error) {
+      toast.error(error instanceof ApiRequestError ? error.payload.message : tCommon('error'));
+    }
+  });
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4" noValidate>
+      {/* Honeypot */}
+      <input
+        type="text"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="absolute -left-[9999px] h-0 w-0 opacity-0"
+        {...register('website')}
+      />
+      {profile !== null ? (
+        <p className="text-muted-foreground text-xs">
+          {t('asProfile', { name: profile.displayName, tag: profile.tag })}
+        </p>
+      ) : null}
+      <div className="space-y-1.5">
+        <Label htmlFor="join-name">{t('name')}</Label>
+        <Input id="join-name" placeholder={t('namePlaceholder')} {...register('name')} />
+        {errors.name ? (
+          <p role="alert" className="text-destructive text-xs">
+            {errors.name.message}
+          </p>
+        ) : null}
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="join-nickname">{t('nickname')}</Label>
+        <Input
+          id="join-nickname"
+          placeholder={t('nicknamePlaceholder')}
+          {...register('nickname')}
+        />
+        <p className="text-muted-foreground text-xs">{t('nicknameHint')}</p>
+        {errors.nickname ? (
+          <p role="alert" className="text-destructive text-xs">
+            {errors.nickname.message}
+          </p>
+        ) : null}
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label>{t('position')}</Label>
+          <Controller
+            control={control}
+            name="position"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {POSITIONS.map((position) => (
+                    <SelectItem key={position} value={position}>
+                      {tPositions(position)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label>{t('skillLevel')}</Label>
+          <Controller
+            control={control}
+            name="skillLevel"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SKILL_LEVELS.map((level) => (
+                    <SelectItem key={level} value={level}>
+                      {tLevels(level)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label>{t('attendance')}</Label>
+        <Controller
+          control={control}
+          name="attendance"
+          render={({ field }) => (
+            <RadioGroup value={field.value} onValueChange={field.onChange} className="flex gap-4">
+              {ATTENDANCE.map((value) => (
+                <div key={value} className="flex items-center gap-2">
+                  <RadioGroupItem id={`att-${value}`} value={value} />
+                  <Label htmlFor={`att-${value}`} className="font-normal">
+                    {tAttendance(value)}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          )}
+        />
+      </div>
+      <Button
+        type="submit"
+        size="lg"
+        className="display w-full text-base tracking-wide"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? t('submitting') : t('submit')}
+      </Button>
+    </form>
   );
 }

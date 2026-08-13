@@ -34,6 +34,7 @@ describe('гонка за последнее место', () => {
           skillLevel: 'ANY',
           attendance: 'CONFIRMED',
           participantToken: `base-token-${n}`,
+          profileId: null,
         }),
       );
     }
@@ -49,6 +50,7 @@ describe('гонка за последнее место', () => {
           skillLevel: 'ANY',
           attendance: 'CONFIRMED',
           participantToken: `race-token-${i}`,
+          profileId: null,
         }),
       ),
     );
