@@ -1,6 +1,11 @@
 import type { PrismaClient, UserProfile } from '@/generated/prisma/client';
-import type { ProfileEntity } from '../domain/types';
-import type { NewProfileRecord, ProfilePatch, ProfileRepository } from '../application/ports';
+import type { ProfileEntity, ProfileSkillLevel } from '../domain/types';
+import type {
+  NewProfileRecord,
+  PlayerListItem,
+  ProfilePatch,
+  ProfileRepository,
+} from '../application/ports';
 
 function toEntity(row: UserProfile): ProfileEntity {
   return {
@@ -19,6 +24,32 @@ function toEntity(row: UserProfile): ProfileEntity {
 
 export class PrismaProfileRepository implements ProfileRepository {
   constructor(private readonly prisma: PrismaClient) {}
+
+  async listPlayers(limit: number): Promise<PlayerListItem[]> {
+    // Одним запросом: счёт состоявшихся игр считает СУБД, а не память.
+    // Гости без кабинета сюда не попадают — join идёт по profileId.
+    const rows = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        tag: string;
+        displayName: string;
+        countryCode: string | null;
+        club: string | null;
+        skillLevel: ProfileSkillLevel;
+        played: bigint;
+      }>
+    >`
+      SELECT p.id, p.tag, p."displayName", p."countryCode", p.club, p."skillLevel",
+             COUNT(pt.id) FILTER (WHERE g."status"::text = 'FINISHED') AS played
+      FROM "UserProfile" p
+      LEFT JOIN "Participant" pt ON pt."profileId" = p.id AND pt."leftAt" IS NULL
+      LEFT JOIN "Game" g ON g.id = pt."gameId"
+      GROUP BY p.id
+      ORDER BY played DESC, lower(p."displayName") ASC
+      LIMIT ${limit}
+    `;
+    return rows.map((row) => ({ ...row, played: Number(row.played) }));
+  }
 
   async findByDeviceHash(tokenHash: string): Promise<ProfileEntity | null> {
     const device = await this.prisma.profileDevice.findUnique({

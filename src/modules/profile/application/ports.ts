@@ -26,7 +26,21 @@ export interface ProfilePatch {
   loginCodeHash?: string;
 }
 
+/** Строка каталога игроков. */
+export interface PlayerListItem {
+  id: string;
+  tag: string;
+  displayName: string;
+  countryCode: string | null;
+  club: string | null;
+  skillLevel: ProfileSkillLevel;
+  /** Сколько состоявшихся игр за плечами. */
+  played: number;
+}
+
 export interface ProfileRepository {
+  /** Каталог игроков: сначала те, кто больше сыграл, затем по алфавиту. */
+  listPlayers(limit: number): Promise<PlayerListItem[]>;
   findByDeviceHash(tokenHash: string): Promise<ProfileEntity | null>;
   findByLoginCodeHash(codeHash: string): Promise<ProfileEntity | null>;
   isTagTaken(tag: string): Promise<boolean>;

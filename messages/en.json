@@ -16,6 +16,7 @@
     "feed": "Games",
     "create": "Create game",
     "quick": "Quick game",
+    "players": "Players",
     "profile": "Profile",
     "toggleTheme": "Toggle theme"
   },
@@ -234,6 +235,12 @@
     "guest": "Look around as a guest",
     "gotIt": "Got it, let's go",
     "dontShowAgain": "Don't show this again"
+  },
+  "players": {
+    "title": "Players",
+    "lead": "Everyone with a profile. Goals and assists appear here once the match protocol ships.",
+    "empty": "Nobody yet: be the first to create a profile.",
+    "played": "{count, plural, one {# game} other {# games}}"
   },
   "profile": {
     "title": "Profile",

@@ -26,6 +26,7 @@ export async function SiteHeader() {
               { href: '/', label: t('feed'), hideOnMobile: true },
               { href: '/games/new', label: t('create') },
               { href: '/quick', label: t('quick') },
+              { href: '/players', label: t('players'), hideOnMobile: true },
             ]}
           />
           <Button asChild variant="ghost" size="icon-sm" aria-label={t('profile')}>
