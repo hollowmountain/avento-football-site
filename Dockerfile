@@ -14,17 +14,30 @@ RUN npm ci --ignore-scripts
 # ---------- Сборка ----------
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN npx prisma generate
-# Фиктивные значения для сборки: env.ts валидирует наличие переменных,
-# реальные секреты придут только в runtime из окружения Railway
+# Значения объявлены ДО prisma generate: .env в образ не попадает
+# (см. .dockerignore), а prisma.config.ts читает DATABASE_URL через env()
+# и падает без него — как и env.ts при next build. Реальные секреты
+# приходят только в runtime из окружения Railway.
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build" \
     TOKEN_PEPPER="build-time-pepper-0000000000" \
     IP_HASH_SALT="build-time-salt-000000000000" \
     CRON_SECRET="build-time-secret-0000000000" \
     NEXT_TELEMETRY_DISABLED=1
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npx prisma generate
 RUN npm run build
+
+# ---------- CLI миграций ----------
+# Отдельное дерево вместо копирования пакетов поимённо: CLI тянет с десяток
+# транзитивных зависимостей (c12, jiti, effect…), которые npm поднимает в
+# корень node_modules, и точечный список ломался бы при каждом обновлении.
+FROM base AS migrator
+WORKDIR /migrator
+COPY package.json ./
+# Версию берём из package.json, чтобы CLI миграций не разъезжался со схемой
+RUN PRISMA_SPEC=$(node -p 'require("./package.json").devDependencies.prisma') \
+ && npm install --no-save "prisma@$PRISMA_SPEC"
 
 # ---------- Runtime ----------
 FROM base AS runner
@@ -42,16 +55,18 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Prisma CLI для `migrate deploy` на старте (standalone его не трейсит)
+# Схема и конфиг для `migrate deploy` на старте (standalone их не трейсит).
+# dotenv нужен здесь же: prisma.config.ts начинается с `import 'dotenv/config'`
+# и резолвит его относительно /app.
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/dotenv ./node_modules/dotenv
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.bin ./node_modules/.bin
+COPY --from=migrator --chown=nextjs:nodejs /migrator/node_modules /migrator/node_modules
 
 USER nextjs
 EXPOSE 3000
 
-# Миграции — в release-фазе старта, не в build (ТЗ §10)
-CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
+# Миграции — в release-фазе старта, не в build (ТЗ §10).
+# CLI зовём по абсолютному пути: его дерево зависимостей лежит отдельно
+# от /app/node_modules, куда распакован standalone-бандл Next.
+CMD ["sh", "-c", "node /migrator/node_modules/prisma/build/index.js migrate deploy && node server.js"]
