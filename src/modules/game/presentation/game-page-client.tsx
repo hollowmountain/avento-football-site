@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 import { ClubBadge } from '@/modules/profile/presentation/clubs';
-import { flagEmoji } from '@/modules/profile/presentation/country';
+import { FlagIcon } from '@/modules/profile/presentation/country-flag';
 import { WeatherBadge } from '@/modules/weather/presentation/weather-badge';
 import { useGameEvents } from '@/shared/hooks/use-game-events';
 import { useHostToken } from '@/shared/hooks/use-host-token';
@@ -414,9 +414,7 @@ function PlayerRow({
         <span className="truncate text-sm font-semibold">
           {participant.nickname}
           {participant.country !== null ? (
-            <span className="ml-1.5" aria-hidden>
-              {flagEmoji(participant.country)}
-            </span>
+            <FlagIcon code={participant.country} width={16} className="ml-1.5" />
           ) : null}
           {participant.club !== null ? (
             <ClubBadge clubId={participant.club} size={16} className="ml-1.5" />

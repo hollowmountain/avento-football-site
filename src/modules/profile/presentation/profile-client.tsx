@@ -18,7 +18,8 @@ import { isValidTag, normalizeTag } from '../domain/tag';
 import { CLUBS } from '../clubs';
 import { GENDERS, PROFILE_SKILL_LEVELS, type ProfileDto } from '../schemas';
 import { ClubBadge } from './clubs';
-import { COUNTRY_CODES, countryName, flagEmoji } from './country';
+import { COUNTRY_CODES, countryName } from './country';
+import { FlagIcon } from './country-flag';
 import { MyGames } from './my-games';
 
 /**
@@ -56,7 +57,7 @@ export function ProfileClient() {
         {profile !== null ? (
           <span className="flex items-center gap-1.5">
             {profile.countryCode !== null ? (
-              <span aria-hidden>{flagEmoji(profile.countryCode)}</span>
+              <FlagIcon code={profile.countryCode} width={20} />
             ) : null}
             {profile.club !== null ? <ClubBadge clubId={profile.club} size={18} /> : null}
             <Pill tone="accent">@{profile.tag}</Pill>
@@ -455,7 +456,8 @@ function ProfileForm({
             <SelectItem value="none">{t('countryNone')}</SelectItem>
             {COUNTRY_CODES.map((code) => (
               <SelectItem key={code} value={code}>
-                {flagEmoji(code)} {countryName(code, locale)}
+                <FlagIcon code={code} width={18} className="mr-1.5" />
+                {countryName(code, locale)}
               </SelectItem>
             ))}
           </SelectContent>
