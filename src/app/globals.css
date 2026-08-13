@@ -265,6 +265,39 @@
   }
 
   /*
+   * Фон сайта: коллаж с игроками за содержимым. Лежит отдельным
+   * фиксированным слоем, а не background-attachment: fixed — тот на iOS
+   * дёргается при прокрутке. Приглушён до трети яркости: поверх идёт
+   * текст, и полноцветная картинка сделала бы его нечитаемым.
+   * Вертикальная версия по умолчанию, горизонтальная — когда экран шире
+   * своей высоты, поэтому поворот телефона тоже обработан.
+   */
+  .site-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url('/bg-portrait.jpg');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.32;
+  }
+
+  @media (min-aspect-ratio: 1 / 1) {
+    .site-bg {
+      background-image: url('/bg-landscape.jpg');
+    }
+  }
+
+  /* К краям уводим в чернильный фон — центр остаётся спокойным */
+  .site-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 40%, transparent 30%, var(--background) 100%);
+  }
+
+  /*
    * Нижняя панель разделов: янтарь медленно переливается.
    * Градиент втрое шире контейнера и ходит туда-обратно — на стыке
    * нет рывка, движение читается как дыхание, а не как бегущая строка.

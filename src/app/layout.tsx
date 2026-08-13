@@ -55,6 +55,8 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
     >
       {/* Отступ снизу на телефоне — под плавающую панель разделов */}
       <body className="bg-background text-foreground flex min-h-full flex-col pb-24 sm:pb-0">
+        {/* Фон-коллаж за содержимым; если картинок нет, остаётся чернильный фон */}
+        <div className="site-bg" aria-hidden />
         <NextIntlClientProvider>
           <Providers>
             <SiteHeader />
