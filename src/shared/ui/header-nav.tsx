@@ -7,8 +7,6 @@ import { Button } from '@/shared/ui/button';
 export interface HeaderNavItem {
   href: string;
   label: string;
-  /** Скрыть на мобильном (на ленту ведёт логотип). */
-  hideOnMobile?: boolean;
 }
 
 /**
@@ -31,8 +29,6 @@ export function HeaderNav({ items }: { items: HeaderNavItem[] }) {
             asChild
             size="sm"
             className={`display text-sm tracking-wide ${
-              item.hideOnMobile === true ? 'hidden sm:inline-flex' : ''
-            } ${
               active
                 ? 'bg-[color-mix(in_oklch,var(--primary),black_30%)] hover:bg-[color-mix(in_oklch,var(--primary),black_38%)]'
                 : ''

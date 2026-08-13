@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { WelcomeGate } from '@/modules/profile/presentation/welcome-gate';
 import { env } from '@/shared/lib/env';
+import { MobileTabBar } from '@/shared/ui/mobile-tab-bar';
 import { PageTransition } from '@/shared/ui/page-transition';
 import { SiteHeader } from '@/shared/ui/site-header';
 import { Providers } from './providers';
@@ -45,6 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: LayoutProps<'/'>) {
   const locale = await getLocale();
   const tCommon = await getTranslations('common');
+  const tHeader = await getTranslations('header');
 
   return (
     <html
@@ -52,7 +54,8 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
       className={`${sofia.variable} ${sofiaCondensed.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="bg-background text-foreground flex min-h-full flex-col">
+      {/* Отступ снизу на телефоне — под фиксированную панель разделов */}
+      <body className="bg-background text-foreground flex min-h-full flex-col pb-16 sm:pb-0">
         <NextIntlClientProvider>
           <Providers>
             <SiteHeader />
@@ -62,6 +65,13 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
             <footer className="text-muted-foreground border-t py-5 text-center">
               <span className="eyebrow">{tCommon('appName')}</span>
             </footer>
+            <MobileTabBar
+              items={[
+                { href: '/games/new', label: tHeader('create'), icon: 'create' },
+                { href: '/quick', label: tHeader('quick'), icon: 'quick' },
+                { href: '/players', label: tHeader('players'), icon: 'players' },
+              ]}
+            />
             <WelcomeGate />
           </Providers>
         </NextIntlClientProvider>
