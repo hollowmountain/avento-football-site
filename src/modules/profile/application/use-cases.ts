@@ -1,5 +1,5 @@
 import { err, ok, type Result } from '@/shared/lib/result';
-import type { Gender, ProfileEntity } from '../domain/types';
+import type { Gender, ProfileEntity, ProfileSkillLevel } from '../domain/types';
 import { profileError, type ProfileError } from './errors';
 import type { ProfileRepository, TokenService } from './ports';
 
@@ -20,6 +20,7 @@ export interface ProfileInput {
   age: number | null;
   gender: Gender | null;
   countryCode: string | null;
+  skillLevel: ProfileSkillLevel;
 }
 
 export interface CreatedProfile {
@@ -47,6 +48,7 @@ export async function createProfile(
     age: input.age,
     gender: input.gender,
     countryCode: input.countryCode,
+    skillLevel: input.skillLevel,
     loginCodeHash: deps.tokens.hash(loginCode),
     deviceTokenHash: input.deviceTokenHash,
   });
@@ -70,6 +72,7 @@ export async function updateProfile(
     age: input.age,
     gender: input.gender,
     countryCode: input.countryCode,
+    skillLevel: input.skillLevel,
   });
   return ok(updated);
 }

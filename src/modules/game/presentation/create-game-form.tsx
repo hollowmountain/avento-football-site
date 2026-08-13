@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { Check, Copy, ExternalLink } from 'lucide-react';
+import { Copy, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -13,7 +13,6 @@ import type { ProfileDto } from '@/modules/profile/schemas';
 import { ApiRequestError, apiFetch } from '@/shared/lib/api-client';
 import { toDatetimeLocalValue } from '@/shared/lib/format';
 import { saveHostToken } from '@/shared/lib/host-tokens';
-import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Input } from '@/shared/ui/input';
@@ -124,7 +123,6 @@ function defaultStartValue(): string {
 export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
   const t = useTranslations('createForm');
   const tFormats = useTranslations('formats');
-  const tLevels = useTranslations('levels');
   const tCommon = useTranslations('common');
 
   const [defaultStart] = useState(defaultStartValue);
@@ -157,7 +155,7 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
       venueName: '',
       address: '',
       city: defaults.city,
-      minPlayers: 6,
+      minPlayers: 2,
       maxPlayers: 10,
       priceRub: 0,
       cancelDeadlineLocal: '',
@@ -345,27 +343,6 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
               )}
             />
           </div>
-          <div className="space-y-1.5">
-            <Label>{t('fields.skillLevel')}</Label>
-            <Controller
-              control={control}
-              name="skillLevel"
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SKILL_LEVELS.map((level) => (
-                      <SelectItem key={level} value={level}>
-                        {tLevels(level)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
         </CardContent>
       </Card>
 
@@ -407,17 +384,6 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="cg-min">{t('fields.minPlayers')}</Label>
-            <Input
-              id="cg-min"
-              type="number"
-              min={2}
-              max={30}
-              {...register('minPlayers', { valueAsNumber: true })}
-            />
-            {fieldError('minPlayers')}
-          </div>
-          <div className="space-y-1.5">
             <Label htmlFor="cg-max">{t('fields.maxPlayers')}</Label>
             <Input
               id="cg-max"
@@ -439,11 +405,6 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
             />
             <p className="text-muted-foreground text-xs">{t('fields.priceHint')}</p>
             {fieldError('priceRub')}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="cg-deadline">{t('fields.cancelDeadline')}</Label>
-            <Input id="cg-deadline" type="datetime-local" {...register('cancelDeadlineLocal')} />
-            <p className="text-muted-foreground text-xs">{t('fields.cancelDeadlineHint')}</p>
           </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label>{t('fields.teamCount')}</Label>
@@ -469,6 +430,37 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
             />
             <p className="text-muted-foreground text-xs">{t('fields.teamCountHint')}</p>
           </div>
+
+          {/* Редко нужные поля спрятаны: обычному организатору хватает
+              значений по умолчанию (минимум 2, дедлайн — за 6 часов) */}
+          <details className="group sm:col-span-2">
+            <summary className="text-muted-foreground hover:text-foreground cursor-pointer text-sm font-medium select-none">
+              {t('sections.advanced')}
+            </summary>
+            <div className="grid gap-4 pt-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="cg-min">{t('fields.minPlayers')}</Label>
+                <Input
+                  id="cg-min"
+                  type="number"
+                  min={2}
+                  max={30}
+                  {...register('minPlayers', { valueAsNumber: true })}
+                />
+                <p className="text-muted-foreground text-xs">{t('fields.minPlayersHint')}</p>
+                {fieldError('minPlayers')}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cg-deadline">{t('fields.cancelDeadline')}</Label>
+                <Input
+                  id="cg-deadline"
+                  type="datetime-local"
+                  {...register('cancelDeadlineLocal')}
+                />
+                <p className="text-muted-foreground text-xs">{t('fields.cancelDeadlineHint')}</p>
+              </div>
+            </div>
+          </details>
         </CardContent>
       </Card>
 
@@ -487,16 +479,17 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
 function CreatedGameScreen({ created }: { created: CreatedGame }) {
   const t = useTranslations('createForm.success');
   const tCommon = useTranslations('common');
-  const [tokenCopied, setTokenCopied] = useState(false);
 
   const gameUrl = `${window.location.origin}/games/${created.game.code}`;
 
-  const copy = async (value: string, onDone?: () => void) => {
+  const copy = async (value: string) => {
     await navigator.clipboard.writeText(value);
     toast.success(tCommon('copied'));
-    onDone?.();
   };
 
+  // Секретный токен пользователю больше не показываем: организатор
+  // управляет игрой через кабинет. Токен тихо лежит в localStorage
+  // как запасной ключ для этого браузера (старый механизм жив).
   return (
     <div className="space-y-6">
       <h1 className="display text-3xl">{t('title')}</h1>
@@ -506,28 +499,9 @@ function CreatedGameScreen({ created }: { created: CreatedGame }) {
           <CardTitle className="text-lamp digits text-4xl tracking-wider">
             {created.game.code}
           </CardTitle>
+          <CardDescription>{t('managedByProfile')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Alert>
-            <AlertTitle>{t('tokenTitle')}</AlertTitle>
-            <AlertDescription className="space-y-2">
-              <p>{t('tokenWarning')}</p>
-              <div className="flex items-center gap-2">
-                <code className="bg-muted block flex-1 overflow-x-auto rounded px-2 py-1.5 text-xs">
-                  {created.hostToken}
-                </code>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label={tCommon('copy')}
-                  onClick={() => void copy(created.hostToken, () => setTokenCopied(true))}
-                >
-                  {tokenCopied ? <Check className="size-4" /> : <Copy className="size-4" />}
-                </Button>
-              </div>
-              <p className="text-muted-foreground text-xs">{t('tokenSaved')}</p>
-            </AlertDescription>
-          </Alert>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button variant="outline" className="flex-1" onClick={() => void copy(gameUrl)}>
               <Copy className="size-4" /> {t('copyLink')}

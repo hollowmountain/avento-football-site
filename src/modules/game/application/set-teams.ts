@@ -1,11 +1,11 @@
 import { err, ok, type Result } from '@/shared/lib/result';
 import type { TeamsSnapshot } from '../domain/types';
 import { domainError, type DomainError } from './errors';
+import { isHostAuthorized, type HostAuth } from './host-auth';
 import type { Clock, EventBus, TokenService, UnitOfWork } from './ports';
 
-export interface SetTeamsInput {
+export interface SetTeamsInput extends HostAuth {
   gameCode: string;
-  hostToken: string;
   teamA: string[]; // participant ids
   teamB: string[];
 }
@@ -30,8 +30,8 @@ export async function setTeams(
   const result = await deps.uow.withGameLock<Result<{ teams: TeamsSnapshot }, DomainError>>(
     input.gameCode,
     async (tx) => {
-      if (!deps.tokens.verify(input.hostToken, tx.game.hostTokenHash)) {
-        return err(domainError('FORBIDDEN', 'Неверный токен управления игрой'));
+      if (!isHostAuthorized(deps.tokens, tx.game, input)) {
+        return err(domainError('FORBIDDEN', 'Управлять игрой может только организатор'));
       }
 
       const ids = [...input.teamA, ...input.teamB];

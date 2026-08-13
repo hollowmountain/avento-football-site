@@ -69,8 +69,9 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
     gameCode: code.toUpperCase(),
     name: parsed.data.name,
     nickname: parsed.data.nickname,
-    position: parsed.data.position,
-    skillLevel: parsed.data.skillLevel,
+    position: 'ANY',
+    // Уровень — из кабинета: он и в составе виден, и жеребьёвку выравнивает
+    skillLevel: profile?.skillLevel ?? 'ANY',
     attendance: parsed.data.attendance,
     participantToken,
     profileId: profile?.id ?? null,

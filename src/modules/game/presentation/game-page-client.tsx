@@ -22,7 +22,6 @@ import type { GameViewData } from './api-types';
 import { Countdown } from './countdown';
 import type { ParticipantDto } from './dto';
 import { JoinDialog } from './join-dialog';
-import { QrDialog } from './qr-dialog';
 import { TeamsBoard } from './teams-board';
 
 interface GamePageClientProps {
@@ -36,7 +35,6 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
   const tStatuses = useTranslations('statuses');
   const tFormats = useTranslations('formats');
   const tLevels = useTranslations('levels');
-  const tPositions = useTranslations('positions');
   const tAttendance = useTranslations('attendance');
   const tCommon = useTranslations('common');
 
@@ -58,7 +56,9 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
   const data = query.data;
   const game = data.game;
   const isActive = game.status === 'OPEN' || game.status === 'FULL';
-  const isHost = data.viewer.isHost && hostToken !== null;
+  // Организатор — по кабинету (сервер сверяет cookie с создателем игры);
+  // hostToken больше не обязателен, но остаётся для старых игр
+  const isHost = data.viewer.isHost;
   const you = [...data.participants, ...data.waitlist].find((p) => p.isYou) ?? null;
   const started = new Date(game.startsAt).getTime() <= openedAt;
 
@@ -154,7 +154,7 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
         <div className="flex flex-wrap items-center gap-1.5">
           <Pill tone={isActive ? 'accent' : 'muted'}>{tStatuses(game.status)}</Pill>
           <Pill>{tFormats(game.format)}</Pill>
-          <Pill>{tLevels(game.skillLevel)}</Pill>
+          {game.skillLevel !== 'ANY' ? <Pill>{tLevels(game.skillLevel)}</Pill> : null}
           {isActive && !started ? <WeatherBadge gameCode={code} /> : null}
           <span className="text-muted-foreground ml-auto digits text-xs tracking-wider">
             {game.code}
@@ -210,7 +210,9 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
                   key={participant.id}
                   participant={participant}
                   number={index + 1}
-                  positionLabel={tPositions(participant.position)}
+                  levelLabel={
+                    participant.skillLevel === 'ANY' ? null : tLevels(participant.skillLevel)
+                  }
                   maybeLabel={participant.attendance === 'MAYBE' ? tAttendance('MAYBE') : null}
                 />
               ))
@@ -227,7 +229,9 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
                     key={participant.id}
                     participant={participant}
                     number={participant.waitlistOrder ?? 0}
-                    positionLabel={tPositions(participant.position)}
+                    levelLabel={
+                      participant.skillLevel === 'ANY' ? null : tLevels(participant.skillLevel)
+                    }
                     maybeLabel={participant.attendance === 'MAYBE' ? tAttendance('MAYBE') : null}
                   />
                 ))}
@@ -261,7 +265,6 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
           <Button size="lg" variant="outline" onClick={() => void share()}>
             <Share2 className="size-4" /> {t('share')}
           </Button>
-          <QrDialog gameCode={code} title={game.title} />
           <Button size="lg" variant="outline" asChild>
             <a href={`/api/games/${code}/ics`} download>
               <CalendarPlus className="size-4" /> {t('addToCalendar')}
@@ -382,25 +385,24 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
   );
 }
 
-/** Строка состава: номер как на футболке, позиция, индекс надёжности. */
+/** Строка состава: номер как на футболке, тег, уровень игрока. */
 function PlayerRow({
   participant,
   number,
-  positionLabel,
+  levelLabel,
   maybeLabel,
 }: {
   participant: ParticipantDto;
   number: number;
-  positionLabel: string;
+  /** Уровень игрока из кабинета; null — не указан, строку не занимаем. */
+  levelLabel: string | null;
   maybeLabel: string | null;
 }) {
-  const t = useTranslations('reliability');
-  const isNew = participant.reliability.kind === 'new';
-  const percent = participant.reliability.kind === 'score' ? participant.reliability.percent : 0;
+  const secondLine = [levelLabel, maybeLabel?.toLowerCase()].filter(Boolean).join(' · ');
 
   return (
     <li
-      className={`grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-3 border-b py-2 last:border-b-0 ${
+      className={`grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-3 border-b py-2 last:border-b-0 ${
         participant.isYou ? 'bg-primary/5' : ''
       }`}
     >
@@ -419,19 +421,9 @@ function PlayerRow({
             <span className="text-lamp ml-1.5 text-xs font-medium">@{participant.tag}</span>
           ) : null}
         </span>
-        {/* Позиция и «под вопросом» — одной строкой: отдельная пилюля
-            съедала место у никнейма и обрезала его до одной буквы */}
-        <span className="text-muted-foreground truncate text-xs">
-          {maybeLabel ? `${positionLabel} · ${maybeLabel.toLowerCase()}` : positionLabel}
-        </span>
-      </span>
-      <span
-        className={`shrink-0 digits text-[0.68rem] tracking-wider ${
-          isNew ? 'text-muted-foreground' : 'text-foreground'
-        }`}
-        title={isNew ? t('newTitle') : t('scoreTitle', { percent })}
-      >
-        {isNew ? t('newChip') : t('scoreChip', { percent })}
+        {secondLine !== '' ? (
+          <span className="text-muted-foreground truncate text-xs">{secondLine}</span>
+        ) : null}
       </span>
     </li>
   );

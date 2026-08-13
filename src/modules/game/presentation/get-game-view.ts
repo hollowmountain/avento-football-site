@@ -1,3 +1,4 @@
+import { profileByDeviceToken } from '@/modules/profile/server';
 import { getGameDeps } from '../composition';
 import type { GameViewData } from './api-types';
 import { gameToSummaryDto, participantToDto } from './dto';
@@ -21,7 +22,11 @@ export async function getGameView(
   const confirmedMain = main.filter((p) => p.attendance === 'CONFIRMED');
 
   const viewerTokenHash = viewerToken ? deps.tokens.hash(viewerToken) : null;
-  const isHost = hostToken ? deps.tokens.verify(hostToken, game.hostTokenHash) : false;
+  // Организатор: кабинет создателя (основной путь) или легаси host-токен
+  const viewerProfile = await profileByDeviceToken(viewerToken);
+  const isHost =
+    (viewerProfile !== null && viewerProfile.id === game.creatorProfileId) ||
+    (hostToken ? deps.tokens.verify(hostToken, game.hostTokenHash) : false);
   const profiles = await deps.games.profilesFor(participants.map((p) => p.tokenHash));
 
   return {

@@ -2,9 +2,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { setTeams } from '@/modules/game/application/set-teams';
 import { getGameDeps } from '@/modules/game/composition';
+import { profileByDeviceToken } from '@/modules/profile/server';
 import { jsonDomainError, jsonError, jsonOk, jsonRateLimited } from '@/shared/errors/api-response';
 import { env } from '@/shared/lib/env';
-import { clientIpHash, getRateLimiter } from '@/shared/security/api-guard';
+import { PARTICIPANT_COOKIE, clientIpHash, getRateLimiter } from '@/shared/security/api-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,9 +29,9 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
   }
 
   const hostToken = request.headers.get('x-host-token');
-  if (!hostToken) {
-    return jsonError('FORBIDDEN', 'Нужен токен управления игрой (заголовок x-host-token)', 403);
-  }
+  const viewerProfile = await profileByDeviceToken(
+    request.cookies.get(PARTICIPANT_COOKIE)?.value ?? null,
+  );
 
   const body: unknown = await request.json().catch(() => null);
   const parsed = setTeamsBodySchema.safeParse(body);
@@ -41,6 +42,7 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
   const result = await setTeams(deps, {
     gameCode: code.toUpperCase(),
     hostToken,
+    viewerProfileId: viewerProfile?.id ?? null,
     teamA: parsed.data.teamA,
     teamB: parsed.data.teamB,
   });

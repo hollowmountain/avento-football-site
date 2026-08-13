@@ -8,6 +8,7 @@ import { getGameView } from '@/modules/game/presentation/get-game-view';
 import { patchGameBodySchema } from '@/modules/game/schemas';
 import { resolveCoordinates } from '@/modules/geo/application/resolve-coordinates';
 import { getGeocoder } from '@/modules/geo/composition';
+import { profileByDeviceToken } from '@/modules/profile/server';
 import { jsonDomainError, jsonError, jsonOk, jsonRateLimited } from '@/shared/errors/api-response';
 import { env } from '@/shared/lib/env';
 import { PARTICIPANT_COOKIE, clientIpHash, getRateLimiter } from '@/shared/security/api-guard';
@@ -44,10 +45,11 @@ export async function PATCH(request: NextRequest, context: RouteContext): Promis
     return jsonRateLimited('Слишком много запросов. Попробуйте позже.', global.retryAfterSeconds);
   }
 
+  // Организатор — по кабинету (cookie) или по легаси host-токену
   const hostToken = request.headers.get(HOST_TOKEN_HEADER);
-  if (!hostToken) {
-    return jsonError('FORBIDDEN', 'Нужен токен управления игрой (заголовок x-host-token)', 403);
-  }
+  const viewerProfile = await profileByDeviceToken(
+    request.cookies.get(PARTICIPANT_COOKIE)?.value ?? null,
+  );
 
   const body: unknown = await request.json().catch(() => null);
   const parsed = patchGameBodySchema.safeParse(body);
@@ -82,6 +84,7 @@ export async function PATCH(request: NextRequest, context: RouteContext): Promis
   const result = await updateGame(deps, {
     gameCode: code.toUpperCase(),
     hostToken,
+    viewerProfileId: viewerProfile?.id ?? null,
     patch,
   });
   if (!result.ok) return jsonDomainError(result.error);
@@ -103,11 +106,15 @@ export async function DELETE(request: NextRequest, context: RouteContext): Promi
   }
 
   const hostToken = request.headers.get(HOST_TOKEN_HEADER);
-  if (!hostToken) {
-    return jsonError('FORBIDDEN', 'Нужен токен управления игрой (заголовок x-host-token)', 403);
-  }
+  const viewerProfile = await profileByDeviceToken(
+    request.cookies.get(PARTICIPANT_COOKIE)?.value ?? null,
+  );
 
-  const result = await cancelGame(deps, { gameCode: code.toUpperCase(), hostToken });
+  const result = await cancelGame(deps, {
+    gameCode: code.toUpperCase(),
+    hostToken,
+    viewerProfileId: viewerProfile?.id ?? null,
+  });
   if (!result.ok) return jsonDomainError(result.error);
   return jsonOk({ cancelled: true });
 }

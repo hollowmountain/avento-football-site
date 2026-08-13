@@ -75,7 +75,8 @@ describe('balanceTeams', () => {
   });
 
   it('суммарные веса команд отличаются не больше чем на вес одного игрока', () => {
-    const maxWeight = 3;
+    // Шкала выросла до пяти уровней: максимальный вес игрока — 5 (PRO)
+    const maxWeight = 5;
     for (const seed of [1, 5, 9, 21, 33]) {
       const teams = balanceTeams(squad(), seed, AT);
       const diff = Math.abs(teamWeight(teams.teamA) - teamWeight(teams.teamB));

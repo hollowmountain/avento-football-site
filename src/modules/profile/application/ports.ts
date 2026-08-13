@@ -1,4 +1,4 @@
-import type { Gender, ProfileEntity } from '../domain/types';
+import type { Gender, ProfileEntity, ProfileSkillLevel } from '../domain/types';
 
 /** Порты модуля profile: интерфейсы, реализуемые infrastructure. */
 
@@ -8,6 +8,7 @@ export interface NewProfileRecord {
   age: number | null;
   gender: Gender | null;
   countryCode: string | null;
+  skillLevel: ProfileSkillLevel;
   loginCodeHash: string;
   /** Хеш анонимного cookie первого устройства. */
   deviceTokenHash: string;
@@ -19,6 +20,7 @@ export interface ProfilePatch {
   age?: number | null;
   gender?: Gender | null;
   countryCode?: string | null;
+  skillLevel?: ProfileSkillLevel;
   loginCodeHash?: string;
 }
 

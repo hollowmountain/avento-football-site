@@ -1,11 +1,11 @@
 import { err, ok, type Result } from '@/shared/lib/result';
 import { canTransition } from '../domain/game-status';
 import { domainError, type DomainError } from './errors';
+import { isHostAuthorized, type HostAuth } from './host-auth';
 import type { Clock, EventBus, TokenService, UnitOfWork } from './ports';
 
-export interface CancelGameInput {
+export interface CancelGameInput extends HostAuth {
   gameCode: string;
-  hostToken: string;
 }
 
 export interface CancelGameDeps {
@@ -24,8 +24,8 @@ export async function cancelGame(
   const result = await deps.uow.withGameLock<Result<{ cancelled: true }, DomainError>>(
     input.gameCode,
     async (tx) => {
-      if (!deps.tokens.verify(input.hostToken, tx.game.hostTokenHash)) {
-        return err(domainError('FORBIDDEN', 'Неверный токен управления игрой'));
+      if (!isHostAuthorized(deps.tokens, tx.game, input)) {
+        return err(domainError('FORBIDDEN', 'Управлять игрой может только организатор'));
       }
       if (!canTransition(tx.game.status, 'CANCELLED_BY_HOST')) {
         return err(domainError('GAME_NOT_EDITABLE', 'Эту игру уже нельзя отменить'));

@@ -9,7 +9,7 @@ test('создание игры → приглашение → вступлен�
   // --- Организатор: сначала кабинет (без него создание закрыто) ---
   const hostContext = await browser.newContext();
   // Приветственное окно выбора «профиль или гость» в e2e не тестируем
-  await hostContext.addInitScript(() => localStorage.setItem('avento_welcome_v1', 'guest'));
+  await hostContext.addInitScript(() => localStorage.setItem('avento_welcome_v2_never', '1'));
   const hostPage = await hostContext.newPage();
 
   await hostPage.goto('/me');
@@ -37,8 +37,11 @@ test('создание игры → приглашение → вступлен�
     .textContent())!;
   expect(code).toMatch(/^AVA-/);
 
-  // Секретный токен показан
-  await expect(hostPage.getByText('Секретный токен управления')).toBeVisible();
+  // Секретного токена больше нет: игра привязана к кабинету
+  await expect(
+    hostPage.getByText('Игра привязана к вашему кабинету', { exact: false }),
+  ).toBeVisible();
+  await expect(hostPage.getByText('Секретный токен управления')).toHaveCount(0);
 
   // --- Страница игры: панель организатора на месте ---
   await hostPage.getByRole('link', { name: 'К странице игры' }).click();
@@ -50,7 +53,7 @@ test('создание игры → приглашение → вступлен�
 
   // --- Игрок открывает ссылку в «другом браузере» ---
   const playerContext = await browser.newContext();
-  await playerContext.addInitScript(() => localStorage.setItem('avento_welcome_v1', 'guest'));
+  await playerContext.addInitScript(() => localStorage.setItem('avento_welcome_v2_never', '1'));
   const playerPage = await playerContext.newPage();
   await playerPage.goto(`/games/${code}`);
   await expect(playerPage.getByRole('heading', { name: 'E2E: вечерний матч' })).toBeVisible();

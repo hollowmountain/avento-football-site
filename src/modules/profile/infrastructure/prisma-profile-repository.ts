@@ -10,6 +10,7 @@ function toEntity(row: UserProfile): ProfileEntity {
     age: row.age,
     gender: row.gender,
     countryCode: row.countryCode,
+    skillLevel: row.skillLevel,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -47,6 +48,7 @@ export class PrismaProfileRepository implements ProfileRepository {
         age: record.age,
         gender: record.gender,
         countryCode: record.countryCode,
+        skillLevel: record.skillLevel,
         loginCodeHash: record.loginCodeHash,
         devices: { create: { tokenHash: record.deviceTokenHash } },
       },

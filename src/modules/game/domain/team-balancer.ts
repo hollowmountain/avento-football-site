@@ -15,9 +15,12 @@ export interface BalancerPlayer {
 
 const SKILL_WEIGHT: Record<SkillLevel, number> = {
   BEGINNER: 1,
-  ANY: 2, // не указал уровень — считаем средним
-  INTERMEDIATE: 2,
-  ADVANCED: 3,
+  AMATEUR: 2,
+  ANY: 3, // не указал уровень — считаем средним
+  INTERMEDIATE: 3,
+  ADVANCED: 4, // легаси-значение старых записей ≈ полупрофи
+  SEMI_PRO: 4,
+  PRO: 5,
 };
 
 /** Порядок разбора позиций: вратари в первую очередь, «без разницы» — в конце. */

@@ -22,7 +22,7 @@ export function GameCard({ game }: { game: GameSummaryDto }) {
         <CardContent className="flex flex-col gap-3 pt-0">
           <div className="flex flex-wrap items-center gap-1.5">
             <Pill>{tFormats(game.format)}</Pill>
-            <Pill>{tLevels(game.skillLevel)}</Pill>
+            {game.skillLevel !== 'ANY' ? <Pill>{tLevels(game.skillLevel)}</Pill> : null}
             {game.status === 'FULL' ? <Pill tone="muted">{tStatuses('FULL')}</Pill> : null}
             <span className="text-muted-foreground ml-auto digits text-xs">
               {formatShortDate(game.startsAt, game.timezone)}

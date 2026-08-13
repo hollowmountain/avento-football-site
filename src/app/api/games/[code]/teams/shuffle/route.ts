@@ -2,9 +2,10 @@ import { randomInt } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { shuffleTeams } from '@/modules/game/application/shuffle-teams';
 import { getGameDeps } from '@/modules/game/composition';
-import { jsonDomainError, jsonError, jsonOk, jsonRateLimited } from '@/shared/errors/api-response';
+import { profileByDeviceToken } from '@/modules/profile/server';
+import { jsonDomainError, jsonOk, jsonRateLimited } from '@/shared/errors/api-response';
 import { env } from '@/shared/lib/env';
-import { clientIpHash, getRateLimiter } from '@/shared/security/api-guard';
+import { PARTICIPANT_COOKIE, clientIpHash, getRateLimiter } from '@/shared/security/api-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,13 +24,14 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
   }
 
   const hostToken = request.headers.get('x-host-token');
-  if (!hostToken) {
-    return jsonError('FORBIDDEN', 'Нужен токен управления игрой (заголовок x-host-token)', 403);
-  }
+  const viewerProfile = await profileByDeviceToken(
+    request.cookies.get(PARTICIPANT_COOKIE)?.value ?? null,
+  );
 
   const result = await shuffleTeams(deps, {
     gameCode: code.toUpperCase(),
     hostToken,
+    viewerProfileId: viewerProfile?.id ?? null,
     seed: randomInt(2 ** 31),
   });
   if (!result.ok) return jsonDomainError(result.error);

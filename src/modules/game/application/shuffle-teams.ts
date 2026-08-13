@@ -2,11 +2,11 @@ import { err, ok, type Result } from '@/shared/lib/result';
 import { balanceTeams } from '../domain/team-balancer';
 import type { TeamsSnapshot } from '../domain/types';
 import { domainError, type DomainError } from './errors';
+import { isHostAuthorized, type HostAuth } from './host-auth';
 import type { Clock, EventBus, TokenService, UnitOfWork } from './ports';
 
-export interface ShuffleTeamsInput {
+export interface ShuffleTeamsInput extends HostAuth {
   gameCode: string;
-  hostToken: string;
   /** Источник детерминизма; новый seed → новый расклад. */
   seed: number;
 }
@@ -27,8 +27,8 @@ export async function shuffleTeams(
   const result = await deps.uow.withGameLock<Result<{ teams: TeamsSnapshot }, DomainError>>(
     input.gameCode,
     async (tx) => {
-      if (!deps.tokens.verify(input.hostToken, tx.game.hostTokenHash)) {
-        return err(domainError('FORBIDDEN', 'Неверный токен управления игрой'));
+      if (!isHostAuthorized(deps.tokens, tx.game, input)) {
+        return err(domainError('FORBIDDEN', 'Управлять игрой может только организатор'));
       }
 
       const players = (await tx.activeParticipants()).filter(

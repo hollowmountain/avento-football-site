@@ -15,7 +15,25 @@ export const GAME_FORMATS = [
   'ELEVEN_A_SIDE',
 ] as const;
 
-export const SKILL_LEVELS = ['ANY', 'BEGINNER', 'INTERMEDIATE', 'ADVANCED'] as const;
+// ADVANCED — легаси-значение старых записей, в выбор не попадает
+export const SKILL_LEVELS = [
+  'ANY',
+  'BEGINNER',
+  'AMATEUR',
+  'INTERMEDIATE',
+  'ADVANCED',
+  'SEMI_PRO',
+  'PRO',
+] as const;
+
+/** Пять уровней для выбора игроком в кабинете (без ANY и легаси). */
+export const PICKABLE_SKILL_LEVELS = [
+  'BEGINNER',
+  'AMATEUR',
+  'INTERMEDIATE',
+  'SEMI_PRO',
+  'PRO',
+] as const;
 
 export const POSITIONS = ['GOALKEEPER', 'DEFENDER', 'MIDFIELDER', 'FORWARD', 'ANY'] as const;
 
@@ -105,8 +123,8 @@ export const joinGameBodySchema = z.object({
         .max(24, 'максимум 24 симв.')
         .regex(/^[\p{L}\p{N} _.-]+$/u, 'только буквы, цифры, пробел и _ . -'),
     ),
-  position: z.enum(POSITIONS),
-  skillLevel: z.enum(SKILL_LEVELS).default('ANY'),
+  // Позицию и уровень при записи не спрашиваем: уровень берётся из
+  // кабинета участника (у гостей — «не указан»)
   attendance: z.enum(ATTENDANCE).default('CONFIRMED'),
   ...antiAbuseFields,
 });

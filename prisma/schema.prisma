@@ -24,11 +24,15 @@ enum GameFormat {
   ELEVEN_A_SIDE
 }
 
+// 5 уровней игрока (ANY — «не указан»; ADVANCED — легаси, в UI = SEMI_PRO)
 enum SkillLevel {
   ANY
   BEGINNER
+  AMATEUR
   INTERMEDIATE
   ADVANCED
+  SEMI_PRO
+  PRO
 }
 
 enum Position {
@@ -65,6 +69,8 @@ model UserProfile {
   gender        Gender?
   // ISO 3166-1 alpha-2 в нижнем регистре — флаг «для красоты»
   countryCode   String?
+  // Уровень игрока: живёт в профиле, подставляется при записи на игры
+  skillLevel    SkillLevel @default(ANY)
   loginCodeHash String   @unique
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

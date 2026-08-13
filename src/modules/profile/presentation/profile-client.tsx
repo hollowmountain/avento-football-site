@@ -15,8 +15,9 @@ import { Pill } from '@/shared/ui/pill';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { isValidTag, normalizeTag } from '../domain/tag';
-import { GENDERS, type ProfileDto } from '../schemas';
+import { GENDERS, PROFILE_SKILL_LEVELS, type ProfileDto } from '../schemas';
 import { COUNTRY_CODES, countryName, flagEmoji } from './country';
+import { MyGames } from './my-games';
 
 /**
  * Личный кабинет. Пароля нет: профиль привязан к этому браузеру, вход
@@ -212,6 +213,7 @@ function HasProfile({
           <ProfileForm mode="edit" initial={profile} />
         </CardContent>
       </Card>
+      <MyGames />
       <CodeCard onCodeIssued={onCodeIssued} />
     </>
   );
@@ -289,6 +291,7 @@ function ProfileForm({
 }) {
   const t = useTranslations('profile.form');
   const tGenders = useTranslations('profile.genders');
+  const tLevels = useTranslations('levels');
   const tCommon = useTranslations('common');
   const locale = useLocale();
   const queryClient = useQueryClient();
@@ -300,6 +303,9 @@ function ProfileForm({
   );
   const [gender, setGender] = useState<string>(initial?.gender ?? '');
   const [country, setCountry] = useState<string>(initial?.countryCode ?? 'none');
+  const [level, setLevel] = useState<string>(
+    initial === undefined || initial.skillLevel === 'ANY' ? '' : initial.skillLevel,
+  );
   const tagStatus = useTagStatus(tag);
 
   const save = useMutation({
@@ -309,6 +315,7 @@ function ProfileForm({
       age: number | null;
       gender: string | null;
       countryCode: string | null;
+      skillLevel: string | null;
     }) =>
       apiFetch<{ profile: ProfileDto; loginCode?: string }>('/api/me', {
         method: mode === 'create' ? 'POST' : 'PATCH',
@@ -335,6 +342,7 @@ function ProfileForm({
       age: parsedAge !== null && Number.isFinite(parsedAge) ? parsedAge : null,
       gender: gender === '' ? null : gender,
       countryCode: country === 'none' ? null : country,
+      skillLevel: level === '' ? null : level,
     });
   };
 
@@ -412,6 +420,24 @@ function ProfileForm({
             ))}
           </div>
         </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label>{t('level')}</Label>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('level')}>
+          {PROFILE_SKILL_LEVELS.map((value) => (
+            <Button
+              key={value}
+              type="button"
+              size="sm"
+              variant={level === value ? 'secondary' : 'outline'}
+              aria-pressed={level === value}
+              onClick={() => setLevel(level === value ? '' : value)}
+            >
+              {tLevels(value)}
+            </Button>
+          ))}
+        </div>
+        <p className="text-muted-foreground text-xs">{t('levelHint')}</p>
       </div>
       <div className="space-y-1.5">
         <Label>{t('country')}</Label>

@@ -118,8 +118,17 @@ export interface ParticipantReliability {
   lateCancels: number;
 }
 
+/** Игра в списке кабинета: роль зрителя и заполненность состава. */
+export interface ProfileGameItem {
+  game: GameEntity;
+  activeMainCount: number;
+  roles: ('HOST' | 'PLAYER')[];
+}
+
 export interface GameRepository {
   findByCode(code: string): Promise<GameEntity | null>;
+  /** Игры кабинета: созданные и с активной записью, свежие сверху. */
+  listByProfile(profileId: string, limit: number): Promise<ProfileGameItem[]>;
   /** Активные участники (leftAt IS NULL), MAIN — по порядку вступления, затем waitlist. */
   activeParticipants(gameId: string): Promise<ParticipantEntity[]>;
   activeMainCount(gameId: string): Promise<number>;

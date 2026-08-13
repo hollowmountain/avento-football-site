@@ -50,6 +50,37 @@ export class PrismaGameRepository implements GameRepository {
     return row ? toGameEntity(row) : null;
   }
 
+  async listByProfile(profileId: string, limit: number) {
+    const rows = await this.prisma.game.findMany({
+      where: {
+        OR: [
+          { creatorProfileId: profileId },
+          { participants: { some: { profileId, leftAt: null } } },
+        ],
+      },
+      orderBy: { startsAt: 'desc' },
+      take: limit,
+      include: {
+        _count: {
+          select: { participants: { where: { leftAt: null, role: 'MAIN' } } },
+        },
+        participants: {
+          where: { profileId, leftAt: null },
+          select: { id: true },
+          take: 1,
+        },
+      },
+    });
+    return rows.map((row) => ({
+      game: toGameEntity(row),
+      activeMainCount: row._count.participants,
+      roles: [
+        ...(row.creatorProfileId === profileId ? (['HOST'] as const) : []),
+        ...(row.participants.length > 0 ? (['PLAYER'] as const) : []),
+      ],
+    }));
+  }
+
   async activeParticipants(gameId: string) {
     const rows = await this.prisma.participant.findMany({
       where: { gameId, leftAt: null },

@@ -23,6 +23,15 @@ export const tagSchema = z
 
 export const GENDERS = ['MALE', 'FEMALE'] as const;
 
+/** Пять уровней на выбор (ANY — «не указан», ставится по умолчанию). */
+export const PROFILE_SKILL_LEVELS = [
+  'BEGINNER',
+  'AMATEUR',
+  'INTERMEDIATE',
+  'SEMI_PRO',
+  'PRO',
+] as const;
+
 export const profileBodySchema = z.object({
   displayName: displayNameSchema,
   tag: tagSchema,
@@ -33,6 +42,7 @@ export const profileBodySchema = z.object({
     .transform((s) => s.trim().toLowerCase())
     .pipe(z.string().regex(/^[a-z]{2}$/, 'код страны — две буквы'))
     .nullish(),
+  skillLevel: z.enum(PROFILE_SKILL_LEVELS).nullish(),
 });
 
 export const loginBodySchema = z.object({
@@ -48,5 +58,6 @@ export interface ProfileDto {
   age: number | null;
   gender: string | null;
   countryCode: string | null;
+  skillLevel: string;
   createdAt: string;
 }

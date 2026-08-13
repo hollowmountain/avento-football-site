@@ -10,7 +10,7 @@ import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { GAME_FORMATS, SKILL_LEVELS } from '../schemas';
+import { GAME_FORMATS } from '../schemas';
 import type { GamesListData } from './api-types';
 import { GameCard } from './game-card';
 
@@ -48,7 +48,6 @@ export function FeedClient({ initialData }: { initialData: GamesListData }) {
   const t = useTranslations('feed');
   const tHeader = useTranslations('header');
   const tFormats = useTranslations('formats');
-  const tLevels = useTranslations('levels');
 
   const [filters, setFilters] = useState<FeedFilters>(DEFAULT_FILTERS);
   const [cityDraft, setCityDraft] = useState('');
@@ -110,25 +109,6 @@ export function FeedClient({ initialData }: { initialData: GamesListData }) {
               {GAME_FORMATS.map((format) => (
                 <SelectItem key={format} value={format}>
                   {tFormats(format)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="eyebrow text-muted-foreground">{t('filters.level')}</Label>
-          <Select
-            value={filters.skillLevel}
-            onValueChange={(skillLevel) => setFilters((f) => ({ ...f, skillLevel }))}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ANY}>{t('filters.anyLevel')}</SelectItem>
-              {SKILL_LEVELS.map((level) => (
-                <SelectItem key={level} value={level}>
-                  {tLevels(level)}
                 </SelectItem>
               ))}
             </SelectContent>

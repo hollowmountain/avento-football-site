@@ -3,11 +3,11 @@ import { validateGameDraft } from '../domain/game-rules';
 import { isActiveStatus, statusForMainCount } from '../domain/game-status';
 import type { GameEntity } from '../domain/types';
 import { domainError, type DomainError } from './errors';
+import { isHostAuthorized, type HostAuth } from './host-auth';
 import type { Clock, EventBus, GamePatch, TokenService, UnitOfWork } from './ports';
 
-export interface UpdateGameInput {
+export interface UpdateGameInput extends HostAuth {
   gameCode: string;
-  hostToken: string;
   patch: Omit<GamePatch, 'status' | 'teamsSnapshot'>;
 }
 
@@ -31,8 +31,8 @@ export async function updateGame(
   const result = await deps.uow.withGameLock<Result<{ game: GameEntity }, DomainError>>(
     input.gameCode,
     async (tx) => {
-      if (!deps.tokens.verify(input.hostToken, tx.game.hostTokenHash)) {
-        return err(domainError('FORBIDDEN', 'Неверный токен управления игрой'));
+      if (!isHostAuthorized(deps.tokens, tx.game, input)) {
+        return err(domainError('FORBIDDEN', 'Управлять игрой может только организатор'));
       }
       if (!isActiveStatus(tx.game.status)) {
         return err(domainError('GAME_NOT_EDITABLE', 'Игра уже завершена или отменена'));

@@ -20,9 +20,8 @@ import {
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/shared/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { ATTENDANCE, POSITIONS, SKILL_LEVELS, type formTokenSchema } from '../schemas';
+import { ATTENDANCE, type formTokenSchema } from '../schemas';
 import type { ParticipantDto } from './dto';
 
 const joinFormSchema = z.object({
@@ -33,8 +32,6 @@ const joinFormSchema = z.object({
     .min(2, 'минимум 2 симв.')
     .max(24, 'максимум 24 симв.')
     .regex(/^[\p{L}\p{N} _.-]+$/u, 'только буквы, цифры, пробел и _ . -'),
-  position: z.enum(POSITIONS),
-  skillLevel: z.enum(SKILL_LEVELS),
   attendance: z.enum(ATTENDANCE),
   website: z.string().optional(),
 });
@@ -112,8 +109,6 @@ function JoinForm({
   onJoined: () => void;
 }) {
   const t = useTranslations('joinForm');
-  const tPositions = useTranslations('positions');
-  const tLevels = useTranslations('levels');
   const tAttendance = useTranslations('attendance');
   const tCommon = useTranslations('common');
 
@@ -127,8 +122,6 @@ function JoinForm({
     defaultValues: {
       name: profile?.displayName ?? '',
       nickname: profile?.tag ?? '',
-      position: 'ANY',
-      skillLevel: 'ANY',
       attendance: 'CONFIRMED',
       website: '',
     },
@@ -185,50 +178,6 @@ function JoinForm({
             {errors.nickname.message}
           </p>
         ) : null}
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label>{t('position')}</Label>
-          <Controller
-            control={control}
-            name="position"
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {POSITIONS.map((position) => (
-                    <SelectItem key={position} value={position}>
-                      {tPositions(position)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>{t('skillLevel')}</Label>
-          <Controller
-            control={control}
-            name="skillLevel"
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SKILL_LEVELS.map((level) => (
-                    <SelectItem key={level} value={level}>
-                      {tLevels(level)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </div>
       </div>
       <div className="space-y-1.5">
         <Label>{t('attendance')}</Label>
