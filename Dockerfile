@@ -50,23 +50,25 @@ ENV NODE_ENV=production \
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
 
+# Дерево CLI миграций — именно в /app/node_modules: prisma.config.ts
+# импортирует 'prisma/config', а модули резолвятся относительно /app.
+# Кладём первым, чтобы при совпадении пакетов верх взял трейс standalone.
+COPY --from=migrator --chown=nextjs:nodejs /migrator/node_modules ./node_modules
+
 # standalone-бандл + статика (standalone не включает их сам)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Схема и конфиг для `migrate deploy` на старте (standalone их не трейсит).
-# dotenv нужен здесь же: prisma.config.ts начинается с `import 'dotenv/config'`
-# и резолвит его относительно /app.
+# dotenv в зависимости prisma не входит, а prisma.config.ts начинается
+# с `import 'dotenv/config'` — копируем отдельно.
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/dotenv ./node_modules/dotenv
-COPY --from=migrator --chown=nextjs:nodejs /migrator/node_modules /migrator/node_modules
 
 USER nextjs
 EXPOSE 3000
 
-# Миграции — в release-фазе старта, не в build (ТЗ §10).
-# CLI зовём по абсолютному пути: его дерево зависимостей лежит отдельно
-# от /app/node_modules, куда распакован standalone-бандл Next.
-CMD ["sh", "-c", "node /migrator/node_modules/prisma/build/index.js migrate deploy && node server.js"]
+# Миграции — в release-фазе старта, не в build (ТЗ §10)
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node server.js"]
