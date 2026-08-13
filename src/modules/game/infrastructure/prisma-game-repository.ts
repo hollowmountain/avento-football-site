@@ -55,7 +55,7 @@ export class PrismaGameRepository implements GameRepository {
       where: { gameId, leftAt: null },
       orderBy: [{ role: 'asc' }, { waitlistOrder: 'asc' }, { joinedAt: 'asc' }],
       // Тег кабинета — для отображения «@tag» рядом с ником
-      include: { profile: { select: { tag: true } } },
+      include: { profile: { select: { tag: true, countryCode: true } } },
     });
     return rows.map(toParticipantEntity);
   }
@@ -239,7 +239,7 @@ export class PrismaGameRepository implements GameRepository {
     const rows = await this.prisma.$queryRawUnsafe<Array<{ code: string }>>(
       `SELECT code FROM "Game"
         WHERE "status"::text IN ('OPEN', 'FULL')
-          AND "startsAt" + ("durationMinutes" * interval '1 minute') < $1
+          AND "startsAt" + (COALESCE("durationMinutes", 120) * interval '1 minute') < $1
         LIMIT $2`,
       now,
       limit,

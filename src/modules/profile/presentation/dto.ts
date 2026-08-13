@@ -8,6 +8,7 @@ export function profileToDto(profile: ProfileEntity): ProfileDto {
     displayName: profile.displayName,
     age: profile.age,
     gender: profile.gender,
+    countryCode: profile.countryCode,
     createdAt: profile.createdAt.toISOString(),
   };
 }

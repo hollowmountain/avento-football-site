@@ -66,6 +66,7 @@ export function gameDraft(overrides: Partial<CreateGameInput> = {}): CreateGameI
     skillLevel: 'ANY',
     startsAt,
     durationMinutes: 90,
+    teamCount: 2,
     timezone: 'Europe/Moscow',
     minPlayers: 2,
     maxPlayers: 4,
@@ -79,7 +80,9 @@ export function gameDraft(overrides: Partial<CreateGameInput> = {}): CreateGameI
     city: 'Москва',
     hostName: 'Организатор',
     creatorToken: null,
+    creatorProfileId: null,
     createdIpHash: 'ip-hash-test',
+    bypassLimits: false,
     ...overrides,
   };
 }

@@ -28,6 +28,11 @@ export const profileBodySchema = z.object({
   tag: tagSchema,
   age: z.coerce.number().int().min(6, 'минимум 6').max(99, 'максимум 99').nullish(),
   gender: z.enum(GENDERS).nullish(),
+  countryCode: z
+    .string()
+    .transform((s) => s.trim().toLowerCase())
+    .pipe(z.string().regex(/^[a-z]{2}$/, 'код страны — две буквы'))
+    .nullish(),
 });
 
 export const loginBodySchema = z.object({
@@ -42,5 +47,6 @@ export interface ProfileDto {
   displayName: string;
   age: number | null;
   gender: string | null;
+  countryCode: string | null;
   createdAt: string;
 }

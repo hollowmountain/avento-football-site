@@ -63,12 +63,15 @@ model UserProfile {
   displayName   String
   age           Int?
   gender        Gender?
+  // ISO 3166-1 alpha-2 в нижнем регистре — флаг «для красоты»
+  countryCode   String?
   loginCodeHash String   @unique
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   devices      ProfileDevice[]
   participants Participant[]
+  createdGames Game[]
 }
 
 // Устройство = анонимный cookie kickoff_pid; один профиль — много устройств.
@@ -90,7 +93,10 @@ model Game {
   format          GameFormat
   skillLevel      SkillLevel
   startsAt        DateTime
-  durationMinutes Int
+  // null — «как получится»: длительность не фиксирована
+  durationMinutes Int?
+  // Сколько команд играет в этот день (2–4, лишние ждут очереди)
+  teamCount       Int        @default(2)
   timezone        String     @default("Europe/Moscow") // IANA tz; startsAt хранится в UTC
   minPlayers      Int
   maxPlayers      Int
@@ -107,6 +113,9 @@ model Game {
   createdIpHash   String // хеш IP + соль, сам IP не хранится (GDPR)
   // Хеш анонимного identity-токена создателя (лимит одновременных игр на организатора)
   creatorTokenHash String?
+  // Кабинет создателя: с ним связаны права организатора и будущий матч-день
+  creatorProfileId String?
+  creatorProfile   UserProfile? @relation(fields: [creatorProfileId], references: [id], onDelete: SetNull)
   teamsSnapshot   Json? // результат жеребьёвки
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt

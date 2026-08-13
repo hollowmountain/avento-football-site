@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { z } from 'zod';
+import { flagEmoji } from '@/modules/profile/presentation/country';
 import { WeatherBadge } from '@/modules/weather/presentation/weather-badge';
 import { useGameEvents } from '@/shared/hooks/use-game-events';
 import { useHostToken } from '@/shared/hooks/use-host-token';
@@ -166,7 +167,10 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
 
         <p className="text-muted-foreground text-sm">
           {formatGameDate(game.startsAt, game.timezone)} ·{' '}
-          {t('duration', { count: game.durationMinutes })}
+          {game.durationMinutes === null
+            ? t('durationOpen')
+            : t('duration', { count: game.durationMinutes })}
+          {game.teamCount > 2 ? <> · {t('teams', { count: game.teamCount })}</> : null}
           <br />
           {game.venueName} · {game.city}
         </p>
@@ -406,6 +410,11 @@ function PlayerRow({
       <span className="flex min-w-0 flex-col">
         <span className="truncate text-sm font-semibold">
           {participant.nickname}
+          {participant.country !== null ? (
+            <span className="ml-1.5" aria-hidden>
+              {flagEmoji(participant.country)}
+            </span>
+          ) : null}
           {participant.tag !== null ? (
             <span className="text-lamp ml-1.5 text-xs font-medium">@{participant.tag}</span>
           ) : null}

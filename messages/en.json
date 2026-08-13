@@ -119,6 +119,8 @@
     "priceFree": "Free game",
     "detailsTitle": "Details",
     "duration": "{count} minutes",
+    "durationOpen": "open-ended",
+    "teams": "{count} teams",
     "cancelDeadline": "Free cancellation until {date}",
     "addToCalendar": "Add to calendar",
     "share": "Share",
@@ -174,7 +176,15 @@
       "priceHint": "0 — free game. The price is split between confirmed players",
       "cancelDeadline": "Cancellation deadline",
       "cancelDeadlineHint": "Dropping out after this time hurts the player's reliability score",
-      "hostName": "Your name"
+      "durationFlex": "Open-ended",
+      "teamCount": "Teams",
+      "teamCountOption": "{count} teams",
+      "teamCountHint": "With 3–4 teams the extras wait their turn and rotate in, like in the quick game"
+    },
+    "profileGate": {
+      "title": "Profile needed",
+      "lead": "Only players with a profile can create games: the organizer name comes from your profile and all your games live in one place.",
+      "cta": "Create a profile"
     },
     "submit": "Create game",
     "submitting": "Creating…",
@@ -203,6 +213,13 @@
     "submitting": "Signing up…",
     "joined": "You're in!",
     "waitlisted": "No slots left — you're on the waitlist"
+  },
+  "welcome": {
+    "title": "Welcome!",
+    "lead": "AVENTO ASCENT is pickup football. Create a profile with a unique tag to sign up in one tap and build your stats — or just look around.",
+    "register": "Create a profile",
+    "guest": "Continue as guest",
+    "hint": "You can create a profile anytime — the player icon in the header"
   },
   "profile": {
     "title": "Profile",
@@ -234,6 +251,12 @@
       "tag": "Tag",
       "tagPlaceholder": "sanya_10",
       "tagHint": "3–20 characters: latin letters, digits and “_”, starts with a letter",
+      "tagFree": "Tag is available ✓",
+      "tagTaken": "Tag is taken — try another",
+      "tagYours": "This is your current tag",
+      "country": "Country flag",
+      "countryNone": "No flag",
+      "countryHint": "Just for looks — shown next to your tag",
       "age": "Age",
       "agePlaceholder": "18",
       "gender": "Gender",

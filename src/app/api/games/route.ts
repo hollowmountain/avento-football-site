@@ -3,6 +3,7 @@ import { resolveCoordinates } from '@/modules/geo/application/resolve-coordinate
 import { getGeocoder } from '@/modules/geo/composition';
 import { createGame } from '@/modules/game/application/create-game';
 import { getGameDeps } from '@/modules/game/composition';
+import { getProfileDeps } from '@/modules/profile/composition';
 import { lazySweep } from '@/modules/game/lazy-sweep';
 import { gameToDto, gameToSummaryDto } from '@/modules/game/presentation/dto';
 import { createGameBodySchema, listGamesQuerySchema } from '@/modules/game/schemas';
@@ -21,12 +22,7 @@ import {
   isHoneypotTripped,
   turnstileDisabled,
 } from '@/shared/security/anti-abuse';
-import {
-  PARTICIPANT_COOKIE,
-  clientIpHash,
-  getRateLimiter,
-  participantCookieOptions,
-} from '@/shared/security/api-guard';
+import { PARTICIPANT_COOKIE, clientIpHash, getRateLimiter } from '@/shared/security/api-guard';
 import { generateGameCode } from '@/shared/security/game-code';
 
 export const dynamic = 'force-dynamic';
@@ -82,32 +78,52 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
   }
 
+  // Создавать игры могут только игроки с кабинетом: имя организатора
+  // берём из профиля, а участие в лимитах и правах — по кабинету
+  const existingIdentity = request.cookies.get(PARTICIPANT_COOKIE)?.value ?? null;
+  const profileDeps = getProfileDeps();
+  const profile =
+    existingIdentity === null
+      ? null
+      : await profileDeps.profiles.findByDeviceHash(deps.tokens.hash(existingIdentity));
+  if (profile === null) {
+    return jsonError(
+      'PROFILE_REQUIRED',
+      'Создавать игры могут только игроки с кабинетом. Создайте профиль — это минута.',
+      401,
+    );
+  }
+  // Админ-теги (ENV ADMIN_TAGS): без лимитов количества и без дедупа
+  const isAdmin = env.ADMIN_TAGS.includes(profile.tag);
+
   // Лимиты создания игр (fail-closed: хранилище недоступно → отказ).
   // Здесь только ПРОВЕРКА: квота списывается ниже, после успешного создания,
   // иначе опечатка в форме блокировала бы человека на весь период окна.
-  const per10min = await limiter.check(
-    `cg10:${ipHash}`,
-    env.RATE_CREATE_GAME_PER_10MIN,
-    600,
-    'closed',
-  );
-  if (!per10min.allowed) {
-    return jsonRateLimited(
-      `Вы недавно создали игру. Следующую можно создать через ${humanizeSeconds(per10min.retryAfterSeconds)}.`,
-      per10min.retryAfterSeconds,
+  if (!isAdmin) {
+    const per10min = await limiter.check(
+      `cg10:${ipHash}`,
+      env.RATE_CREATE_GAME_PER_10MIN,
+      600,
+      'closed',
     );
-  }
-  const perDay = await limiter.check(
-    `cgday:${ipHash}`,
-    env.RATE_CREATE_GAME_PER_DAY,
-    86_400,
-    'closed',
-  );
-  if (!perDay.allowed) {
-    return jsonRateLimited(
-      `Вы уже создали ${env.RATE_CREATE_GAME_PER_DAY} игры за сутки. Следующую можно создать через ${humanizeSeconds(perDay.retryAfterSeconds)}.`,
-      perDay.retryAfterSeconds,
+    if (!per10min.allowed) {
+      return jsonRateLimited(
+        `Вы недавно создали игру. Следующую можно создать через ${humanizeSeconds(per10min.retryAfterSeconds)}.`,
+        per10min.retryAfterSeconds,
+      );
+    }
+    const perDay = await limiter.check(
+      `cgday:${ipHash}`,
+      env.RATE_CREATE_GAME_PER_DAY,
+      86_400,
+      'closed',
     );
+    if (!perDay.allowed) {
+      return jsonRateLimited(
+        `Вы уже создали ${env.RATE_CREATE_GAME_PER_DAY} игры за сутки. Следующую можно создать через ${humanizeSeconds(perDay.retryAfterSeconds)}.`,
+        perDay.retryAfterSeconds,
+      );
+    }
   }
 
   // Координаты у человека не спрашиваем — определяем по адресу
@@ -125,9 +141,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const existingIdentity = request.cookies.get(PARTICIPANT_COOKIE)?.value ?? null;
-  const creatorToken = existingIdentity ?? deps.tokens.generate();
-
   const result = await createGame(deps, {
     title: parsed.data.title,
     description: parsed.data.description || null,
@@ -135,6 +148,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     skillLevel: parsed.data.skillLevel,
     startsAt: parsed.data.startsAt,
     durationMinutes: parsed.data.durationMinutes,
+    teamCount: parsed.data.teamCount,
     timezone: parsed.data.timezone,
     minPlayers: parsed.data.minPlayers,
     maxPlayers: parsed.data.maxPlayers,
@@ -146,28 +160,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     latitude: coordinates.latitude,
     longitude: coordinates.longitude,
     city: parsed.data.city,
-    hostName: parsed.data.hostName,
-    creatorToken,
+    // Имя организатора — из кабинета, отдельное поле формы убрано
+    hostName: profile.displayName,
+    creatorToken: existingIdentity,
+    creatorProfileId: profile.id,
     createdIpHash: ipHash,
+    bypassLimits: isAdmin,
   });
 
   if (!result.ok) return jsonDomainError(result.error);
 
-  // Игра создана — только теперь тратим квоту
-  await Promise.all([
-    limiter.consume(`cg10:${ipHash}`, env.RATE_CREATE_GAME_PER_10MIN, 600, 'closed'),
-    limiter.consume(`cgday:${ipHash}`, env.RATE_CREATE_GAME_PER_DAY, 86_400, 'closed'),
-  ]);
+  // Игра создана — только теперь тратим квоту (админ квоту не тратит)
+  if (!isAdmin) {
+    await Promise.all([
+      limiter.consume(`cg10:${ipHash}`, env.RATE_CREATE_GAME_PER_10MIN, 600, 'closed'),
+      limiter.consume(`cgday:${ipHash}`, env.RATE_CREATE_GAME_PER_DAY, 86_400, 'closed'),
+    ]);
+  }
 
   log.info({ code: result.value.game.code }, 'игра создана');
-  const response = jsonOk(
+  return jsonOk(
     { game: gameToDto(result.value.game), hostToken: result.value.hostToken },
     { status: 201 },
   );
-  if (!existingIdentity) {
-    response.cookies.set(PARTICIPANT_COOKIE, creatorToken, participantCookieOptions);
-  }
-  return response;
 }
 
 /** GET /api/games — публичная лента с фильтрами и cursor-пагинацией. */

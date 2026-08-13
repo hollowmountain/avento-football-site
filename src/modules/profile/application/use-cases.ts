@@ -19,6 +19,7 @@ export interface ProfileInput {
   tag: string;
   age: number | null;
   gender: Gender | null;
+  countryCode: string | null;
 }
 
 export interface CreatedProfile {
@@ -45,6 +46,7 @@ export async function createProfile(
     displayName: input.displayName,
     age: input.age,
     gender: input.gender,
+    countryCode: input.countryCode,
     loginCodeHash: deps.tokens.hash(loginCode),
     deviceTokenHash: input.deviceTokenHash,
   });
@@ -67,6 +69,7 @@ export async function updateProfile(
     displayName: input.displayName,
     age: input.age,
     gender: input.gender,
+    countryCode: input.countryCode,
   });
   return ok(updated);
 }

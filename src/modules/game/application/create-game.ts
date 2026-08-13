@@ -18,7 +18,10 @@ export interface CreateGameInput {
   format: GameFormat;
   skillLevel: SkillLevel;
   startsAt: Date;
-  durationMinutes: number;
+  /** null — «как получится»: длительность не фиксирована. */
+  durationMinutes: number | null;
+  /** Сколько команд играет (2–4). */
+  teamCount: number;
   timezone: string;
   minPlayers: number;
   maxPlayers: number;
@@ -33,7 +36,11 @@ export interface CreateGameInput {
   hostName: string;
   /** Анонимный identity-токен создателя (cookie), plain. */
   creatorToken: string | null;
+  /** Кабинет создателя. */
+  creatorProfileId: string | null;
   createdIpHash: string;
+  /** Админ-тег: без лимита активных игр и без дедупа по месту. */
+  bypassLimits: boolean;
 }
 
 export interface CreateGameOutput {
@@ -69,7 +76,7 @@ export async function createGame(
 
   const creatorTokenHash = input.creatorToken ? deps.tokens.hash(input.creatorToken) : null;
 
-  if (creatorTokenHash) {
+  if (creatorTokenHash && !input.bypassLimits) {
     const active = await deps.games.countActiveByCreator(creatorTokenHash, now);
     if (active >= deps.config.maxActiveGamesPerHost) {
       return err(
@@ -81,21 +88,24 @@ export async function createGame(
     }
   }
 
-  const duplicate = await deps.games.findNearbyAt({
-    latitude: input.latitude,
-    longitude: input.longitude,
-    radiusMeters: deps.config.dedupRadiusMeters,
-    startsAt: input.startsAt,
-    windowMinutes: deps.config.dedupWindowMinutes,
-  });
-  if (duplicate) {
-    return err(
-      domainError(
-        'DUPLICATE_GAME',
-        `Рядом уже есть игра «${duplicate.title}» (${duplicate.code}) примерно на это время`,
-        { code: duplicate.code },
-      ),
-    );
+  // Админ проводит турниры: несколько игр на одной площадке — не дубль
+  if (!input.bypassLimits) {
+    const duplicate = await deps.games.findNearbyAt({
+      latitude: input.latitude,
+      longitude: input.longitude,
+      radiusMeters: deps.config.dedupRadiusMeters,
+      startsAt: input.startsAt,
+      windowMinutes: deps.config.dedupWindowMinutes,
+    });
+    if (duplicate) {
+      return err(
+        domainError(
+          'DUPLICATE_GAME',
+          `Рядом уже есть игра «${duplicate.title}» (${duplicate.code}) примерно на это время`,
+          { code: duplicate.code },
+        ),
+      );
+    }
   }
 
   const hostToken = deps.tokens.generate();
@@ -111,6 +121,7 @@ export async function createGame(
         skillLevel: input.skillLevel,
         startsAt: input.startsAt,
         durationMinutes: input.durationMinutes,
+        teamCount: input.teamCount,
         timezone: input.timezone,
         minPlayers: input.minPlayers,
         maxPlayers: input.maxPlayers,
@@ -125,6 +136,7 @@ export async function createGame(
         hostName: input.hostName,
         hostTokenHash,
         creatorTokenHash,
+        creatorProfileId: input.creatorProfileId,
         createdIpHash: input.createdIpHash,
       });
       return ok({ game, hostToken });

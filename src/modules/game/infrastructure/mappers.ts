@@ -12,6 +12,7 @@ export function toGameEntity(row: Game): GameEntity {
     skillLevel: row.skillLevel,
     startsAt: row.startsAt,
     durationMinutes: row.durationMinutes,
+    teamCount: row.teamCount,
     timezone: row.timezone,
     minPlayers: row.minPlayers,
     maxPlayers: row.maxPlayers,
@@ -25,6 +26,7 @@ export function toGameEntity(row: Game): GameEntity {
     city: row.city,
     hostName: row.hostName,
     hostTokenHash: row.hostTokenHash,
+    creatorProfileId: row.creatorProfileId,
     teamsSnapshot: (row.teamsSnapshot as unknown as TeamsSnapshot | null) ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -32,7 +34,7 @@ export function toGameEntity(row: Game): GameEntity {
 }
 
 export function toParticipantEntity(
-  row: Participant & { profile?: { tag: string } | null },
+  row: Participant & { profile?: { tag: string; countryCode: string | null } | null },
 ): ParticipantEntity {
   return {
     id: row.id,
@@ -51,5 +53,6 @@ export function toParticipantEntity(
     profileId: row.profileId,
     // Тег есть только у выборок с include: без него участник — «гость»
     profileTag: row.profile?.tag ?? null,
+    profileCountry: row.profile?.countryCode ?? null,
   };
 }

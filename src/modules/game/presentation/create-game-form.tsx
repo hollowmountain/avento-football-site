@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { Check, Copy, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
@@ -8,6 +9,7 @@ import { useState } from 'react';
 import { Controller, useForm, type UseFormSetError } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import type { ProfileDto } from '@/modules/profile/schemas';
 import { ApiRequestError, apiFetch } from '@/shared/lib/api-client';
 import { toDatetimeLocalValue } from '@/shared/lib/format';
 import { saveHostToken } from '@/shared/lib/host-tokens';
@@ -17,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/sha
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
+import { Skeleton } from '@/shared/ui/skeleton';
 import { Textarea } from '@/shared/ui/textarea';
 import { MAX_START_DAYS_AHEAD } from '../domain/game-rules';
 import { GAME_FORMATS, SKILL_LEVELS, type formTokenSchema } from '../schemas';
@@ -36,7 +39,11 @@ const createFormSchema = z
     format: z.enum(GAME_FORMATS),
     skillLevel: z.enum(SKILL_LEVELS),
     startsAtLocal: z.string().min(1, 'укажите дату'),
+    // При «как получится» поле неактивно, но число в состоянии остаётся —
+    // валидация не спотыкается, а на сервер уходит null
+    flexDuration: z.boolean(),
     durationMinutes: z.number({ message: 'число' }).int().min(30).max(480),
+    teamCount: z.number().int().min(2).max(4),
     venueName: z.string().trim().min(2, 'минимум 2 симв.').max(80),
     address: z.string().trim().min(3, 'минимум 3 симв.').max(160),
     city: z.string().trim().min(2, 'минимум 2 симв.').max(60),
@@ -44,7 +51,6 @@ const createFormSchema = z
     maxPlayers: z.number({ message: 'число' }).int().min(4).max(30),
     priceRub: z.number({ message: 'число' }).min(0).max(1_000_000),
     cancelDeadlineLocal: z.string().optional(),
-    hostName: z.string().trim().min(2, 'минимум 2 симв.').max(60),
     website: z.string().optional(),
   })
   .refine((d) => d.maxPlayers >= d.minPlayers, {
@@ -91,7 +97,6 @@ const SERVER_FIELD_MAP: Record<string, keyof FormValues> = {
   venueName: 'venueName',
   address: 'address',
   city: 'city',
-  hostName: 'hostName',
 };
 
 /** Раскладывает ответ сервера по полям формы. true — что-то удалось показать. */
@@ -124,6 +129,14 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
 
   const [defaultStart] = useState(defaultStartValue);
 
+  // Создавать игры могут только игроки с кабинетом: имя организатора
+  // берётся из профиля, форма без него не открывается
+  const me = useQuery({
+    queryKey: ['me'],
+    queryFn: () => apiFetch<{ profile: ProfileDto | null }>('/api/me'),
+    staleTime: 60_000,
+  });
+
   const {
     register,
     handleSubmit,
@@ -138,7 +151,9 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
       format: 'FREE',
       skillLevel: 'ANY',
       startsAtLocal: defaultStart,
+      flexDuration: false,
       durationMinutes: 90,
+      teamCount: 2,
       venueName: '',
       address: '',
       city: defaults.city,
@@ -146,7 +161,6 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
       maxPlayers: 10,
       priceRub: 0,
       cancelDeadlineLocal: '',
-      hostName: '',
       website: '',
     },
   });
@@ -168,7 +182,8 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
           format: values.format,
           skillLevel: values.skillLevel,
           startsAt: startsAt.toISOString(),
-          durationMinutes: values.durationMinutes,
+          durationMinutes: values.flexDuration ? null : values.durationMinutes,
+          teamCount: values.teamCount,
           timezone: defaults.timezone,
           minPlayers: values.minPlayers,
           maxPlayers: values.maxPlayers,
@@ -178,7 +193,6 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
           venueName: values.venueName,
           address: values.address,
           city: values.city,
-          hostName: values.hostName,
           website: values.website,
           formToken,
         }),
@@ -199,6 +213,36 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
 
   if (created) {
     return <CreatedGameScreen created={created} />;
+  }
+
+  if (me.isPending) {
+    return (
+      <div className="flex flex-col gap-3 py-6" aria-busy="true">
+        <Skeleton className="h-10 w-1/2" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+    );
+  }
+
+  if ((me.data?.profile ?? null) === null) {
+    return (
+      <section className="mx-auto flex max-w-md flex-col gap-4 py-8">
+        <h1 className="display text-3xl">{t('title')}</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle className="display text-xl tracking-wide">
+              {t('profileGate.title')}
+            </CardTitle>
+            <CardDescription>{t('profileGate.lead')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="display text-base tracking-wide">
+              <Link href="/me">{t('profileGate.cta')}</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
+    );
   }
 
   const fieldError = (key: keyof FormValues) =>
@@ -252,13 +296,31 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cg-duration">{t('fields.duration')}</Label>
-            <Input
-              id="cg-duration"
-              type="number"
-              min={30}
-              max={480}
-              step={15}
-              {...register('durationMinutes', { valueAsNumber: true })}
+            <Controller
+              control={control}
+              name="flexDuration"
+              render={({ field }) => (
+                <div className="flex gap-2">
+                  <Input
+                    id="cg-duration"
+                    type="number"
+                    min={30}
+                    max={480}
+                    step={15}
+                    disabled={field.value}
+                    className="flex-1"
+                    {...register('durationMinutes', { valueAsNumber: true })}
+                  />
+                  <Button
+                    type="button"
+                    variant={field.value ? 'secondary' : 'outline'}
+                    aria-pressed={field.value}
+                    onClick={() => field.onChange(!field.value)}
+                  >
+                    {t('fields.durationFlex')}
+                  </Button>
+                </div>
+              )}
             />
             {fieldError('durationMinutes')}
           </div>
@@ -384,9 +446,28 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
             <p className="text-muted-foreground text-xs">{t('fields.cancelDeadlineHint')}</p>
           </div>
           <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="cg-host">{t('fields.hostName')}</Label>
-            <Input id="cg-host" {...register('hostName')} />
-            {fieldError('hostName')}
+            <Label>{t('fields.teamCount')}</Label>
+            <Controller
+              control={control}
+              name="teamCount"
+              render={({ field }) => (
+                <div className="flex gap-1.5" role="group" aria-label={t('fields.teamCount')}>
+                  {[2, 3, 4].map((count) => (
+                    <Button
+                      key={count}
+                      type="button"
+                      size="sm"
+                      variant={field.value === count ? 'secondary' : 'outline'}
+                      aria-pressed={field.value === count}
+                      onClick={() => field.onChange(count)}
+                    >
+                      {t('fields.teamCountOption', { count })}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            />
+            <p className="text-muted-foreground text-xs">{t('fields.teamCountHint')}</p>
           </div>
         </CardContent>
       </Card>

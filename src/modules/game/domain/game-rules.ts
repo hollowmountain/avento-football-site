@@ -14,7 +14,8 @@ export const LATE_CANCEL_HOURS = 3;
 export interface GameTimingDraft {
   startsAt: Date;
   cancelDeadline: Date;
-  durationMinutes: number;
+  /** null — «как получится»: длительность не проверяется. */
+  durationMinutes: number | null;
 }
 
 export interface PlayerCountsDraft {
@@ -50,8 +51,8 @@ export function validateGameDraft(
     });
   }
   if (
-    draft.durationMinutes < DURATION_MIN_MINUTES ||
-    draft.durationMinutes > DURATION_MAX_MINUTES
+    draft.durationMinutes !== null &&
+    (draft.durationMinutes < DURATION_MIN_MINUTES || draft.durationMinutes > DURATION_MAX_MINUTES)
   ) {
     violations.push({
       field: 'durationMinutes',

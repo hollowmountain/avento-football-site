@@ -41,7 +41,11 @@ export async function updateGame(
       const draft = {
         startsAt: input.patch.startsAt ?? tx.game.startsAt,
         cancelDeadline: input.patch.cancelDeadline ?? tx.game.cancelDeadline,
-        durationMinutes: input.patch.durationMinutes ?? tx.game.durationMinutes,
+        // null — валидный сброс на «как получится», undefined — «не менять»
+        durationMinutes:
+          input.patch.durationMinutes !== undefined
+            ? input.patch.durationMinutes
+            : tx.game.durationMinutes,
         minPlayers: input.patch.minPlayers ?? tx.game.minPlayers,
         maxPlayers: input.patch.maxPlayers ?? tx.game.maxPlayers,
         pricePerPitch: input.patch.pricePerPitch ?? tx.game.pricePerPitch,

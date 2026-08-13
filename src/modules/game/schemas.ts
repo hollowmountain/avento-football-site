@@ -74,7 +74,10 @@ export const createGameBodySchema = z.object({
   format: z.enum(GAME_FORMATS),
   skillLevel: z.enum(SKILL_LEVELS),
   startsAt: z.coerce.date(),
-  durationMinutes: z.coerce.number().int().min(30).max(480),
+  /** null — «как получится»: длительность заранее не фиксируется. */
+  durationMinutes: z.coerce.number().int().min(30).max(480).nullable(),
+  /** Сколько команд играет (лишние ждут очереди, как в быстрой игре). */
+  teamCount: z.coerce.number().int().min(2).max(4).default(2),
   timezone: timezoneSchema,
   minPlayers: z.coerce.number().int().min(2).max(30),
   maxPlayers: z.coerce.number().int().min(4).max(30),
@@ -85,7 +88,6 @@ export const createGameBodySchema = z.object({
   venueName: singleLine(2, 80),
   address: singleLine(3, 160),
   city: singleLine(2, 60),
-  hostName: singleLine(2, 60),
   ...antiAbuseFields,
 });
 
@@ -118,7 +120,7 @@ export const patchGameBodySchema = z
     format: z.enum(GAME_FORMATS),
     skillLevel: z.enum(SKILL_LEVELS),
     startsAt: z.coerce.date(),
-    durationMinutes: z.coerce.number().int().min(30).max(480),
+    durationMinutes: z.coerce.number().int().min(30).max(480).nullable(),
     minPlayers: z.coerce.number().int().min(2).max(30),
     maxPlayers: z.coerce.number().int().min(4).max(30),
     pricePerPitch: z.coerce.number().int().min(0).max(100_000_000),

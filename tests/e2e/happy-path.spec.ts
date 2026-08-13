@@ -6,16 +6,25 @@ import { expect, test } from '@playwright/test';
  * видит его в составе без перезагрузки (SSE), игрок отказывается.
  */
 test('создание игры → приглашение → вступление → live-обновление → отказ', async ({ browser }) => {
-  // --- Организатор создаёт игру ---
+  // --- Организатор: сначала кабинет (без него создание закрыто) ---
   const hostContext = await browser.newContext();
+  // Приветственное окно выбора «профиль или гость» в e2e не тестируем
+  await hostContext.addInitScript(() => localStorage.setItem('avento_welcome_v1', 'guest'));
   const hostPage = await hostContext.newPage();
 
+  await hostPage.goto('/me');
+  await hostPage.locator('#profile-name').fill('Организатор E2E');
+  await hostPage.locator('#profile-tag').fill('e2e_host');
+  await hostPage.getByRole('button', { name: 'Создать профиль' }).click();
+  await expect(hostPage.getByText('Ваш личный код')).toBeVisible();
+
+  // --- Организатор создаёт игру ---
   await hostPage.goto('/games/new');
   await hostPage.getByLabel('Название').fill('E2E: вечерний матч');
   await hostPage.getByLabel('Площадка').fill('Стадион Тестовый');
-  // Координаты не вводим: сервер определяет их по адресу
+  // Координаты не вводим: сервер определяет их по адресу.
+  // Имя организатора не вводим: оно берётся из кабинета
   await hostPage.getByLabel('Адрес').fill('Тестовая улица, 1');
-  await hostPage.getByLabel('Ваше имя').fill('Организатор E2E');
 
   // Time-trap: форма должна прожить минимум 2 секунды до сабмита
   await hostPage.waitForTimeout(2300);
@@ -41,6 +50,7 @@ test('создание игры → приглашение → вступлен�
 
   // --- Игрок открывает ссылку в «другом браузере» ---
   const playerContext = await browser.newContext();
+  await playerContext.addInitScript(() => localStorage.setItem('avento_welcome_v1', 'guest'));
   const playerPage = await playerContext.newPage();
   await playerPage.goto(`/games/${code}`);
   await expect(playerPage.getByRole('heading', { name: 'E2E: вечерний матч' })).toBeVisible();

@@ -39,7 +39,10 @@ export interface GameEntity {
   format: GameFormat;
   skillLevel: SkillLevel;
   startsAt: Date;
-  durationMinutes: number;
+  /** null — «как получится»: длительность заранее не фиксирована. */
+  durationMinutes: number | null;
+  /** Сколько команд играет (2–4, лишние ждут очереди). */
+  teamCount: number;
   timezone: string;
   minPlayers: number;
   maxPlayers: number;
@@ -53,6 +56,8 @@ export interface GameEntity {
   city: string;
   hostName: string;
   hostTokenHash: string;
+  /** Кабинет создателя (null — старые игры до кабинетов). */
+  creatorProfileId: string | null;
   teamsSnapshot: TeamsSnapshot | null;
   createdAt: Date;
   updatedAt: Date;
@@ -77,4 +82,6 @@ export interface ParticipantEntity {
   profileId: string | null;
   /** Тег профиля для отображения (@tag); заполняется выборкой с include. */
   profileTag: string | null;
+  /** Код страны из профиля — флаг рядом с ником. */
+  profileCountry: string | null;
 }

@@ -29,6 +29,17 @@ const envSchema = z.object({
   DEFAULT_CURRENCY: z.string().length(3).default('RUB'),
   DEFAULT_TIMEZONE: z.string().min(1).default('Europe/Moscow'),
 
+  // Теги-администраторы: создают игры без лимитов количества и дедупа
+  ADMIN_TAGS: z
+    .string()
+    .default('ice')
+    .transform((raw) =>
+      raw
+        .split(',')
+        .map((tag) => tag.trim().toLowerCase())
+        .filter((tag) => tag !== ''),
+    ),
+
   // Anti-abuse (значения лимитов — только через ENV, не в коде)
   RATE_CREATE_GAME_PER_DAY: z.coerce.number().int().positive().default(3),
   RATE_CREATE_GAME_PER_10MIN: z.coerce.number().int().positive().default(1),

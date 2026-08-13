@@ -44,7 +44,8 @@ export async function closeExpiredGames(deps: CloseExpiredDeps): Promise<CloseEx
 
   for (const code of await deps.games.findCodesToFinish(now, BATCH_LIMIT)) {
     const changed = await deps.uow.withGameLock(code, async (tx) => {
-      const endsAt = tx.game.startsAt.getTime() + tx.game.durationMinutes * 60_000;
+      // «Как получится» (null) закрываем через 2 часа после начала
+      const endsAt = tx.game.startsAt.getTime() + (tx.game.durationMinutes ?? 120) * 60_000;
       if (!canTransition(tx.game.status, 'FINISHED') || endsAt > now.getTime()) {
         return false;
       }

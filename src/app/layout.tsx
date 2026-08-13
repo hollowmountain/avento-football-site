@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Sofia_Sans, Sofia_Sans_Extra_Condensed } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getTranslations } from 'next-intl/server';
+import { WelcomeGate } from '@/modules/profile/presentation/welcome-gate';
 import { env } from '@/shared/lib/env';
 import { PageTransition } from '@/shared/ui/page-transition';
 import { SiteHeader } from '@/shared/ui/site-header';
@@ -61,6 +62,7 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
             <footer className="text-muted-foreground border-t py-5 text-center">
               <span className="eyebrow">{tCommon('appName')}</span>
             </footer>
+            <WelcomeGate />
           </Providers>
         </NextIntlClientProvider>
       </body>

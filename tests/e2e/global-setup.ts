@@ -15,7 +15,7 @@ export default async function globalSetup(): Promise<void> {
   const client = new Client({ connectionString: url });
   await client.connect();
   await client.query(
-    'TRUNCATE "Game", "Participant", "ParticipantProfile", "RateLimitEvent", "AuditLog", "WeatherCache" CASCADE',
+    'TRUNCATE "Game", "Participant", "ParticipantProfile", "UserProfile", "ProfileDevice", "RateLimitEvent", "AuditLog", "WeatherCache" CASCADE',
   );
   await client.end();
 }

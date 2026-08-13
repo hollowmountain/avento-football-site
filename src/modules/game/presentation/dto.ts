@@ -20,6 +20,8 @@ export interface ParticipantDto {
   reliability: ReliabilityBadge;
   /** Тег кабинета («vanya» без @); null — гость. */
   tag: string | null;
+  /** Код страны из профиля — флаг рядом с ником. */
+  country: string | null;
 }
 
 export interface GameDto {
@@ -30,7 +32,10 @@ export interface GameDto {
   format: string;
   skillLevel: string;
   startsAt: string;
-  durationMinutes: number;
+  /** null — «как получится»: длительность не фиксирована. */
+  durationMinutes: number | null;
+  /** Сколько команд играет (2–4). */
+  teamCount: number;
   timezone: string;
   minPlayers: number;
   maxPlayers: number;
@@ -65,6 +70,7 @@ export function gameToDto(game: GameEntity): GameDto {
     skillLevel: game.skillLevel,
     startsAt: game.startsAt.toISOString(),
     durationMinutes: game.durationMinutes,
+    teamCount: game.teamCount,
     timezone: game.timezone,
     minPlayers: game.minPlayers,
     maxPlayers: game.maxPlayers,
@@ -114,5 +120,6 @@ export function participantToDto(
     isYou: viewerTokenHash !== null && participant.tokenHash === viewerTokenHash,
     reliability: reliabilityBadge(profile ?? { gamesJoined: 0, gamesAttended: 0, lateCancels: 0 }),
     tag: participant.profileTag,
+    country: participant.profileCountry,
   };
 }

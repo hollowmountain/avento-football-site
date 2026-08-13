@@ -2,8 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Copy, KeyRound, UserRound } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { ApiRequestError, apiFetch } from '@/shared/lib/api-client';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert';
@@ -12,8 +12,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/sha
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Pill } from '@/shared/ui/pill';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { isValidTag, normalizeTag } from '../domain/tag';
 import { GENDERS, type ProfileDto } from '../schemas';
+import { COUNTRY_CODES, countryName, flagEmoji } from './country';
 
 /**
  * Личный кабинет. Пароля нет: профиль привязан к этому браузеру, вход
@@ -47,7 +50,14 @@ export function ProfileClient() {
     <section className="mx-auto flex max-w-md flex-col gap-4">
       <header className="flex items-baseline gap-3">
         <h1 className="display text-3xl leading-none tracking-tight">{t('title')}</h1>
-        {profile !== null ? <Pill tone="accent">@{profile.tag}</Pill> : null}
+        {profile !== null ? (
+          <span className="flex items-center gap-1.5">
+            {profile.countryCode !== null ? (
+              <span aria-hidden>{flagEmoji(profile.countryCode)}</span>
+            ) : null}
+            <Pill tone="accent">@{profile.tag}</Pill>
+          </span>
+        ) : null}
       </header>
       {freshCode !== null ? (
         <CodeAlert
@@ -242,6 +252,32 @@ function CodeCard({ onCodeIssued }: { onCodeIssued: (code: string) => void }) {
 
 // ─── Форма профиля (создание и правка) ──────────────────────────────────
 
+/** Живой статус тега: подсказка «свободен/занят» прямо при вводе. */
+function useTagStatus(rawTag: string) {
+  const [debounced, setDebounced] = useState('');
+
+  const normalized = normalizeTag(rawTag);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(normalized), 350);
+    return () => clearTimeout(id);
+  }, [normalized]);
+
+  const check = useQuery({
+    queryKey: ['tag-check', debounced],
+    queryFn: () =>
+      apiFetch<{ status: 'invalid' | 'free' | 'taken' | 'yours' }>(
+        `/api/me/tag?tag=${encodeURIComponent(debounced)}`,
+      ),
+    enabled: isValidTag(debounced),
+    staleTime: 10_000,
+  });
+
+  if (normalized.length < 3) return null;
+  if (!isValidTag(normalized)) return 'invalid' as const;
+  if (debounced !== normalized || check.isPending) return 'checking' as const;
+  return check.data?.status ?? null;
+}
+
 function ProfileForm({
   mode,
   initial,
@@ -254,6 +290,7 @@ function ProfileForm({
   const t = useTranslations('profile.form');
   const tGenders = useTranslations('profile.genders');
   const tCommon = useTranslations('common');
+  const locale = useLocale();
   const queryClient = useQueryClient();
 
   const [displayName, setDisplayName] = useState(initial?.displayName ?? '');
@@ -262,6 +299,8 @@ function ProfileForm({
     initial?.age === null || initial === undefined ? '' : String(initial.age),
   );
   const [gender, setGender] = useState<string>(initial?.gender ?? '');
+  const [country, setCountry] = useState<string>(initial?.countryCode ?? 'none');
+  const tagStatus = useTagStatus(tag);
 
   const save = useMutation({
     mutationFn: (body: {
@@ -269,6 +308,7 @@ function ProfileForm({
       tag: string;
       age: number | null;
       gender: string | null;
+      countryCode: string | null;
     }) =>
       apiFetch<{ profile: ProfileDto; loginCode?: string }>('/api/me', {
         method: mode === 'create' ? 'POST' : 'PATCH',
@@ -294,6 +334,7 @@ function ProfileForm({
       tag: tag.trim(),
       age: parsedAge !== null && Number.isFinite(parsedAge) ? parsedAge : null,
       gender: gender === '' ? null : gender,
+      countryCode: country === 'none' ? null : country,
     });
   };
 
@@ -331,7 +372,17 @@ function ProfileForm({
             autoCorrect="off"
           />
         </div>
-        <p className="text-muted-foreground text-xs">{t('tagHint')}</p>
+        {tagStatus === 'free' ? (
+          <p className="text-success text-xs">{t('tagFree')}</p>
+        ) : tagStatus === 'taken' ? (
+          <p role="alert" className="text-destructive text-xs">
+            {t('tagTaken')}
+          </p>
+        ) : tagStatus === 'yours' ? (
+          <p className="text-success text-xs">{t('tagYours')}</p>
+        ) : (
+          <p className="text-muted-foreground text-xs">{t('tagHint')}</p>
+        )}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
@@ -362,10 +413,32 @@ function ProfileForm({
           </div>
         </div>
       </div>
+      <div className="space-y-1.5">
+        <Label>{t('country')}</Label>
+        <Select value={country} onValueChange={setCountry}>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">{t('countryNone')}</SelectItem>
+            {COUNTRY_CODES.map((code) => (
+              <SelectItem key={code} value={code}>
+                {flagEmoji(code)} {countryName(code, locale)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-muted-foreground text-xs">{t('countryHint')}</p>
+      </div>
       <Button
         type="submit"
         className="display self-start text-base tracking-wide"
-        disabled={displayName.trim().length < 2 || tag.trim().length < 3 || save.isPending}
+        disabled={
+          displayName.trim().length < 2 ||
+          tag.trim().length < 3 ||
+          tagStatus === 'taken' ||
+          save.isPending
+        }
       >
         {mode === 'create' ? t('createSubmit') : t('editSubmit')}
       </Button>

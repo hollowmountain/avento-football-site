@@ -9,6 +9,7 @@ function toEntity(row: UserProfile): ProfileEntity {
     displayName: row.displayName,
     age: row.age,
     gender: row.gender,
+    countryCode: row.countryCode,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -45,6 +46,7 @@ export class PrismaProfileRepository implements ProfileRepository {
         displayName: record.displayName,
         age: record.age,
         gender: record.gender,
+        countryCode: record.countryCode,
         loginCodeHash: record.loginCodeHash,
         devices: { create: { tokenHash: record.deviceTokenHash } },
       },

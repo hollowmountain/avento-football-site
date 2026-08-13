@@ -7,6 +7,7 @@ export interface NewProfileRecord {
   displayName: string;
   age: number | null;
   gender: Gender | null;
+  countryCode: string | null;
   loginCodeHash: string;
   /** Хеш анонимного cookie первого устройства. */
   deviceTokenHash: string;
@@ -17,6 +18,7 @@ export interface ProfilePatch {
   displayName?: string;
   age?: number | null;
   gender?: Gender | null;
+  countryCode?: string | null;
   loginCodeHash?: string;
 }
 

@@ -50,7 +50,8 @@ export interface NewGameRecord {
   format: GameFormat;
   skillLevel: SkillLevel;
   startsAt: Date;
-  durationMinutes: number;
+  durationMinutes: number | null;
+  teamCount: number;
   timezone: string;
   minPlayers: number;
   maxPlayers: number;
@@ -65,6 +66,7 @@ export interface NewGameRecord {
   hostName: string;
   hostTokenHash: string;
   creatorTokenHash: string | null;
+  creatorProfileId: string | null;
   createdIpHash: string;
 }
 
@@ -74,7 +76,7 @@ export interface GamePatch {
   format?: GameFormat;
   skillLevel?: SkillLevel;
   startsAt?: Date;
-  durationMinutes?: number;
+  durationMinutes?: number | null;
   minPlayers?: number;
   maxPlayers?: number;
   pricePerPitch?: number;
