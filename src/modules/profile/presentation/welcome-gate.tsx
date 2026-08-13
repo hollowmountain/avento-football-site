@@ -107,11 +107,13 @@ export function WelcomeGate() {
               </Link>
             </Button>
           ) : null}
+          {/* Обе кнопки — узким капсом одного размера: равнозначные пункты
+              не должны различаться шрифтом (правило шапки) */}
           <Button
             type="button"
             variant={hasProfile ? 'default' : 'outline'}
             size="lg"
-            className={hasProfile ? 'display text-base tracking-wide' : undefined}
+            className="display text-base tracking-wide"
             onClick={dismiss}
           >
             {hasProfile ? t('gotIt') : t('guest')}
