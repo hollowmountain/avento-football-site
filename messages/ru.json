@@ -18,6 +18,12 @@
     "quick": "Быстрая игра",
     "players": "Игроки",
     "profile": "Кабинет",
+    "tabs": {
+      "create": "Создать",
+      "games": "Матчи",
+      "quick": "Быстрая",
+      "players": "Игроки"
+    },
     "toggleTheme": "Переключить тему"
   },
   "statuses": {

@@ -18,6 +18,12 @@
     "quick": "Quick game",
     "players": "Players",
     "profile": "Profile",
+    "tabs": {
+      "create": "Create",
+      "games": "Matches",
+      "quick": "Quick",
+      "players": "Players"
+    },
     "toggleTheme": "Toggle theme"
   },
   "statuses": {

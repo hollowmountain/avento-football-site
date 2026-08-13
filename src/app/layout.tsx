@@ -63,11 +63,13 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
             <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 lg:max-w-4xl">
               <PageTransition>{children}</PageTransition>
             </main>
+            {/* Короткие подписи: в четыре колонки полные не помещаются */}
             <MobileTabBar
               items={[
-                { href: '/games/new', label: tHeader('create'), icon: 'create' },
-                { href: '/quick', label: tHeader('quick'), icon: 'quick' },
-                { href: '/players', label: tHeader('players'), icon: 'players' },
+                { href: '/games/new', label: tHeader('tabs.create'), icon: 'create' },
+                { href: '/', label: tHeader('tabs.games'), icon: 'games' },
+                { href: '/quick', label: tHeader('tabs.quick'), icon: 'quick' },
+                { href: '/players', label: tHeader('tabs.players'), icon: 'players' },
               ]}
             />
             <WelcomeGate />

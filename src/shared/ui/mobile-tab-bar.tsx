@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarPlus, Users, Zap } from 'lucide-react';
+import { CalendarPlus, ListOrdered, Users, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ComponentType } from 'react';
@@ -8,11 +8,12 @@ import type { ComponentType } from 'react';
 export interface MobileTabItem {
   href: string;
   label: string;
-  icon: 'create' | 'quick' | 'players';
+  icon: 'create' | 'games' | 'quick' | 'players';
 }
 
 const ICONS: Record<MobileTabItem['icon'], ComponentType<{ className?: string }>> = {
   create: CalendarPlus,
+  games: ListOrdered,
   quick: Zap,
   players: Users,
 };
@@ -31,10 +32,15 @@ export function MobileTabBar({ items }: { items: MobileTabItem[] }) {
       className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:hidden"
       aria-label="Основные разделы"
     >
-      <ul className="tab-gradient mx-auto grid max-w-md grid-cols-3 overflow-hidden rounded-2xl shadow-lg shadow-black/25">
+      <ul className="tab-gradient mx-auto grid max-w-md grid-cols-4 overflow-hidden rounded-2xl shadow-lg shadow-black/25">
         {items.map((item) => {
           const Icon = ICONS[item.icon];
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          // Лента живёт на «/», а с ней совпадает начало любого адреса —
+          // поэтому корень сверяем целиком, иначе подсветятся все разделы
+          const active =
+            item.href === '/'
+              ? pathname === '/'
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <li key={item.href}>
               <Link
