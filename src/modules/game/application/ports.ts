@@ -96,6 +96,9 @@ export interface GamePatch {
   city?: string;
   status?: GameStatus;
   teamsSnapshot?: TeamsSnapshot;
+  /** Модерация: причина снятия и пояснение владельца. */
+  removalReason?: string | null;
+  removalNote?: string | null;
   /** Менеджер матч-дня: null — вернуть протокол создателю. */
   managerProfileId?: string | null;
 }

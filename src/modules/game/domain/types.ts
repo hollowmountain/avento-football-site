@@ -3,7 +3,16 @@
  * значения совпадают с enum'ами Prisma по именам, маппинг — забота infrastructure.
  */
 export type GameStatus =
-  'OPEN' | 'FULL' | 'CANCELLED_BY_HOST' | 'CANCELLED_NOT_ENOUGH' | 'FINISHED';
+  | 'OPEN'
+  | 'FULL'
+  | 'CANCELLED_BY_HOST'
+  | 'CANCELLED_NOT_ENOUGH'
+  | 'FINISHED'
+  /** Снята владельцем сайта: в ленте нет, в кабинетах видна с причиной. */
+  | 'REMOVED_BY_ADMIN';
+
+/** Причины снятия игры модерацией — код, текст берётся из переводов. */
+export type RemovalReason = 'WRONG_TITLE' | 'MISTAKE' | 'DUPLICATE' | 'RULES' | 'OTHER';
 
 export type GameFormat =
   'FREE' | 'FIVE_A_SIDE' | 'SIX_A_SIDE' | 'SEVEN_A_SIDE' | 'EIGHT_A_SIDE' | 'ELEVEN_A_SIDE';
@@ -76,6 +85,10 @@ export interface GameEntity {
   /** Менеджер матч-дня из записавшихся (null — протокол ведёт создатель). */
   managerProfileId: string | null;
   teamsSnapshot: TeamsSnapshot | null;
+  /** Код причины снятия модерацией (null — игру не снимали). */
+  removalReason: string | null;
+  /** Пояснение владельца к снятию, если он его оставил. */
+  removalNote: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

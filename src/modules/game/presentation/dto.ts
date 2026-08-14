@@ -53,6 +53,9 @@ export interface GameDto {
   city: string;
   hostName: string;
   teamsSnapshot: TeamsSnapshot | null;
+  /** Игру сняла модерация: код причины и пояснение владельца. */
+  removalReason: string | null;
+  removalNote: string | null;
   createdAt: string;
 }
 
@@ -89,6 +92,8 @@ export function gameToDto(game: GameEntity): GameDto {
     city: game.city,
     hostName: game.hostName,
     teamsSnapshot: game.teamsSnapshot,
+    removalReason: game.removalReason,
+    removalNote: game.removalNote,
     createdAt: game.createdAt.toISOString(),
   };
 }

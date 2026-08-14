@@ -13,6 +13,9 @@ enum GameStatus {
   CANCELLED_BY_HOST
   CANCELLED_NOT_ENOUGH
   FINISHED
+  // Снята владельцем сайта (модерация): в ленте не показывается,
+  // но остаётся в кабинетах участников с причиной снятия
+  REMOVED_BY_ADMIN
 }
 
 enum GameFormat {
@@ -146,6 +149,10 @@ model Game {
   managerProfileId String?
   managerProfile   UserProfile? @relation("managedGames", fields: [managerProfileId], references: [id], onDelete: SetNull)
   teamsSnapshot   Json? // результат жеребьёвки
+  // Модерация: код причины снятия (WRONG_TITLE, MISTAKE, DUPLICATE, RULES, OTHER)
+  // и пояснение владельца — их видят участники в своём кабинете
+  removalReason   String?
+  removalNote     String?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 

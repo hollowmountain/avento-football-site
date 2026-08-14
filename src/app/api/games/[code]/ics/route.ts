@@ -47,7 +47,10 @@ export async function GET(request: NextRequest, context: RouteContext): Promise<
   const gameUrl = `${env.APP_URL}/games/${game.code}`;
   // «Как получится» (null) — в календарь ставим 2 часа
   const endsAt = new Date(game.startsAt.getTime() + (game.durationMinutes ?? 120) * 60_000);
-  const cancelled = game.status === 'CANCELLED_BY_HOST' || game.status === 'CANCELLED_NOT_ENOUGH';
+  const cancelled =
+    game.status === 'CANCELLED_BY_HOST' ||
+    game.status === 'CANCELLED_NOT_ENOUGH' ||
+    game.status === 'REMOVED_BY_ADMIN';
 
   const description = [game.description, '', gameUrl].filter((v) => v !== null).join('\n');
 

@@ -1,22 +1,28 @@
 'use client';
 
-import { MapPin } from 'lucide-react';
+import { MapPin, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { formatMoneyMinor, formatShortDate } from '@/shared/lib/format';
+import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Pill } from '@/shared/ui/pill';
 import { Progress } from '@/shared/ui/progress';
 import type { GameSummaryDto } from './dto';
 
-/** Карточка игры в публичной ленте. */
-export function GameCard({ game }: { game: GameSummaryDto }) {
+/**
+ * Карточка игры в публичной ленте. Владельцу сайта под карточкой
+ * показывается снятие с публикации — кнопка живёт вне ссылки,
+ * иначе клик по ней уводил бы на страницу игры.
+ */
+export function GameCard({ game, onRemove }: { game: GameSummaryDto; onRemove?: () => void }) {
   const t = useTranslations('feed.card');
+  const tAdmin = useTranslations('admin');
   const tFormats = useTranslations('formats');
   const tLevels = useTranslations('levels');
   const tStatuses = useTranslations('statuses');
 
-  return (
+  const card = (
     <Link href={`/games/${game.code}`} className="group block focus-visible:outline-none">
       <Card className="group-focus-visible:ring-ring group-hover:border-primary/50 transition-colors group-focus-visible:ring-2">
         <CardContent className="flex flex-col gap-3 pt-0">
@@ -56,5 +62,22 @@ export function GameCard({ game }: { game: GameSummaryDto }) {
         </CardContent>
       </Card>
     </Link>
+  );
+
+  if (onRemove === undefined) return card;
+
+  return (
+    <div className="flex flex-col gap-1">
+      {card}
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="text-muted-foreground hover:text-destructive self-end"
+        onClick={onRemove}
+      >
+        <Trash2 className="size-4" aria-hidden /> {tAdmin('remove')}
+      </Button>
+    </div>
   );
 }

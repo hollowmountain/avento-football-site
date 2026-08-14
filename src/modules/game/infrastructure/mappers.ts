@@ -32,6 +32,8 @@ export function toGameEntity(row: Game): GameEntity {
     creatorProfileId: row.creatorProfileId,
     managerProfileId: row.managerProfileId,
     teamsSnapshot: (row.teamsSnapshot as unknown as TeamsSnapshot | null) ?? null,
+    removalReason: row.removalReason,
+    removalNote: row.removalNote,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

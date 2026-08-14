@@ -71,7 +71,13 @@ export interface MatchDayEntity {
  * по расписанию, а команда могла начать позже. Отменённая — мешает.
  */
 export function canStartMatchDay(game: { status: GameStatus; startsAt: Date }, now: Date): boolean {
-  if (game.status === 'CANCELLED_BY_HOST' || game.status === 'CANCELLED_NOT_ENOUGH') return false;
+  if (
+    game.status === 'CANCELLED_BY_HOST' ||
+    game.status === 'CANCELLED_NOT_ENOUGH' ||
+    game.status === 'REMOVED_BY_ADMIN'
+  ) {
+    return false;
+  }
   const opensAt = game.startsAt.getTime() - MATCHDAY_START_WINDOW_MINUTES * 60_000;
   return now.getTime() >= opensAt;
 }

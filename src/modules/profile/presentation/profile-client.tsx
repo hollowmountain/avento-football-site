@@ -5,6 +5,7 @@ import { Check, Copy, KeyRound, LogOut, UserRound } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { isClean } from '@/modules/moderation/domain/profanity';
 import { ApiRequestError, apiFetch } from '@/shared/lib/api-client';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
@@ -419,7 +420,13 @@ function ProfileForm({
     },
   });
 
+  // Имя и тег видят все, поэтому грубые слова отсекаем ещё в форме —
+  // сервер проверит то же самое, но человеку важно понять причину сразу
+  const nameIsClean = isClean(displayName);
+  const tagIsClean = isClean(tag);
+
   const submit = () => {
+    if (!nameIsClean || !tagIsClean) return;
     const parsedAge = age.trim() === '' ? null : Number(age);
     save.mutate({
       displayName: displayName.trim(),
@@ -449,6 +456,11 @@ function ProfileForm({
           placeholder={t('namePlaceholder')}
           maxLength={60}
         />
+        {!nameIsClean ? (
+          <p role="alert" className="text-destructive text-xs">
+            {t('cleanWords')}
+          </p>
+        ) : null}
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="profile-tag">{t('tag')}</Label>
@@ -466,7 +478,11 @@ function ProfileForm({
             autoCorrect="off"
           />
         </div>
-        {tagStatus === 'free' ? (
+        {!tagIsClean ? (
+          <p role="alert" className="text-destructive text-xs">
+            {t('cleanWords')}
+          </p>
+        ) : tagStatus === 'free' ? (
           <p className="text-success text-xs">{t('tagFree')}</p>
         ) : tagStatus === 'taken' ? (
           <p role="alert" className="text-destructive text-xs">
@@ -595,6 +611,8 @@ function ProfileForm({
           displayName.trim().length < 2 ||
           tag.trim().length < 3 ||
           tagStatus === 'taken' ||
+          !nameIsClean ||
+          !tagIsClean ||
           save.isPending
         }
       >

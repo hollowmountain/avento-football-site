@@ -28,6 +28,7 @@ import { Card, CardContent } from '@/shared/ui/card';
 import { Pill } from '@/shared/ui/pill';
 import { Progress } from '@/shared/ui/progress';
 import { MATCHDAY_START_WINDOW_MINUTES } from '../domain/matchday';
+import { REMOVAL_REASONS } from '../schemas';
 import type { TeamMember, TeamsSnapshot } from '../domain/types';
 import type { formTokenSchema } from '../schemas';
 import type { GameViewData } from './api-types';
@@ -67,6 +68,8 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
     refetchOnWindowFocus: true,
   });
 
+  const tReasons = useTranslations('admin.reason');
+
   const data = query.data;
   const game = data.game;
   const isActive = game.status === 'OPEN' || game.status === 'FULL';
@@ -80,6 +83,7 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
   const matchDayOpen =
     game.status !== 'CANCELLED_BY_HOST' &&
     game.status !== 'CANCELLED_NOT_ENOUGH' &&
+    game.status !== 'REMOVED_BY_ADMIN' &&
     new Date(game.startsAt).getTime() - MATCHDAY_START_WINDOW_MINUTES * 60_000 <= openedAt;
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['game', code] });
@@ -225,6 +229,20 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
         </div>
 
         <h1 className="display text-3xl leading-[1.05] text-balance sm:text-4xl">{game.title}</h1>
+
+        {/* Снятую модерацией игру объясняем прямо на её странице */}
+        {game.status === 'REMOVED_BY_ADMIN' ? (
+          <p className="text-destructive text-sm">
+            {t('removedBanner', {
+              reason: tReasons(
+                REMOVAL_REASONS.some((code) => code === game.removalReason)
+                  ? (game.removalReason as string)
+                  : 'OTHER',
+              ),
+            })}
+            {game.removalNote !== null && game.removalNote !== '' ? ` — ${game.removalNote}` : ''}
+          </p>
+        ) : null}
 
         {isActive && !started ? <Countdown startsAtIso={game.startsAt} /> : null}
 

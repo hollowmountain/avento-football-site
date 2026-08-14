@@ -31,7 +31,25 @@
     "FULL": "Full",
     "CANCELLED_BY_HOST": "Cancelled by host",
     "CANCELLED_NOT_ENOUGH": "Not enough players",
-    "FINISHED": "Finished"
+    "FINISHED": "Finished",
+    "REMOVED_BY_ADMIN": "Removed by moderation"
+  },
+  "admin": {
+    "remove": "Remove game",
+    "removeTitle": "Remove the game from the feed",
+    "removeLead": "it disappears from the feed and stays in players' profiles with the reason.",
+    "removeConfirm": "Remove",
+    "removed": "Game removed",
+    "reasonLegend": "Reason",
+    "reason": {
+      "WRONG_TITLE": "Inappropriate title",
+      "MISTAKE": "Mistake in the game",
+      "DUPLICATE": "Duplicate",
+      "RULES": "Rules violation",
+      "OTHER": "Other reason"
+    },
+    "notePlaceholder": "A note — players will see it",
+    "noteHint": "Optional, except for the “other” reason."
   },
   "formats": {
     "FREE": "Free play",
@@ -171,6 +189,7 @@
       "rainHint": "rain ☔ — bring spare boots"
     },
     "matchDay": "Match day",
+    "removedBanner": "The site owner removed this game · {reason}",
     "private": "Private",
     "edit": {
       "title": "Edit the game",
@@ -373,6 +392,7 @@
       "tagFree": "Tag is available ✓",
       "tagTaken": "Tag is taken — try another",
       "tagYours": "This is your current tag",
+      "cleanWords": "Remove the rude or offensive word",
       "country": "Country flag",
       "countryNone": "No flag",
       "countryHint": "Just for looks — shown next to your tag",
@@ -399,7 +419,8 @@
       "empty": "Nothing yet: join a game from the feed or create your own — everything gathers here.",
       "pastTitle": "Past",
       "host": "Host",
-      "player": "Player"
+      "player": "Player",
+      "removed": "Removed by moderation · {reason}"
     }
   },
   "quick": {

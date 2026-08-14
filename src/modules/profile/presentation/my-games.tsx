@@ -65,11 +65,21 @@ export function MyGames() {
   );
 }
 
+/** Коды причин снятия — на случай, если в базе окажется незнакомый. */
+const KNOWN_REASONS = ['WRONG_TITLE', 'MISTAKE', 'DUPLICATE', 'RULES', 'OTHER'];
+
 function GameRow({ item, upcoming }: { item: MyGameItem; upcoming: boolean }) {
   const t = useTranslations('profile.myGames');
   const tStatuses = useTranslations('statuses');
+  const tReasons = useTranslations('admin.reason');
   const format = useFormatter();
   const { game, roles } = item;
+
+  const removed = game.status === 'REMOVED_BY_ADMIN';
+  const reasonKey =
+    game.removalReason !== null && KNOWN_REASONS.includes(game.removalReason)
+      ? game.removalReason
+      : 'OTHER';
 
   return (
     <Link
@@ -100,6 +110,13 @@ function GameRow({ item, upcoming }: { item: MyGameItem; upcoming: boolean }) {
             <> · {tStatuses(game.status)}</>
           )}
         </span>
+        {/* Снятую игру не бросаем молча: человек должен понять, куда она делась */}
+        {removed ? (
+          <span className="text-destructive text-xs">
+            {t('removed', { reason: tReasons(reasonKey) })}
+            {game.removalNote !== null && game.removalNote !== '' ? ` — ${game.removalNote}` : ''}
+          </span>
+        ) : null}
       </span>
       {roles.includes('HOST') ? <Pill tone="accent">{t('host')}</Pill> : null}
       {roles.includes('PLAYER') && !roles.includes('HOST') ? <Pill>{t('player')}</Pill> : null}

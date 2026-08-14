@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Controller, useForm, type UseFormSetError } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { isClean } from '@/modules/moderation/domain/profanity';
 import type { ProfileDto } from '@/modules/profile/schemas';
 import { ApiRequestError, apiFetch } from '@/shared/lib/api-client';
 import { toDatetimeLocalValue } from '@/shared/lib/format';
@@ -33,8 +34,18 @@ type CreatedGame = { game: GameDto; hostToken: string; inviteKey: string | null 
 
 const createFormSchema = z
   .object({
-    title: z.string().trim().min(3, 'минимум 3 симв.').max(80),
-    description: z.string().max(2000).optional(),
+    // Тот же фильтр, что на сервере: ошибку видно сразу под полем
+    title: z
+      .string()
+      .trim()
+      .min(3, 'минимум 3 симв.')
+      .max(80)
+      .refine(isClean, 'уберите грубое или оскорбительное слово'),
+    description: z
+      .string()
+      .max(2000)
+      .refine(isClean, 'уберите грубое или оскорбительное слово')
+      .optional(),
     format: z.enum(GAME_FORMATS),
     skillLevel: z.enum(SKILL_LEVELS),
     startsAtLocal: z.string().min(1, 'укажите дату'),

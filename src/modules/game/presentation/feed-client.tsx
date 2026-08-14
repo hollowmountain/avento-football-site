@@ -13,7 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/shared/ui/skeleton';
 import { GAME_FORMATS } from '../schemas';
 import type { GamesListData } from './api-types';
+import type { GameSummaryDto } from './dto';
 import { GameCard } from './game-card';
+import { RemoveGameDialog } from './remove-game-dialog';
 
 /**
  * Карта тянет за собой Leaflet, и на сервере ей делать нечего:
@@ -56,7 +58,13 @@ function buildQuery(filters: FeedFilters, cursor: string | null): string {
 }
 
 /** Публичная лента: фильтры, сортировка, cursor-пагинация («Показать ещё»). */
-export function FeedClient({ initialData }: { initialData: GamesListData }) {
+export function FeedClient({
+  initialData,
+  isAdmin = false,
+}: {
+  initialData: GamesListData;
+  isAdmin?: boolean;
+}) {
   const t = useTranslations('feed');
   const tHeader = useTranslations('header');
   const tFormats = useTranslations('formats');
@@ -64,6 +72,8 @@ export function FeedClient({ initialData }: { initialData: GamesListData }) {
   const [filters, setFilters] = useState<FeedFilters>(DEFAULT_FILTERS);
   const [cityDraft, setCityDraft] = useState('');
   const [view, setView] = useState<FeedView>('list');
+  // Игра, которую владелец сайта собирается снять с публикации
+  const [removing, setRemoving] = useState<GameSummaryDto | null>(null);
 
   const isDefault =
     filters.city === '' &&
@@ -208,11 +218,27 @@ export function FeedClient({ initialData }: { initialData: GamesListData }) {
       ) : (
         <div className="space-y-3" aria-live="polite">
           {items.map((game) => (
-            <GameCard key={game.code} game={game} />
+            <GameCard
+              key={game.code}
+              game={game}
+              onRemove={isAdmin ? () => setRemoving(game) : undefined}
+            />
           ))}
           {loadMore}
         </div>
       )}
+
+      {removing !== null ? (
+        <RemoveGameDialog
+          code={removing.code}
+          title={removing.title}
+          onClose={() => setRemoving(null)}
+          onRemoved={() => {
+            setRemoving(null);
+            void query.refetch();
+          }}
+        />
+      ) : null}
     </div>
   );
 }

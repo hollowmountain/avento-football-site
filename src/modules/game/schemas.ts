@@ -1,3 +1,4 @@
+import { isClean } from '@/modules/moderation/domain/profanity';
 import { z } from 'zod';
 
 /**
@@ -49,6 +50,15 @@ const singleLine = (min: number, max: number) =>
     .transform((s) => s.replace(CONTROL_CHARS, ' ').replace(/\s+/g, ' ').trim())
     .pipe(z.string().min(min, `минимум ${min} симв.`).max(max, `максимум ${max} симв.`));
 
+/**
+ * Текст, который увидят другие: мат, оскорбления по национальности и
+ * религиозные имена не пропускаем. Адреса и города НЕ фильтруем —
+ * там живут Махачкала и подобные названия.
+ */
+const CLEAN_MESSAGE = 'уберите грубое или оскорбительное слово';
+const publicLine = (min: number, max: number) =>
+  singleLine(min, max).refine(isClean, CLEAN_MESSAGE);
+
 /** Как singleLine, но переводы строк сохраняются (описание игры). */
 const multiLine = (max: number) =>
   z
@@ -90,8 +100,8 @@ const antiAbuseFields = {
 export const GAME_VISIBILITIES = ['PUBLIC', 'PRIVATE_LINK', 'PRIVATE_PASSWORD'] as const;
 
 export const createGameBodySchema = z.object({
-  title: singleLine(3, 80),
-  description: multiLine(2000).optional().default(''),
+  title: publicLine(3, 80),
+  description: multiLine(2000).refine(isClean, CLEAN_MESSAGE).optional().default(''),
   format: z.enum(GAME_FORMATS),
   skillLevel: z.enum(SKILL_LEVELS),
   startsAt: z.coerce.date(),
@@ -129,7 +139,7 @@ export const createGameBodyWithPassword = createGameBodySchema.refine(
 export const joinGameBodySchema = z.object({
   // У владельца кабинета имя и ник берутся из профиля — клиент их не шлёт;
   // гость обязан прислать оба, это проверяет роут
-  name: singleLine(2, 60).optional(),
+  name: publicLine(2, 60).optional(),
   nickname: z
     .string()
     .transform((s) => s.trim())
@@ -138,7 +148,8 @@ export const joinGameBodySchema = z.object({
         .string()
         .min(2, 'минимум 2 симв.')
         .max(24, 'максимум 24 симв.')
-        .regex(/^[\p{L}\p{N} _.-]+$/u, 'только буквы, цифры, пробел и _ . -'),
+        .regex(/^[\p{L}\p{N} _.-]+$/u, 'только буквы, цифры, пробел и _ . -')
+        .refine(isClean, CLEAN_MESSAGE),
     )
     .optional(),
   // Позицию и уровень при записи не спрашиваем: уровень берётся из
@@ -153,8 +164,8 @@ export type JoinGameBody = z.infer<typeof joinGameBodySchema>;
 
 export const patchGameBodySchema = z
   .object({
-    title: singleLine(3, 80),
-    description: multiLine(2000),
+    title: publicLine(3, 80),
+    description: multiLine(2000).refine(isClean, CLEAN_MESSAGE),
     format: z.enum(GAME_FORMATS),
     skillLevel: z.enum(SKILL_LEVELS),
     startsAt: z.coerce.date(),
@@ -174,12 +185,23 @@ export const patchGameBodySchema = z
 
 export type PatchGameBody = z.infer<typeof patchGameBodySchema>;
 
+// ─── Модерация ─────────────────────────────────────────────────────────────
+
+/** Причины снятия игры владельцем сайта; текст берётся из переводов. */
+export const REMOVAL_REASONS = ['WRONG_TITLE', 'MISTAKE', 'DUPLICATE', 'RULES', 'OTHER'] as const;
+
+export const removeGameBodySchema = z.object({
+  reason: z.enum(REMOVAL_REASONS),
+  // Для причины «другое» пояснение обязательно — проверяется в use-case
+  note: singleLine(0, 200).nullish(),
+});
+
 // ─── Матч-день ─────────────────────────────────────────────────────────────
 
 /** Палитра команд — та же, что в «Быстрой игре» (QuickTeamColorId). */
 export const TEAM_COLOR_IDS = ['amber', 'green', 'coral', 'sky', 'violet', 'paper'] as const;
 
-const teamNameSchema = singleLine(1, 24);
+const teamNameSchema = publicLine(1, 24);
 const idSchema = z.string().min(1).max(40);
 
 export const startMatchDayBodySchema = z.object({

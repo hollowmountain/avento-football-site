@@ -1,3 +1,4 @@
+import { isClean } from '@/modules/moderation/domain/profanity';
 import { z } from 'zod';
 import { CLUB_IDS } from './clubs';
 import { TAG_MAX, TAG_MIN, isValidTag, normalizeTag } from './domain/tag';
@@ -6,10 +7,19 @@ import { TAG_MAX, TAG_MIN, isValidTag, normalizeTag } from './domain/tag';
 
 const CONTROL_CHARS = new RegExp('[\\u0000-\\u001F\\u007F]', 'g');
 
+/** Имя и тег видят все игроки — грубые слова в них не пропускаем. */
+const CLEAN_MESSAGE = 'уберите грубое или оскорбительное слово';
+
 const displayNameSchema = z
   .string()
   .transform((s) => s.replace(CONTROL_CHARS, ' ').replace(/\s+/g, ' ').trim())
-  .pipe(z.string().min(2, 'минимум 2 симв.').max(60, 'максимум 60 симв.'));
+  .pipe(
+    z
+      .string()
+      .min(2, 'минимум 2 симв.')
+      .max(60, 'максимум 60 симв.')
+      .refine(isClean, CLEAN_MESSAGE),
+  );
 
 export const tagSchema = z
   .string()
@@ -19,7 +29,8 @@ export const tagSchema = z
       .string()
       .min(TAG_MIN, `минимум ${TAG_MIN} симв.`)
       .max(TAG_MAX, `максимум ${TAG_MAX} симв.`)
-      .refine(isValidTag, 'латиница, цифры и «_»; начинается с буквы'),
+      .refine(isValidTag, 'латиница, цифры и «_»; начинается с буквы')
+      .refine(isClean, CLEAN_MESSAGE),
   );
 
 export const GENDERS = ['MALE', 'FEMALE'] as const;

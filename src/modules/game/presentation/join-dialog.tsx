@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/shared/ui/dialog';
+import { isClean } from '@/modules/moderation/domain/profanity';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/shared/ui/radio-group';
@@ -24,14 +25,17 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { ATTENDANCE, type formTokenSchema } from '../schemas';
 import type { ParticipantDto } from './dto';
 
+const CLEAN_MESSAGE = 'уберите грубое или оскорбительное слово';
+
 const joinFormSchema = z.object({
-  name: z.string().trim().min(2, 'минимум 2 симв.').max(60),
+  name: z.string().trim().min(2, 'минимум 2 симв.').max(60).refine(isClean, CLEAN_MESSAGE),
   nickname: z
     .string()
     .trim()
     .min(2, 'минимум 2 симв.')
     .max(24, 'максимум 24 симв.')
-    .regex(/^[\p{L}\p{N} _.-]+$/u, 'только буквы, цифры, пробел и _ . -'),
+    .regex(/^[\p{L}\p{N} _.-]+$/u, 'только буквы, цифры, пробел и _ . -')
+    .refine(isClean, CLEAN_MESSAGE),
   attendance: z.enum(ATTENDANCE),
   /** Пароль приватной игры; для «по ссылке» ключ берётся из адреса. */
   password: z.string().optional(),
