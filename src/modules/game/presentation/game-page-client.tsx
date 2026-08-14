@@ -392,8 +392,8 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
         </p>
       ) : null}
 
-      {/* Составы команд */}
-      {game.teamsSnapshot ? (
+      {/* Составы команд: у сбора (одна команда) их не бывает */}
+      {game.teamCount > 1 && game.teamsSnapshot ? (
         <Card>
           <CardContent className="flex flex-col gap-3 pt-0">
             <span className="eyebrow text-muted-foreground">{t('teams.title')}</span>

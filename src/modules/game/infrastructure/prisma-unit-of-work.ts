@@ -1,4 +1,6 @@
-import type { Prisma, PrismaClient } from '@/generated/prisma/client';
+// Prisma нужен значением: Prisma.DbNull очищает Json-колонку
+import { Prisma } from '@/generated/prisma/client';
+import type { PrismaClient } from '@/generated/prisma/client';
 import type { GameEntity } from '../domain/types';
 import type {
   GamePatch,
@@ -86,8 +88,15 @@ class PrismaGameTx implements GameTx {
       where: { id: this.game.id },
       data: {
         ...rest,
+        // Json-колонку обнуляют только через Prisma.DbNull: обычный null
+        // Prisma понимает как «значение JSON null», а не как пустую ячейку
         ...(teamsSnapshot !== undefined
-          ? { teamsSnapshot: JSON.parse(JSON.stringify(teamsSnapshot)) }
+          ? {
+              teamsSnapshot:
+                teamsSnapshot === null
+                  ? Prisma.DbNull
+                  : (JSON.parse(JSON.stringify(teamsSnapshot)) as Prisma.InputJsonValue),
+            }
           : {}),
       },
     });

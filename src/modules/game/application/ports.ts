@@ -97,7 +97,8 @@ export interface GamePatch {
   longitude?: number;
   city?: string;
   status?: GameStatus;
-  teamsSnapshot?: TeamsSnapshot;
+  /** null — сбросить жеребьёвку (например, поменялось число команд). */
+  teamsSnapshot?: TeamsSnapshot | null;
   /** Модерация: причина снятия и пояснение владельца. */
   removalReason?: string | null;
   removalNote?: string | null;

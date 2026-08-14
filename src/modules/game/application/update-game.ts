@@ -68,7 +68,12 @@ export async function updateGame(
         );
       }
 
-      await tx.updateGame(input.patch);
+      // Поменялось число команд — старая жеребьёвка больше не годится:
+      // в ней либо лишние команды, либо не хватает новых. Сбрасываем,
+      // иначе на странице «сбора» продолжают висеть составы.
+      const teamCountChanged =
+        input.patch.teamCount !== undefined && input.patch.teamCount !== tx.game.teamCount;
+      await tx.updateGame(teamCountChanged ? { ...input.patch, teamsSnapshot: null } : input.patch);
 
       // Стало больше мест — поднимаем очередь ожидания
       let promoted = 0;
