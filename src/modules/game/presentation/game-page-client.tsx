@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 import { ClubBadge } from '@/modules/profile/presentation/clubs';
@@ -85,6 +85,21 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
     game.status !== 'CANCELLED_NOT_ENOUGH' &&
     game.status !== 'REMOVED_BY_ADMIN' &&
     new Date(game.startsAt).getTime() - MATCHDAY_START_WINDOW_MINUTES * 60_000 <= openedAt;
+
+  /**
+   * Организатор чаще всего копирует адрес прямо из строки браузера, а без
+   * ключа по такой ссылке записаться нельзя — друзья упирались в «это
+   * приватная игра». Подставляем ключ в адрес, чтобы рабочей была любая
+   * копия: и из кнопки «Поделиться», и из адресной строки. Ключ приходит
+   * только организатору, у остальных этот эффект ничего не делает.
+   */
+  useEffect(() => {
+    if (data.inviteKey === null) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('key') === data.inviteKey) return;
+    url.searchParams.set('key', data.inviteKey);
+    window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+  }, [data.inviteKey]);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['game', code] });
 
