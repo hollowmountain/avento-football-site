@@ -177,6 +177,8 @@ export const patchGameBodySchema = z
     venueName: singleLine(2, 80),
     address: singleLine(3, 160),
     city: singleLine(2, 60),
+    /** Число команд правится и после создания: 1 — сбор без матчей. */
+    teamCount: z.coerce.number().int().min(1).max(4),
   })
   .partial()
   .refine((patch) => Object.keys(patch).length > 0, {

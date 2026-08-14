@@ -60,7 +60,14 @@ export function ProfileClient() {
 
   const profile = me.data?.profile ?? null;
   return (
-    <section className="mx-auto flex max-w-md flex-col gap-4">
+    // С профилем кабинет раскладывается в две колонки и занимает всю
+    // ширину экрана (класс profile-wide расширяет main — см. globals.css);
+    // без профиля это одна форма, её незачем растягивать
+    <section
+      className={`mx-auto flex w-full flex-col gap-4 ${
+        profile === null ? 'max-w-md' : 'profile-wide max-w-md lg:max-w-none'
+      }`}
+    >
       <header className="flex items-baseline gap-3">
         <h1 className="display text-3xl leading-none tracking-tight">{t('title')}</h1>
         {profile !== null ? (
@@ -213,24 +220,37 @@ function HasProfile({
   onCodeIssued: (code: string) => void;
 }) {
   const t = useTranslations('profile');
+
+  // На большом экране колонки прокручиваются каждая сама: длинная форма
+  // профиля не утаскивает вниз список игр, и наоборот
+  const column =
+    'flex flex-col gap-4 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto';
+
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="display text-xl tracking-wide">
-            <UserRound className="mr-1.5 inline size-4 align-[-2px]" aria-hidden />
-            {profile.displayName}
-          </CardTitle>
-          <CardDescription>{t('edit.lead')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ProfileForm mode="edit" initial={profile} />
-        </CardContent>
-      </Card>
-      <MyGames />
-      <CodeCard onCodeIssued={onCodeIssued} />
-      <LogoutCard />
-    </>
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start lg:gap-5">
+      {/* Слева — игры и всё про доступ к кабинету */}
+      <div className={`${column} lg:pr-1`}>
+        <MyGames />
+        <CodeCard onCodeIssued={onCodeIssued} />
+        <LogoutCard />
+      </div>
+
+      {/* Справа — сами данные профиля */}
+      <div className={`${column} lg:pl-1`}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="display text-xl tracking-wide">
+              <UserRound className="mr-1.5 inline size-4 align-[-2px]" aria-hidden />
+              {profile.displayName}
+            </CardTitle>
+            <CardDescription>{t('edit.lead')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProfileForm mode="edit" initial={profile} />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
 

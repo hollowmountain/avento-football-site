@@ -172,23 +172,22 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
     return data.inviteKey !== null ? `${base}?key=${data.inviteKey}` : base;
   };
 
+  /**
+   * Делимся именно ссылкой. Раньше вместе с ней уходило описание игры,
+   * и мессенджеры показывали текст вместо кликабельного адреса, а в
+   * буфер попадала простыня из трёх строк — ссылку приходилось выковыривать.
+   */
   const share = async () => {
     const url = inviteUrl();
-    // Одним понятным сообщением: что, когда, где и ссылка отдельной строкой
-    const text = [
-      game.title,
-      formatGameDate(game.startsAt, game.timezone),
-      `${game.venueName}, ${game.city}`,
-    ].join('\n');
 
     if (navigator.share) {
       const shared = await navigator
-        .share({ title: game.title, text, url })
+        .share({ title: game.title, url })
         .then(() => true)
         .catch(() => false);
       if (shared) return;
     }
-    await navigator.clipboard.writeText(`${text}\n${url}`);
+    await navigator.clipboard.writeText(url);
     toast.success(tCommon('linkCopied'));
   };
 
@@ -251,7 +250,7 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
           {game.durationMinutes === null
             ? t('durationOpen')
             : t('duration', { count: game.durationMinutes })}
-          {game.teamCount > 2 ? <> · {t('teams', { count: game.teamCount })}</> : null}
+          {game.teamCount > 2 ? <> · {t('teamCountLine', { count: game.teamCount })}</> : null}
           <br />
           {game.venueName} · {game.city}
         </p>

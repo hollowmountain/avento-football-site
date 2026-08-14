@@ -81,6 +81,8 @@ export interface NewGameRecord {
 export interface GamePatch {
   title?: string;
   description?: string | null;
+  /** Сколько команд играет: 1 — сбор без матчей, 2–4 — матч-день. */
+  teamCount?: number;
   format?: GameFormat;
   skillLevel?: SkillLevel;
   startsAt?: Date;

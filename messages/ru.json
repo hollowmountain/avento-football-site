@@ -189,6 +189,7 @@
       "rainHint": "дождь ☔ — возьмите вторые бутсы"
     },
     "matchDay": "Матч-день",
+    "teamCountLine": "{count, plural, one {# команда} few {# команды} many {# команд} other {# команды}}",
     "removedBanner": "Игру снял владелец сайта · {reason}",
     "private": "Приватная",
     "edit": {

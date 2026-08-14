@@ -30,6 +30,7 @@ export function EditGameDialog({
   onSaved: () => void;
 }) {
   const t = useTranslations('game.edit');
+  const tFields = useTranslations('createForm.fields');
   const tCommon = useTranslations('common');
 
   const [title, setTitle] = useState(game.title);
@@ -42,6 +43,7 @@ export function EditGameDialog({
   const [city, setCity] = useState(game.city);
   const [maxPlayers, setMaxPlayers] = useState(String(game.maxPlayers));
   const [priceRub, setPriceRub] = useState(String(game.pricePerPitch / 100));
+  const [teamCount, setTeamCount] = useState(game.teamCount);
 
   const save = useMutation({
     mutationFn: (patch: Record<string, unknown>) =>
@@ -73,6 +75,7 @@ export function EditGameDialog({
     if (Number.isFinite(max) && max !== game.maxPlayers) patch.maxPlayers = max;
     const price = Math.round(Number(priceRub) * 100);
     if (Number.isFinite(price) && price !== game.pricePerPitch) patch.pricePerPitch = price;
+    if (teamCount !== game.teamCount) patch.teamCount = teamCount;
 
     // Пустой PATCH сервер отвергает — и правильно, менять нечего
     if (Object.keys(patch).length === 0) {
@@ -160,6 +163,28 @@ export function EditGameDialog({
                 onChange={(e) => setPriceRub(e.target.value)}
               />
             </div>
+          </div>
+
+          {/* Число команд можно поменять и после создания: планы меняются */}
+          <div className="space-y-1.5">
+            <Label>{tFields('teamCount')}</Label>
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label={tFields('teamCount')}>
+              {[1, 2, 3, 4].map((count) => (
+                <Button
+                  key={count}
+                  type="button"
+                  size="sm"
+                  variant={teamCount === count ? 'secondary' : 'outline'}
+                  aria-pressed={teamCount === count}
+                  onClick={() => setTeamCount(count)}
+                >
+                  {count === 1
+                    ? tFields('teamCountGathering')
+                    : tFields('teamCountOption', { count })}
+                </Button>
+              ))}
+            </div>
+            <p className="text-muted-foreground text-xs">{tFields('teamCountHint')}</p>
           </div>
 
           <DialogFooter>

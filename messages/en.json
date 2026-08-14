@@ -189,6 +189,7 @@
       "rainHint": "rain ☔ — bring spare boots"
     },
     "matchDay": "Match day",
+    "teamCountLine": "{count, plural, one {# team} other {# teams}}",
     "removedBanner": "The site owner removed this game · {reason}",
     "private": "Private",
     "edit": {

@@ -53,6 +53,12 @@ export function GamesMap({ games }: { games: GameSummaryDto[] }) {
         scrollWheelZoom: false,
         zoomControl: true,
       }).setView(FALLBACK_CENTER, FALLBACK_ZOOM);
+      // Leaflet по умолчанию подписывает себя вместе с украинским флагом.
+      // Ссылку на библиотеку оставляем, флаг убираем: сайту, который
+      // работает из России, политическая символика в подписи ни к чему.
+      map.attributionControl.setPrefix(
+        '<a href="https://leafletjs.com" target="_blank" rel="noreferrer noopener">Leaflet</a>',
+      );
       L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 19 }).addTo(map);
       return { L, map };
     });
