@@ -336,6 +336,40 @@
     }
   }
 
+  /*
+   * Карта игр (Leaflet). Своя типографика и белая подложка библиотеки
+   * подгоняются под тему; в тёмной теме тайлы OSM инвертируются —
+   * фильтр висит на слое тайлов, поэтому маркеры остаются янтарными.
+   */
+  .leaflet-container {
+    background: var(--muted);
+    font-family: inherit;
+  }
+
+  .dark .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.72);
+  }
+
+  .leaflet-control-attribution {
+    background: color-mix(in srgb, var(--card) 82%, transparent);
+    color: var(--muted-foreground);
+    font-size: 0.65rem;
+  }
+
+  .leaflet-control-attribution a {
+    color: var(--lamp);
+  }
+
+  .leaflet-bar a {
+    background: var(--card);
+    color: var(--foreground);
+    border-color: var(--border);
+  }
+
+  .leaflet-bar a:hover {
+    background: var(--accent);
+  }
+
   /* Тонкие световые полосы прожекторов по верху страницы */
   .floodlight {
     background-image:

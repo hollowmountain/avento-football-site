@@ -1,9 +1,10 @@
 'use client';
 
 import { useInfiniteQuery } from '@tanstack/react-query';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { apiFetch } from '@/shared/lib/api-client';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -14,7 +15,18 @@ import { GAME_FORMATS } from '../schemas';
 import type { GamesListData } from './api-types';
 import { GameCard } from './game-card';
 
+/**
+ * Карта тянет за собой Leaflet, и на сервере ей делать нечего:
+ * грузим её отдельным куском кода и только когда включили вид «карта».
+ */
+const GamesMap = dynamic(() => import('./games-map').then((m) => m.GamesMap), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[60vh] min-h-80 w-full rounded-xl" />,
+});
+
 const ANY = '__any__';
+
+type FeedView = 'list' | 'map';
 
 interface FeedFilters {
   city: string;
@@ -51,6 +63,7 @@ export function FeedClient({ initialData }: { initialData: GamesListData }) {
 
   const [filters, setFilters] = useState<FeedFilters>(DEFAULT_FILTERS);
   const [cityDraft, setCityDraft] = useState('');
+  const [view, setView] = useState<FeedView>('list');
 
   const isDefault =
     filters.city === '' &&
@@ -70,13 +83,44 @@ export function FeedClient({ initialData }: { initialData: GamesListData }) {
       : {}),
   });
 
-  const items = query.data?.pages.flatMap((page) => page.items) ?? [];
+  // Ссылка на список должна быть стабильной: по ней карта решает,
+  // пересобирать ли маркеры и подгонять ли масштаб под точки
+  const items = useMemo(() => query.data?.pages.flatMap((page) => page.items) ?? [], [query.data]);
 
   const applyCity = () => setFilters((f) => ({ ...f, city: cityDraft }));
 
+  const loadMore = query.hasNextPage ? (
+    <Button
+      variant="outline"
+      className="display w-full tracking-wide"
+      disabled={query.isFetchingNextPage}
+      onClick={() => void query.fetchNextPage()}
+    >
+      {t('loadMore')}
+    </Button>
+  ) : null;
+
   return (
     <div className="space-y-4">
-      <h1 className="display text-3xl">{t('title')}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="display text-3xl">{t('title')}</h1>
+        {/* Равнозначные кнопки: один шрифт и кегль, различие — заливкой */}
+        <div className="flex gap-1" role="group" aria-label={t('view.label')}>
+          {(['list', 'map'] as const).map((mode) => (
+            <Button
+              key={mode}
+              type="button"
+              size="sm"
+              variant={view === mode ? 'default' : 'outline'}
+              aria-pressed={view === mode}
+              className="display tracking-wide"
+              onClick={() => setView(mode)}
+            >
+              {t(`view.${mode}`)}
+            </Button>
+          ))}
+        </div>
+      </div>
 
       {/* Фильтры */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" role="search">
@@ -142,12 +186,17 @@ export function FeedClient({ initialData }: { initialData: GamesListData }) {
         </label>
       </div>
 
-      {/* Список */}
+      {/* Список или карта — данные одни и те же, меняется подача */}
       {query.isPending ? (
         <div className="space-y-3" aria-busy="true">
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} className="h-36 w-full rounded-xl" />
           ))}
+        </div>
+      ) : view === 'map' ? (
+        <div className="space-y-3">
+          <GamesMap games={items} />
+          {loadMore}
         </div>
       ) : items.length === 0 ? (
         <div className="text-muted-foreground space-y-4 py-16 text-center">
@@ -161,16 +210,7 @@ export function FeedClient({ initialData }: { initialData: GamesListData }) {
           {items.map((game) => (
             <GameCard key={game.code} game={game} />
           ))}
-          {query.hasNextPage ? (
-            <Button
-              variant="outline"
-              className="display w-full tracking-wide"
-              disabled={query.isFetchingNextPage}
-              onClick={() => void query.fetchNextPage()}
-            >
-              {t('loadMore')}
-            </Button>
-          ) : null}
+          {loadMore}
         </div>
       )}
     </div>

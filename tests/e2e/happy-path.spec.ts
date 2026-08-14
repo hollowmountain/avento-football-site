@@ -86,6 +86,26 @@ test('создание игры → приглашение → вступлен�
   await playerContext.close();
 });
 
+/**
+ * Карта в ленте: те же игры, что и в списке, но точками на карте города.
+ * Тайлы OSM здесь не нужны — проверяем переключатель и маркеры,
+ * их число должно совпадать с числом карточек списка.
+ */
+test('лента переключается между списком и картой', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('avento_welcome_v2_never', '1'));
+  await page.goto('/');
+
+  const cards = await page.locator('a[href^="/games/AVA-"]').count();
+
+  await page.getByRole('button', { name: 'Карта', exact: true }).click();
+  await expect(page.locator('.leaflet-container')).toBeVisible();
+  await expect(page.locator('.leaflet-marker-icon')).toHaveCount(cards);
+
+  await page.getByRole('button', { name: 'Список', exact: true }).click();
+  await expect(page.locator('.leaflet-container')).toHaveCount(0);
+  await expect(page.locator('a[href^="/games/AVA-"]')).toHaveCount(cards);
+});
+
 test('несуществующая игра показывает 404-страницу', async ({ page }) => {
   // Из-за стриминга metadata Next отдаёт браузеру 200 + noindex + 404-разметку
   // (краулерам с блокирующей metadata уходит настоящий 404) — проверяем UI.

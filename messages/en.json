@@ -73,6 +73,16 @@
     "title": "Upcoming games",
     "empty": "No open games yet. Create the first one!",
     "loadMore": "Show more",
+    "view": {
+      "label": "How to show games",
+      "list": "List",
+      "map": "Map"
+    },
+    "map": {
+      "label": "Games map",
+      "empty": "Nothing to show on the map yet",
+      "close": "Close the card"
+    },
     "filters": {
       "city": "City",
       "cityPlaceholder": "Any city",

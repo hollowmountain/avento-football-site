@@ -7,7 +7,8 @@ const csp = [
   // unsafe-eval нужен только React Fast Refresh в dev
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  // Тайлы карты приходят картинками с домена OSM — без него карта пустая
+  "img-src 'self' data: blob: https://tile.openstreetmap.org",
   "font-src 'self' data:",
   "connect-src 'self' https://challenges.cloudflare.com",
   'frame-src https://challenges.cloudflare.com',
