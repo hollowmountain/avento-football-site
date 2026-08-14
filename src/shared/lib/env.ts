@@ -40,9 +40,12 @@ const envSchema = z.object({
         .filter((tag) => tag !== ''),
     ),
 
-  // Anti-abuse (значения лимитов — только через ENV, не в коде)
+  // Anti-abuse (значения лимитов — только через ENV, не в коде).
+  // Лимиты создания игр считаются по кабинету: друзья с одного Wi-Fi
+  // не делят квоту на всех. IP остаётся широким предохранителем от ботов.
   RATE_CREATE_GAME_PER_DAY: z.coerce.number().int().positive().default(3),
   RATE_CREATE_GAME_PER_10MIN: z.coerce.number().int().positive().default(1),
+  RATE_CREATE_GAME_IP_PER_DAY: z.coerce.number().int().positive().default(20),
   RATE_MAX_ACTIVE_GAMES_PER_HOST: z.coerce.number().int().positive().default(2),
   RATE_GLOBAL_WRITES_PER_MIN: z.coerce.number().int().positive().default(30),
   DEDUP_RADIUS_METERS: z.coerce.number().positive().default(150),

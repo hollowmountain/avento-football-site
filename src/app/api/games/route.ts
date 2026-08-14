@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { resolveCoordinates } from '@/modules/geo/application/resolve-coordinates';
 import { getGeocoder } from '@/modules/geo/composition';
 import { createGame } from '@/modules/game/application/create-game';
+import { joinGame } from '@/modules/game/application/join-game';
 import { getGameDeps } from '@/modules/game/composition';
 import { getProfileDeps } from '@/modules/profile/composition';
 import { lazySweep } from '@/modules/game/lazy-sweep';
@@ -86,7 +87,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     existingIdentity === null
       ? null
       : await profileDeps.profiles.findByDeviceHash(deps.tokens.hash(existingIdentity));
-  if (profile === null) {
+  // existingIdentity проверяем повторно ради типов: без cookie профиля нет,
+  // но именно этот токен уходит в автозапись создателя ниже
+  if (profile === null || existingIdentity === null) {
     return jsonError(
       'PROFILE_REQUIRED',
       'Создавать игры могут только игроки с кабинетом. Создайте профиль — это минута.',
@@ -97,11 +100,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const isAdmin = env.ADMIN_TAGS.includes(profile.tag);
 
   // Лимиты создания игр (fail-closed: хранилище недоступно → отказ).
+  // Считаем по кабинету, а не по IP: у друзей с одного Wi-Fi квота своя
+  // у каждого. IP держит широкий потолок — он ловит ботов, а не компанию.
   // Здесь только ПРОВЕРКА: квота списывается ниже, после успешного создания,
   // иначе опечатка в форме блокировала бы человека на весь период окна.
   if (!isAdmin) {
     const per10min = await limiter.check(
-      `cg10:${ipHash}`,
+      `cg10:${profile.id}`,
       env.RATE_CREATE_GAME_PER_10MIN,
       600,
       'closed',
@@ -113,7 +118,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
     const perDay = await limiter.check(
-      `cgday:${ipHash}`,
+      `cgday:${profile.id}`,
       env.RATE_CREATE_GAME_PER_DAY,
       86_400,
       'closed',
@@ -122,6 +127,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return jsonRateLimited(
         `Вы уже создали ${env.RATE_CREATE_GAME_PER_DAY} игры за сутки. Следующую можно создать через ${humanizeSeconds(perDay.retryAfterSeconds)}.`,
         perDay.retryAfterSeconds,
+      );
+    }
+    const perIp = await limiter.check(
+      `cgip:${ipHash}`,
+      env.RATE_CREATE_GAME_IP_PER_DAY,
+      86_400,
+      'closed',
+    );
+    if (!perIp.allowed) {
+      return jsonRateLimited(
+        `С этой сети сегодня создано слишком много игр. Попробуйте через ${humanizeSeconds(perIp.retryAfterSeconds)}.`,
+        perIp.retryAfterSeconds,
       );
     }
   }
@@ -173,9 +190,33 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // Игра создана — только теперь тратим квоту (админ квоту не тратит)
   if (!isAdmin) {
     await Promise.all([
-      limiter.consume(`cg10:${ipHash}`, env.RATE_CREATE_GAME_PER_10MIN, 600, 'closed'),
-      limiter.consume(`cgday:${ipHash}`, env.RATE_CREATE_GAME_PER_DAY, 86_400, 'closed'),
+      limiter.consume(`cg10:${profile.id}`, env.RATE_CREATE_GAME_PER_10MIN, 600, 'closed'),
+      limiter.consume(`cgday:${profile.id}`, env.RATE_CREATE_GAME_PER_DAY, 86_400, 'closed'),
+      limiter.consume(`cgip:${ipHash}`, env.RATE_CREATE_GAME_IP_PER_DAY, 86_400, 'closed'),
     ]);
+  }
+
+  // Организатор обычно и сам играет: без записи состав остаётся «0 / N»,
+  // и фоновая уборка отменяет игру как «не набралось игроков». Галочку
+  // можно снять — тогда создатель только собирает игру.
+  if (parsed.data.joinAsPlayer) {
+    const joined = await joinGame(deps, {
+      gameCode: result.value.game.code,
+      name: profile.displayName,
+      nickname: profile.tag,
+      position: 'ANY',
+      skillLevel: profile.skillLevel,
+      attendance: 'CONFIRMED',
+      participantToken: existingIdentity,
+      profileId: profile.id,
+    });
+    // Игра уже создана: неудачная автозапись не повод её потерять
+    if (!joined.ok) {
+      log.warn(
+        { code: result.value.game.code, error: joined.error.code },
+        'автозапись создателя не удалась',
+      );
+    }
   }
 
   log.info({ code: result.value.game.code }, 'игра создана');

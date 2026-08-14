@@ -49,6 +49,7 @@ const createFormSchema = z
     minPlayers: z.number({ message: 'число' }).int().min(2).max(30),
     maxPlayers: z.number({ message: 'число' }).int().min(4).max(30),
     priceRub: z.number({ message: 'число' }).min(0).max(1_000_000),
+    joinAsPlayer: z.boolean(),
     cancelDeadlineLocal: z.string().optional(),
     website: z.string().optional(),
   })
@@ -158,6 +159,7 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
       minPlayers: 2,
       maxPlayers: 10,
       priceRub: 0,
+      joinAsPlayer: true,
       cancelDeadlineLocal: '',
       website: '',
     },
@@ -191,6 +193,7 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
           venueName: values.venueName,
           address: values.address,
           city: values.city,
+          joinAsPlayer: values.joinAsPlayer,
           website: values.website,
           formToken,
         }),
@@ -429,6 +432,20 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
               )}
             />
             <p className="text-muted-foreground text-xs">{t('fields.teamCountHint')}</p>
+          </div>
+
+          {/* Организатор чаще всего играет сам: без этой записи состав
+              остаётся пустым и игру снимает фоновая уборка */}
+          <div className="space-y-1.5 sm:col-span-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="accent-primary size-4"
+                {...register('joinAsPlayer')}
+              />
+              {t('fields.joinAsPlayer')}
+            </label>
+            <p className="text-muted-foreground text-xs">{t('fields.joinAsPlayerHint')}</p>
           </div>
 
           {/* Редко нужные поля спрятаны: обычному организатору хватает

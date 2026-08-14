@@ -106,6 +106,8 @@ export const createGameBodySchema = z.object({
   venueName: singleLine(2, 80),
   address: singleLine(3, 160),
   city: singleLine(2, 60),
+  /** Организатор играет сам: по умолчанию да — иначе состав остаётся пустым. */
+  joinAsPlayer: z.boolean().default(true),
   ...antiAbuseFields,
 });
 

@@ -201,7 +201,9 @@
       "durationFlex": "Open-ended",
       "teamCount": "Teams",
       "teamCountOption": "{count} teams",
-      "teamCountHint": "With 3–4 teams the extras wait their turn and rotate in, like in the quick game"
+      "teamCountHint": "With 3–4 teams the extras wait their turn and rotate in, like in the quick game",
+      "joinAsPlayer": "I'm playing too",
+      "joinAsPlayerHint": "Takes a slot in the roster right away. Uncheck it if you only organise the game"
     },
     "profileGate": {
       "title": "Profile needed",
