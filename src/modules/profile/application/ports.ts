@@ -26,7 +26,7 @@ export interface ProfilePatch {
   loginCodeHash?: string;
 }
 
-/** Строка каталога игроков. */
+/** Строка рейтинга игроков. */
 export interface PlayerListItem {
   id: string;
   tag: string;
@@ -36,10 +36,13 @@ export interface PlayerListItem {
   skillLevel: ProfileSkillLevel;
   /** Сколько состоявшихся игр за плечами. */
   played: number;
+  /** Голы из протоколов матч-дней (гости без кабинета сюда не попадают). */
+  goals: number;
+  assists: number;
 }
 
 export interface ProfileRepository {
-  /** Каталог игроков: сначала те, кто больше сыграл, затем по алфавиту. */
+  /** Рейтинг: сначала по сумме «гол + пас», затем по числу игр и алфавиту. */
   listPlayers(limit: number): Promise<PlayerListItem[]>;
   findByDeviceHash(tokenHash: string): Promise<ProfileEntity | null>;
   findByLoginCodeHash(codeHash: string): Promise<ProfileEntity | null>;

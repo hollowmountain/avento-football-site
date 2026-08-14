@@ -26,8 +26,10 @@ export class PrismaProfileRepository implements ProfileRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async listPlayers(limit: number): Promise<PlayerListItem[]> {
-    // Одним запросом: счёт состоявшихся игр считает СУБД, а не память.
-    // Гости без кабинета сюда не попадают — join идёт по profileId.
+    // Одним запросом: и игры, и голы с передачами считает СУБД, а не память.
+    // Гости без кабинета в рейтинг не попадают — всё сводится по profileId.
+    // Голы и передачи агрегируются отдельными CTE: join голов к составу
+    // размножил бы строки и испортил счёт сыгранных матчей.
     const rows = await this.prisma.$queryRaw<
       Array<{
         id: string;
@@ -36,19 +38,46 @@ export class PrismaProfileRepository implements ProfileRepository {
         countryCode: string | null;
         club: string | null;
         skillLevel: ProfileSkillLevel;
-        played: bigint;
+        played: number;
+        goals: number;
+        assists: number;
       }>
     >`
-      SELECT p.id, p.tag, p."displayName", p."countryCode", p.club, p."skillLevel",
-             COUNT(pt.id) FILTER (WHERE g."status"::text = 'FINISHED') AS played
-      FROM "UserProfile" p
-      LEFT JOIN "Participant" pt ON pt."profileId" = p.id AND pt."leftAt" IS NULL
-      LEFT JOIN "Game" g ON g.id = pt."gameId"
-      GROUP BY p.id
-      ORDER BY played DESC, lower(p."displayName") ASC
+      WITH scored AS (
+        SELECT pt."profileId" AS profile_id, COUNT(*)::int AS goals
+        FROM "DayGoal" dg
+        JOIN "Participant" pt ON pt.id = dg."scorerParticipantId"
+        WHERE pt."profileId" IS NOT NULL
+        GROUP BY pt."profileId"
+      ),
+      assisted AS (
+        SELECT pt."profileId" AS profile_id, COUNT(*)::int AS assists
+        FROM "DayGoal" dg
+        JOIN "Participant" pt ON pt.id = dg."assistParticipantId"
+        WHERE pt."profileId" IS NOT NULL
+        GROUP BY pt."profileId"
+      ),
+      base AS (
+        SELECT p.id, p.tag, p."displayName", p."countryCode", p.club, p."skillLevel",
+               COUNT(pt.id) FILTER (WHERE g."status"::text = 'FINISHED')::int AS played
+        FROM "UserProfile" p
+        LEFT JOIN "Participant" pt ON pt."profileId" = p.id AND pt."leftAt" IS NULL
+        LEFT JOIN "Game" g ON g.id = pt."gameId"
+        GROUP BY p.id
+      )
+      SELECT base.id, base.tag, base."displayName", base."countryCode", base.club,
+             base."skillLevel", base.played,
+             COALESCE(scored.goals, 0) AS goals,
+             COALESCE(assisted.assists, 0) AS assists
+      FROM base
+      LEFT JOIN scored ON scored.profile_id = base.id
+      LEFT JOIN assisted ON assisted.profile_id = base.id
+      ORDER BY (COALESCE(scored.goals, 0) + COALESCE(assisted.assists, 0)) DESC,
+               base.played DESC,
+               lower(base."displayName") ASC
       LIMIT ${limit}
     `;
-    return rows.map((row) => ({ ...row, played: Number(row.played) }));
+    return rows;
   }
 
   async findByDeviceHash(tokenHash: string): Promise<ProfileEntity | null> {

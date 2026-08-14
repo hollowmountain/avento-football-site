@@ -284,8 +284,11 @@
   },
   "players": {
     "title": "Players",
-    "lead": "Everyone with a profile. Goals and assists appear here once the match protocol ships.",
+    "lead": "Everyone with a profile. Ranked by goals plus assists from match days.",
     "empty": "Nobody yet: be the first to create a profile.",
+    "player": "Player",
+    "scoreLabel": "G+A",
+    "breakdown": "{goals} + {assists}",
     "played": "{count, plural, one {# game} other {# games}}"
   },
   "profile": {
