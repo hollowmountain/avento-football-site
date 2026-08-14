@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Copy, KeyRound, UserRound } from 'lucide-react';
+import { Check, Copy, KeyRound, LogOut, UserRound } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -9,6 +9,14 @@ import { ApiRequestError, apiFetch } from '@/shared/lib/api-client';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/ui/dialog';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Pill } from '@/shared/ui/pill';
@@ -220,7 +228,77 @@ function HasProfile({
       </Card>
       <MyGames />
       <CodeCard onCodeIssued={onCodeIssued} />
+      <LogoutCard />
     </>
+  );
+}
+
+/**
+ * Выход с этого устройства. Профиль остаётся, но вернуться в него можно
+ * только по личному коду — об этом предупреждаем прямо в диалоге, иначе
+ * человек выйдет и потеряет аккаунт.
+ */
+function LogoutCard() {
+  const t = useTranslations('profile.logout');
+  const tCommon = useTranslations('common');
+  const queryClient = useQueryClient();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const leave = useMutation({
+    mutationFn: () => apiFetch('/api/me/logout', { method: 'POST' }),
+    onSuccess: async () => {
+      setConfirmOpen(false);
+      toast.success(t('done'));
+      await queryClient.invalidateQueries();
+    },
+    onError: (error) => {
+      toast.error(error instanceof ApiRequestError ? error.payload.message : tCommon('error'));
+    },
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="display text-xl tracking-wide">{t('title')}</CardTitle>
+        <CardDescription>{t('lead')}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button type="button" variant="outline" onClick={() => setConfirmOpen(true)}>
+          <LogOut data-icon="inline-start" aria-hidden />
+          {t('action')}
+        </Button>
+      </CardContent>
+
+      {confirmOpen ? (
+        <Dialog open onOpenChange={(open) => (open ? undefined : setConfirmOpen(false))}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="display text-lg tracking-wide">
+                {t('confirmTitle')}
+              </DialogTitle>
+              <DialogDescription>{t('confirmText')}</DialogDescription>
+            </DialogHeader>
+            <Alert>
+              <AlertTitle>{t('warnTitle')}</AlertTitle>
+              <AlertDescription>{t('warnText')}</AlertDescription>
+            </Alert>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setConfirmOpen(false)}>
+                {tCommon('cancel')}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={leave.isPending}
+                onClick={() => leave.mutate()}
+              >
+                {t('action')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : null}
+    </Card>
   );
 }
 
@@ -472,6 +550,23 @@ function ProfileForm({
           role="group"
           aria-label={t('club')}
         >
+          {/* «Без клуба» — отдельной плиткой: выбранный клуб иначе
+              не снять, повторное нажатие на телефоне не угадывается */}
+          <button
+            type="button"
+            aria-pressed={club === ''}
+            onClick={() => setClub('')}
+            className={`focus-visible:ring-ring flex flex-col items-center justify-center gap-1 rounded-md border px-1 py-2 transition-colors focus-visible:ring-2 focus-visible:outline-none ${
+              club === '' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <span className="text-muted-foreground text-lg leading-none" aria-hidden>
+              —
+            </span>
+            <span className="text-muted-foreground w-full truncate text-center text-[0.6rem] leading-tight">
+              {t('clubNone')}
+            </span>
+          </button>
           {CLUBS.map((preset) => (
             <button
               key={preset.id}

@@ -51,6 +51,8 @@ export interface ProfileRepository {
   create(record: NewProfileRecord): Promise<ProfileEntity>;
   update(profileId: string, patch: ProfilePatch): Promise<ProfileEntity>;
   attachDevice(profileId: string, tokenHash: string): Promise<void>;
+  /** Выход: устройство отвязывается, профиль остаётся ждать входа по коду. */
+  detachDevice(tokenHash: string): Promise<void>;
   countDevices(profileId: string): Promise<number>;
 }
 

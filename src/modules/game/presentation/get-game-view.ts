@@ -38,5 +38,7 @@ export async function getGameView(
       isParticipant:
         viewerTokenHash !== null && participants.some((p) => p.tokenHash === viewerTokenHash),
     },
+    // Ключ приглашения — только организатору: им он делится ссылкой
+    inviteKey: isHost ? game.inviteKey : null,
   };
 }

@@ -25,6 +25,8 @@ test('создание игры → приглашение → вступлен�
   // Координаты не вводим: сервер определяет их по адресу.
   // Имя организатора не вводим: оно берётся из кабинета
   await hostPage.getByLabel('Адрес').fill('Тестовая улица, 1');
+  // Игра открытая: записаться сможет любой из ленты
+  await hostPage.getByRole('button', { name: 'Публичная' }).click();
 
   // Time-trap: форма должна прожить минимум 2 секунды до сабмита
   await hostPage.waitForTimeout(2300);
@@ -114,6 +116,7 @@ test('матч-день: протокол, гол на игрока, табли�
   await hostPage.getByLabel('Название').fill('E2E: матч-день');
   await hostPage.getByLabel('Площадка').fill('Манеж Матч-дня');
   await hostPage.getByLabel('Адрес').fill('Протокольная улица, 7');
+  await hostPage.getByRole('button', { name: 'Публичная' }).click();
   await hostPage.locator('#cg-starts').fill(startsAtLocal);
   await hostPage.waitForTimeout(2300);
   await hostPage.getByRole('button', { name: 'Создать игру' }).click();
@@ -197,6 +200,98 @@ test('лента переключается между списком и кар�
   await page.getByRole('button', { name: 'Список', exact: true }).click();
   await expect(page.locator('.leaflet-container')).toHaveCount(0);
   await expect(page.locator(cardLink)).toHaveCount(cards);
+});
+
+/**
+ * Приватная игра «по ссылке»: в ленте видна, но записаться можно только
+ * с ключом из ссылки организатора. Заодно проверяем выход из кабинета
+ * и редактирование игры владельцем.
+ */
+test('приватная игра: запись только по ссылке, правка и выход', async ({ browser }) => {
+  const hostContext = await browser.newContext();
+  await hostContext.addInitScript(() => localStorage.setItem('avento_welcome_v2_never', '1'));
+  const hostPage = await hostContext.newPage();
+
+  await hostPage.goto('/me');
+  await hostPage.locator('#profile-name').fill('Приватный Хост');
+  await hostPage.locator('#profile-tag').fill('e2e_priv');
+  await hostPage.getByRole('button', { name: 'Создать профиль' }).click();
+  await expect(hostPage.getByText('Ваш личный код')).toBeVisible();
+
+  await hostPage.goto('/games/new');
+  await hostPage.getByLabel('Название').fill('E2E: только для своих');
+  await hostPage.getByLabel('Площадка').fill('Закрытый манеж');
+  await hostPage.getByLabel('Адрес').fill('Приватный переулок, 3');
+  await hostPage.getByRole('button', { name: 'По ссылке' }).click();
+  await hostPage.waitForTimeout(2300);
+  await hostPage.getByRole('button', { name: 'Создать игру' }).click();
+  await expect(hostPage.getByText('Игра создана!')).toBeVisible();
+  const code = (await hostPage
+    .getByText(/^AVA-[A-HJ-NP-Z2-9]{4}$/)
+    .first()
+    .textContent())!;
+
+  // Организатор видит подсказку про приватность и ссылку с ключом
+  await expect(hostPage.getByText('Игра приватная', { exact: false })).toBeVisible();
+
+  // --- Чужой человек без ключа записаться не может ---
+  const strangerContext = await browser.newContext();
+  await strangerContext.addInitScript(() => localStorage.setItem('avento_welcome_v2_never', '1'));
+  const strangerPage = await strangerContext.newPage();
+  await strangerPage.goto(`/games/${code}`);
+  await expect(strangerPage.locator('main').getByText('Приватная')).toBeVisible();
+  await strangerPage.getByRole('button', { name: 'Я иду!' }).click();
+  await strangerPage.getByLabel('Имя', { exact: true }).fill('Чужой Человек');
+  await strangerPage.getByLabel('Никнейм').fill('e2e-stranger');
+  await strangerPage.waitForTimeout(2300);
+  await strangerPage.getByRole('button', { name: 'Записаться' }).click();
+  // Сервер отказал — человек остался вне состава
+  await expect(strangerPage.getByText('приватная игра', { exact: false })).toBeVisible();
+
+  // --- По ссылке с ключом запись проходит ---
+  const friendContext = await browser.newContext();
+  await friendContext.addInitScript(() => localStorage.setItem('avento_welcome_v2_never', '1'));
+  const friendPage = await friendContext.newPage();
+  // Ключ берём из ссылки-приглашения на странице игры у организатора
+  await hostPage.goto(`/games/${code}`);
+  const key = await hostPage.evaluate(async (gameCode) => {
+    const response = await fetch(`/api/games/${gameCode}`);
+    const payload = (await response.json()) as { data?: { inviteKey?: string | null } };
+    return payload.data?.inviteKey ?? '';
+  }, code);
+  expect(key).not.toBe('');
+
+  await friendPage.goto(`/games/${code}?key=${key}`);
+  await friendPage.getByRole('button', { name: 'Я иду!' }).click();
+  await friendPage.getByLabel('Имя', { exact: true }).fill('Друг Хоста');
+  await friendPage.getByLabel('Никнейм').fill('e2e-friend');
+  await friendPage.waitForTimeout(2300);
+  await friendPage.getByRole('button', { name: 'Записаться' }).click();
+  await expect(friendPage.getByText('Вы записаны', { exact: true })).toBeVisible();
+
+  // --- Организатор правит игру и убирает участника ---
+  await hostPage.reload();
+  await hostPage.getByRole('button', { name: 'Редактировать' }).click();
+  await hostPage.getByLabel('Название').fill('E2E: только для своих (правка)');
+  await hostPage.getByRole('button', { name: 'Сохранить' }).click();
+  await expect(
+    hostPage.getByRole('heading', { name: 'E2E: только для своих (правка)' }),
+  ).toBeVisible();
+
+  hostPage.once('dialog', (dialog) => void dialog.accept());
+  await hostPage.getByRole('button', { name: 'Убрать из состава' }).first().click();
+  await expect(hostPage.getByText('e2e-friend')).toHaveCount(0);
+
+  // --- Выход из кабинета: профиль отвязан от браузера ---
+  await hostPage.goto('/me');
+  await hostPage.getByRole('button', { name: 'Выйти из аккаунта' }).click();
+  await expect(hostPage.getByText('Точно хотите выйти?')).toBeVisible();
+  await hostPage.getByRole('button', { name: 'Выйти из аккаунта' }).last().click();
+  await expect(hostPage.getByRole('button', { name: 'Создать профиль' })).toBeVisible();
+
+  await hostContext.close();
+  await strangerContext.close();
+  await friendContext.close();
 });
 
 test('несуществующая игра показывает 404-страницу', async ({ page }) => {

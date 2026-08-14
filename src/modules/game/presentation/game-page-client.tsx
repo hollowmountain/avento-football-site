@@ -1,7 +1,16 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarPlus, MapPin, Share2, Shuffle, Timer, XCircle } from 'lucide-react';
+import {
+  CalendarPlus,
+  MapPin,
+  Pencil,
+  Share2,
+  Shuffle,
+  Timer,
+  UserMinus,
+  XCircle,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -24,6 +33,7 @@ import type { formTokenSchema } from '../schemas';
 import type { GameViewData } from './api-types';
 import { Countdown } from './countdown';
 import type { ParticipantDto } from './dto';
+import { EditGameDialog } from './edit-game-dialog';
 import { JoinDialog } from './join-dialog';
 import { TeamsBoard } from './teams-board';
 
@@ -44,6 +54,7 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
   const queryClient = useQueryClient();
   const hostToken = useHostToken(code);
   const [openedAt] = useState(() => Date.now());
+  const [editOpen, setEditOpen] = useState(false);
 
   const query = useQuery({
     queryKey: ['game', code, Boolean(hostToken)],
@@ -117,6 +128,22 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
     onError: onApiError,
   });
 
+  const kickMutation = useMutation({
+    mutationFn: (participantId: string) =>
+      apiFetch<{ nickname: string; promotedNickname: string | null }>(
+        `/api/games/${code}/participants/${participantId}`,
+        { method: 'DELETE', headers: hostToken ? { 'x-host-token': hostToken } : {} },
+      ),
+    onSuccess: (result) => {
+      toast.success(t('host.kicked', { nickname: result.nickname }));
+      if (result.promotedNickname) {
+        toast.info(t('promoted', { nickname: result.promotedNickname }));
+      }
+      void invalidate();
+    },
+    onError: onApiError,
+  });
+
   const setTeamsMutation = useMutation({
     mutationFn: (teams: { teamA: string[]; teamB: string[] }) =>
       apiFetch<{ teams: TeamsSnapshot }>(`/api/games/${code}/teams`, {
@@ -131,15 +158,34 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
     },
   });
 
+  /**
+   * Ссылка-приглашение: чистый адрес игры, без служебных параметров
+   * страницы. Для приватной игры «по ссылке» ключ входит в адрес —
+   * без него человек не запишется.
+   */
+  const inviteUrl = () => {
+    const base = `${window.location.origin}/games/${game.code}`;
+    return data.inviteKey !== null ? `${base}?key=${data.inviteKey}` : base;
+  };
+
   const share = async () => {
-    const url = window.location.href;
-    const text = `${game.title} — ${formatGameDate(game.startsAt, game.timezone)}`;
+    const url = inviteUrl();
+    // Одним понятным сообщением: что, когда, где и ссылка отдельной строкой
+    const text = [
+      game.title,
+      formatGameDate(game.startsAt, game.timezone),
+      `${game.venueName}, ${game.city}`,
+    ].join('\n');
+
     if (navigator.share) {
-      await navigator.share({ title: game.title, text, url }).catch(() => undefined);
-    } else {
-      await navigator.clipboard.writeText(url);
-      toast.success(tCommon('linkCopied'));
+      const shared = await navigator
+        .share({ title: game.title, text, url })
+        .then(() => true)
+        .catch(() => false);
+      if (shared) return;
     }
+    await navigator.clipboard.writeText(`${text}\n${url}`);
+    toast.success(tCommon('linkCopied'));
   };
 
   const leave = () => {
@@ -153,6 +199,13 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
     if (window.confirm(t('host.cancelConfirm'))) cancelMutation.mutate();
   };
 
+  const kick = (participant: ParticipantDto) => {
+    const label = participant.tag !== null ? participant.name : participant.nickname;
+    if (window.confirm(t('host.kickConfirm', { nickname: label }))) {
+      kickMutation.mutate(participant.id);
+    }
+  };
+
   const mapUrl = `https://yandex.ru/maps/?pt=${game.longitude},${game.latitude}&z=16&l=map`;
   const rosterLabel = t('rosterProgress', { main: game.mainCount, max: game.maxPlayers });
 
@@ -162,6 +215,7 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
           <Pill tone={isActive ? 'accent' : 'muted'}>{tStatuses(game.status)}</Pill>
+          {game.visibility !== 'PUBLIC' ? <Pill tone="muted">{t('private')}</Pill> : null}
           <Pill>{tFormats(game.format)}</Pill>
           {game.skillLevel !== 'ANY' ? <Pill>{tLevels(game.skillLevel)}</Pill> : null}
           {isActive && !started ? <WeatherBadge gameCode={code} /> : null}
@@ -232,6 +286,8 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
                     participant.skillLevel === 'ANY' ? null : tLevels(participant.skillLevel)
                   }
                   maybeLabel={participant.attendance === 'MAYBE' ? tAttendance('MAYBE') : null}
+                  onKick={isHost && isActive && !participant.isYou ? () => kick(participant) : null}
+                  kickLabel={t('host.kick')}
                 />
               ))
             )}
@@ -251,6 +307,10 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
                       participant.skillLevel === 'ANY' ? null : tLevels(participant.skillLevel)
                     }
                     maybeLabel={participant.attendance === 'MAYBE' ? tAttendance('MAYBE') : null}
+                    onKick={
+                      isHost && isActive && !participant.isYou ? () => kick(participant) : null
+                    }
+                    kickLabel={t('host.kick')}
                   />
                 ))}
               </ul>
@@ -276,6 +336,7 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
             <JoinDialog
               gameCode={code}
               isFull={game.status === 'FULL'}
+              visibility={game.visibility}
               formToken={formToken}
               onJoined={() => void invalidate()}
             />
@@ -384,20 +445,35 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
           <CardContent className="flex flex-col gap-3 pt-0">
             <span className="eyebrow text-lamp">{t('host.panel')}</span>
             <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                onClick={() => shuffleMutation.mutate()}
-                disabled={shuffleMutation.isPending}
-              >
-                <Shuffle className="size-4" />
-                {game.teamsSnapshot ? t('host.reshuffle') : t('host.shuffle')}
+              <Button variant="outline" onClick={() => setEditOpen(true)}>
+                <Pencil className="size-4" /> {t('host.edit')}
               </Button>
+              {/* Жеребьёвка нужна только там, где есть команды: у сбора её нет */}
+              {game.teamCount > 1 ? (
+                <Button
+                  variant="outline"
+                  onClick={() => shuffleMutation.mutate()}
+                  disabled={shuffleMutation.isPending}
+                >
+                  <Shuffle className="size-4" />
+                  {game.teamsSnapshot ? t('host.reshuffle') : t('host.shuffle')}
+                </Button>
+              ) : null}
               <Button variant="outline" onClick={cancelGame} disabled={cancelMutation.isPending}>
                 <XCircle className="size-4" /> {t('host.cancelGame')}
               </Button>
             </div>
           </CardContent>
         </Card>
+      ) : null}
+
+      {editOpen ? (
+        <EditGameDialog
+          game={game}
+          hostToken={hostToken}
+          onClose={() => setEditOpen(false)}
+          onSaved={() => void invalidate()}
+        />
       ) : null}
     </div>
   );
@@ -409,18 +485,23 @@ function PlayerRow({
   number,
   levelLabel,
   maybeLabel,
+  onKick,
+  kickLabel,
 }: {
   participant: ParticipantDto;
   number: number;
   /** Уровень игрока из кабинета; null — не указан, строку не занимаем. */
   levelLabel: string | null;
   maybeLabel: string | null;
+  /** Организатору — убрать игрока из состава; null — кнопки нет. */
+  onKick: (() => void) | null;
+  kickLabel: string;
 }) {
   const secondLine = [levelLabel, maybeLabel?.toLowerCase()].filter(Boolean).join(' · ');
 
   return (
     <li
-      className={`grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-3 border-b py-2 last:border-b-0 ${
+      className={`grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-3 border-b py-2 last:border-b-0 ${
         // Своя строка подсвечена во всю ширину карточки: заливка,
         // обрывающаяся до краёв, читается как случайный отступ
         participant.isYou ? 'bg-primary/5 -mx-(--card-spacing) px-(--card-spacing)' : ''
@@ -449,6 +530,21 @@ function PlayerRow({
           <span className="text-muted-foreground truncate text-xs">{secondLine}</span>
         ) : null}
       </span>
+      {onKick !== null ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="text-muted-foreground hover:text-destructive"
+          aria-label={kickLabel}
+          title={kickLabel}
+          onClick={onKick}
+        >
+          <UserMinus className="size-4" aria-hidden />
+        </Button>
+      ) : (
+        <span aria-hidden />
+      )}
     </li>
   );
 }

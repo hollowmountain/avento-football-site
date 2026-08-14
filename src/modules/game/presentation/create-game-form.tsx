@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Textarea } from '@/shared/ui/textarea';
 import { MAX_START_DAYS_AHEAD, defaultCancelDeadline } from '../domain/game-rules';
-import { GAME_FORMATS, SKILL_LEVELS, type formTokenSchema } from '../schemas';
+import { GAME_FORMATS, GAME_VISIBILITIES, SKILL_LEVELS, type formTokenSchema } from '../schemas';
 import type { GameDto } from './dto';
 
 interface CreateGameFormProps {
@@ -29,7 +29,7 @@ interface CreateGameFormProps {
   defaults: { city: string; currency: string; timezone: string };
 }
 
-type CreatedGame = { game: GameDto; hostToken: string };
+type CreatedGame = { game: GameDto; hostToken: string; inviteKey: string | null };
 
 const createFormSchema = z
   .object({
@@ -42,7 +42,9 @@ const createFormSchema = z
     // валидация не спотыкается, а на сервер уходит null
     flexDuration: z.boolean(),
     durationMinutes: z.number({ message: 'число' }).int().min(30).max(480),
-    teamCount: z.number().int().min(2).max(4),
+    teamCount: z.number().int().min(1).max(4),
+    visibility: z.enum(GAME_VISIBILITIES),
+    joinPassword: z.string().optional(),
     venueName: z.string().trim().min(2, 'минимум 2 симв.').max(80),
     address: z.string().trim().min(3, 'минимум 3 симв.').max(160),
     city: z.string().trim().min(2, 'минимум 2 симв.').max(60),
@@ -56,6 +58,10 @@ const createFormSchema = z
   .refine((d) => d.maxPlayers >= d.minPlayers, {
     path: ['maxPlayers'],
     message: 'не меньше минимума',
+  })
+  .refine((d) => d.visibility !== 'PRIVATE_PASSWORD' || (d.joinPassword ?? '').trim().length >= 4, {
+    path: ['joinPassword'],
+    message: 'минимум 4 символа',
   })
   .refine((d) => new Date(d.startsAtLocal).getTime() > Date.now(), {
     path: ['startsAtLocal'],
@@ -132,9 +138,12 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
   // берётся из профиля, форма без него не открывается
   const me = useQuery({
     queryKey: ['me'],
-    queryFn: () => apiFetch<{ profile: ProfileDto | null }>('/api/me'),
+    queryFn: () => apiFetch<{ profile: ProfileDto | null; canCreatePublic: boolean }>('/api/me'),
     staleTime: 60_000,
   });
+  // Публичные игры — по согласованию с владельцем; остальным доступны
+  // приватные, чтобы никто не собрал «открытую» игру и не обманул людей
+  const canCreatePublic = me.data?.canCreatePublic ?? false;
 
   const {
     register,
@@ -153,6 +162,10 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
       flexDuration: false,
       durationMinutes: 90,
       teamCount: 2,
+      // Публичную игру создать может не каждый — ниже опция скрыта,
+      // и дефолт выбирается по ответу /api/me
+      visibility: 'PRIVATE_LINK',
+      joinPassword: '',
       venueName: '',
       address: '',
       city: defaults.city,
@@ -193,6 +206,9 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
           venueName: values.venueName,
           address: values.address,
           city: values.city,
+          visibility: values.visibility,
+          joinPassword:
+            values.visibility === 'PRIVATE_PASSWORD' ? values.joinPassword?.trim() : undefined,
           joinAsPlayer: values.joinAsPlayer,
           website: values.website,
           formToken,
@@ -409,6 +425,54 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
             <p className="text-muted-foreground text-xs">{t('fields.priceHint')}</p>
             {fieldError('priceRub')}
           </div>
+          {/* Кто может записаться: публичная игра — по согласованию,
+              остальным — приватная по ссылке или по паролю */}
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>{t('fields.visibility')}</Label>
+            <Controller
+              control={control}
+              name="visibility"
+              render={({ field }) => (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-wrap gap-1.5" role="group">
+                    {GAME_VISIBILITIES.filter((value) => value !== 'PUBLIC' || canCreatePublic).map(
+                      (value) => (
+                        <Button
+                          key={value}
+                          type="button"
+                          size="sm"
+                          variant={field.value === value ? 'secondary' : 'outline'}
+                          aria-pressed={field.value === value}
+                          onClick={() => field.onChange(value)}
+                        >
+                          {t(`fields.visibilityOptions.${value}`)}
+                        </Button>
+                      ),
+                    )}
+                  </div>
+                  <p className="text-muted-foreground text-xs">
+                    {t(`fields.visibilityHints.${field.value}`)}
+                  </p>
+                  {field.value === 'PRIVATE_PASSWORD' ? (
+                    <div className="space-y-1.5 pt-1">
+                      <Label htmlFor="cg-password">{t('fields.joinPassword')}</Label>
+                      <Input
+                        id="cg-password"
+                        autoComplete="off"
+                        placeholder={t('fields.joinPasswordPlaceholder')}
+                        {...register('joinPassword')}
+                      />
+                      {fieldError('joinPassword')}
+                    </div>
+                  ) : null}
+                  {!canCreatePublic ? (
+                    <p className="text-muted-foreground text-xs">{t('fields.publicLocked')}</p>
+                  ) : null}
+                </div>
+              )}
+            />
+          </div>
+
           <div className="space-y-1.5 sm:col-span-2">
             <Label>{t('fields.teamCount')}</Label>
             <Controller
@@ -416,7 +480,7 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
               name="teamCount"
               render={({ field }) => (
                 <div className="flex gap-1.5" role="group" aria-label={t('fields.teamCount')}>
-                  {[2, 3, 4].map((count) => (
+                  {[1, 2, 3, 4].map((count) => (
                     <Button
                       key={count}
                       type="button"
@@ -425,7 +489,9 @@ export function CreateGameForm({ formToken, defaults }: CreateGameFormProps) {
                       aria-pressed={field.value === count}
                       onClick={() => field.onChange(count)}
                     >
-                      {t('fields.teamCountOption', { count })}
+                      {count === 1
+                        ? t('fields.teamCountGathering')
+                        : t('fields.teamCountOption', { count })}
                     </Button>
                   ))}
                 </div>
@@ -497,7 +563,10 @@ function CreatedGameScreen({ created }: { created: CreatedGame }) {
   const t = useTranslations('createForm.success');
   const tCommon = useTranslations('common');
 
-  const gameUrl = `${window.location.origin}/games/${created.game.code}`;
+  // Для игры «по ссылке» ключ входит в адрес: по нему и записываются
+  const gameUrl =
+    `${window.location.origin}/games/${created.game.code}` +
+    (created.inviteKey !== null ? `?key=${created.inviteKey}` : '');
 
   const copy = async (value: string) => {
     await navigator.clipboard.writeText(value);
@@ -519,6 +588,11 @@ function CreatedGameScreen({ created }: { created: CreatedGame }) {
           <CardDescription>{t('managedByProfile')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {created.game.visibility !== 'PUBLIC' ? (
+            <p className="text-muted-foreground text-sm">
+              {created.inviteKey !== null ? t('privateLinkHint') : t('privatePasswordHint')}
+            </p>
+          ) : null}
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button variant="outline" className="flex-1" onClick={() => void copy(gameUrl)}>
               <Copy className="size-4" /> {t('copyLink')}

@@ -1,6 +1,6 @@
 import { err, ok, type Result } from '@/shared/lib/result';
 import { validateGameDraft } from '../domain/game-rules';
-import type { GameEntity, GameFormat, SkillLevel } from '../domain/types';
+import type { GameEntity, GameFormat, GameVisibility, SkillLevel } from '../domain/types';
 import { domainError, type DomainError } from './errors';
 import {
   CodeCollisionError,
@@ -33,6 +33,12 @@ export interface CreateGameInput {
   latitude: number;
   longitude: number;
   city: string;
+  /** Публичная или приватная (по ссылке / паролю). */
+  visibility: GameVisibility;
+  /** Хеш ключа записи приватной игры (считает вызывающий код). */
+  joinKeyHash: string | null;
+  /** Ключ-приглашение открытым текстом — только для PRIVATE_LINK. */
+  inviteKey: string | null;
   hostName: string;
   /** Анонимный identity-токен создателя (cookie), plain. */
   creatorToken: string | null;
@@ -144,6 +150,9 @@ export async function createGame(
         latitude: input.latitude,
         longitude: input.longitude,
         city: input.city,
+        visibility: input.visibility,
+        joinKeyHash: input.joinKeyHash,
+        inviteKey: input.inviteKey,
         hostName: input.hostName,
         hostTokenHash,
         creatorTokenHash,

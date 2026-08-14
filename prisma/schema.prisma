@@ -58,6 +58,15 @@ enum Gender {
   FEMALE
 }
 
+// Видимость игры: публичные создают только согласованные теги (ENV
+// PUBLIC_GAME_TAGS), остальные собирают друзей приватно — по ссылке
+// с ключом или по паролю. В ленте видны все игры.
+enum GameVisibility {
+  PUBLIC
+  PRIVATE_LINK
+  PRIVATE_PASSWORD
+}
+
 // Личный кабинет: профиль с уникальным тегом (как в Telegram).
 // Пароля нет: устройства привязываются анонимным cookie, вход с нового —
 // по личному коду (хранится только HMAC-хеш, как у host-токенов).
@@ -117,6 +126,13 @@ model Game {
   latitude        Float
   longitude       Float
   city            String
+  visibility      GameVisibility @default(PUBLIC)
+  // Хеш ключа записи для приватных игр (ссылка или пароль)
+  joinKeyHash     String?
+  // Ключ-приглашение открытым текстом — ТОЛЬКО для PRIVATE_LINK
+  // (случайный код, нужен организатору для повторного шаринга ссылки).
+  // Пароль PRIVATE_PASSWORD открытым текстом не хранится никогда.
+  inviteKey       String?
   hostTokenHash   String // хеш токена, plain-токен не хранится
   hostName        String
   createdIpHash   String // хеш IP + соль, сам IP не хранится (GDPR)

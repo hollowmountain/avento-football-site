@@ -41,6 +41,9 @@ export default defineConfig({
       RATE_CREATE_GAME_PER_DAY: '100',
       RATE_CREATE_GAME_IP_PER_DAY: '100',
       RATE_GLOBAL_WRITES_PER_MIN: '500',
+      // Публичные игры создаются по согласованию: e2e-тегам разрешаем,
+      // чтобы сценарии проверяли и публичный, и приватный путь
+      PUBLIC_GAME_TAGS: 'ice,e2e_host,e2e_day_host,e2e_priv',
       // Без сети: координаты считает детерминированная заглушка
       GEOCODER: 'stub',
     },

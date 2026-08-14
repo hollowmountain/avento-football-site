@@ -132,6 +132,11 @@ export class PrismaProfileRepository implements ProfileRepository {
     });
   }
 
+  async detachDevice(tokenHash: string): Promise<void> {
+    // deleteMany: не бросает, если устройство уже отвязано
+    await this.prisma.profileDevice.deleteMany({ where: { tokenHash } });
+  }
+
   async countDevices(profileId: string): Promise<number> {
     return this.prisma.profileDevice.count({ where: { profileId } });
   }

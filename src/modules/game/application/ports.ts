@@ -3,6 +3,7 @@ import type {
   GameEntity,
   GameFormat,
   GameStatus,
+  GameVisibility,
   ParticipantEntity,
   Position,
   SkillLevel,
@@ -67,6 +68,9 @@ export interface NewGameRecord {
   latitude: number;
   longitude: number;
   city: string;
+  visibility: GameVisibility;
+  joinKeyHash: string | null;
+  inviteKey: string | null;
   hostName: string;
   hostTokenHash: string;
   creatorTokenHash: string | null;

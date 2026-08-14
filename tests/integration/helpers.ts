@@ -80,6 +80,9 @@ export function gameDraft(overrides: Partial<CreateGameInput> = {}): CreateGameI
     latitude: 55.751 + Math.random() * 0.5, // разные точки — не задевать дедуп
     longitude: 37.618 + Math.random() * 0.5,
     city: 'Москва',
+    visibility: 'PUBLIC',
+    joinKeyHash: null,
+    inviteKey: null,
     hostName: 'Организатор',
     creatorToken: null,
     creatorProfileId: null,

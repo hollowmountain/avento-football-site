@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { resolveCoordinates } from '@/modules/geo/application/resolve-coordinates';
 import { getGeocoder } from '@/modules/geo/composition';
@@ -7,7 +8,7 @@ import { getGameDeps } from '@/modules/game/composition';
 import { getProfileDeps } from '@/modules/profile/composition';
 import { lazySweep } from '@/modules/game/lazy-sweep';
 import { gameToDto, gameToSummaryDto } from '@/modules/game/presentation/dto';
-import { createGameBodySchema, listGamesQuerySchema } from '@/modules/game/schemas';
+import { createGameBodyWithPassword, listGamesQuerySchema } from '@/modules/game/schemas';
 import {
   humanizeSeconds,
   jsonDomainError,
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const body: unknown = await request.json().catch(() => null);
-  const parsed = createGameBodySchema.safeParse(body);
+  const parsed = createGameBodyWithPassword.safeParse(body);
   if (!parsed.success) {
     return jsonError('BAD_REQUEST', 'Некорректные данные формы', 400, {
       details: parsed.error.flatten((issue) => issue.message),
@@ -98,6 +99,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
   // Админ-теги (ENV ADMIN_TAGS): без лимитов количества и без дедупа
   const isAdmin = env.ADMIN_TAGS.includes(profile.tag);
+
+  // Публичные игры — по согласованию с владельцем (ENV PUBLIC_GAME_TAGS):
+  // чужой человек не соберёт «открытую» игру и не обманет записавшихся.
+  // Остальным доступны приватные — по ссылке с ключом или по паролю.
+  const canCreatePublic = isAdmin || env.PUBLIC_GAME_TAGS.includes(profile.tag);
+  if (parsed.data.visibility === 'PUBLIC' && !canCreatePublic) {
+    return jsonError(
+      'PUBLIC_NOT_ALLOWED',
+      'Публичные игры создаются по согласованию. Выберите приватную — по ссылке или паролю.',
+      403,
+    );
+  }
+
+  // Ключ записи приватной игры: для ссылки — случайный код (хранится
+  // открыто, нужен организатору для шаринга), для пароля — только хеш
+  let joinKeyHash: string | null = null;
+  let inviteKey: string | null = null;
+  if (parsed.data.visibility === 'PRIVATE_LINK') {
+    inviteKey = randomBytes(9).toString('base64url');
+    joinKeyHash = deps.tokens.hash(inviteKey);
+  } else if (parsed.data.visibility === 'PRIVATE_PASSWORD') {
+    joinKeyHash = deps.tokens.hash(parsed.data.joinPassword ?? '');
+  }
 
   // Лимиты создания игр (fail-closed: хранилище недоступно → отказ).
   // Считаем по кабинету, а не по IP: у друзей с одного Wi-Fi квота своя
@@ -177,6 +201,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     latitude: coordinates.latitude,
     longitude: coordinates.longitude,
     city: parsed.data.city,
+    visibility: parsed.data.visibility,
+    joinKeyHash,
+    inviteKey,
     // Имя организатора — из кабинета, отдельное поле формы убрано
     hostName: profile.displayName,
     creatorToken: existingIdentity,
@@ -221,7 +248,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   log.info({ code: result.value.game.code }, 'игра создана');
   return jsonOk(
-    { game: gameToDto(result.value.game), hostToken: result.value.hostToken },
+    {
+      game: gameToDto(result.value.game),
+      hostToken: result.value.hostToken,
+      // Ключ-приглашение — организатору для ссылки «только для своих»
+      inviteKey,
+    },
     { status: 201 },
   );
 }

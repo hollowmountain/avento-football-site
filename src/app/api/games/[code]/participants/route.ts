@@ -65,6 +65,24 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
       ? null
       : await profileDeps.profiles.findByDeviceHash(deps.tokens.hash(existingToken));
 
+  // Приватная игра: запись только с ключом из ссылки или паролем.
+  // Организатору ключ не нужен — он и так владелец игры.
+  const game = await deps.games.findByCode(code.toUpperCase());
+  if (game === null) return jsonError('GAME_NOT_FOUND', 'Игра не найдена', 404);
+  if (game.visibility !== 'PUBLIC' && game.joinKeyHash !== null) {
+    const isCreator = profile !== null && profile.id === game.creatorProfileId;
+    const key = parsed.data.joinKey?.trim() ?? '';
+    if (!isCreator && (key === '' || !deps.tokens.verify(key, game.joinKeyHash))) {
+      return jsonError(
+        'JOIN_KEY_INVALID',
+        game.visibility === 'PRIVATE_PASSWORD'
+          ? 'Неверный пароль игры. Спросите его у организатора.'
+          : 'Это приватная игра: записаться можно только по ссылке от организатора.',
+        403,
+      );
+    }
+  }
+
   // Имя и ник владельца кабинета — из профиля: спрашивать их второй раз
   // незачем, а заодно нельзя записаться под чужим именем
   const name = profile?.displayName ?? parsed.data.name;

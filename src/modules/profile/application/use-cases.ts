@@ -93,6 +93,23 @@ export async function loginByCode(
   return ok(profile);
 }
 
+/**
+ * Выход из кабинета на этом устройстве. Профиль не удаляется — в него
+ * можно вернуться по личному коду (или войти в другой). Предупредить
+ * человека, что без сохранённого кода доступ пропадёт, обязан интерфейс.
+ */
+export async function logout(
+  deps: ProfileDeps,
+  input: { deviceTokenHash: string },
+): Promise<Result<null, ProfileError>> {
+  const profile = await deps.profiles.findByDeviceHash(input.deviceTokenHash);
+  if (profile === null) {
+    return err(profileError('PROFILE_NOT_FOUND', 'Профиль не найден'));
+  }
+  await deps.profiles.detachDevice(input.deviceTokenHash);
+  return ok(null);
+}
+
 /** Перевыпуск личного кода: старый перестаёт действовать сразу. */
 export async function rotateLoginCode(
   deps: ProfileDeps,

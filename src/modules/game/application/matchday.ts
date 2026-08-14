@@ -53,6 +53,13 @@ export async function startMatchDay(
     return err(domainError('MATCHDAY_NOT_YET', 'Матч-день открывается за два часа до начала игры'));
   }
 
+  // «Сбор» (одна команда) — просто встреча: матчей и протокола у неё нет
+  if (game.teamCount < 2) {
+    return err(
+      domainError('MATCHDAY_NOT_ENOUGH', 'Это сбор с одной командой — матч-день здесь не нужен'),
+    );
+  }
+
   // Повторное нажатие «начать» не создаёт второй день
   const existing = await deps.days.findByGameId(game.id);
   if (existing !== null) return ok(existing);

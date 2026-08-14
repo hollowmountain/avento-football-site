@@ -19,10 +19,17 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const deps = getProfileDeps();
   const token = request.cookies.get(PARTICIPANT_COOKIE)?.value ?? null;
-  if (token === null) return jsonOk({ profile: null });
+  if (token === null) return jsonOk({ profile: null, canCreatePublic: false });
 
   const profile = await deps.profiles.findByDeviceHash(deps.tokens.hash(token));
-  return jsonOk({ profile: profile === null ? null : profileToDto(profile) });
+  // Публичные игры — по согласованию: форма создания прячет опцию у остальных
+  const canCreatePublic =
+    profile !== null &&
+    (env.ADMIN_TAGS.includes(profile.tag) || env.PUBLIC_GAME_TAGS.includes(profile.tag));
+  return jsonOk({
+    profile: profile === null ? null : profileToDto(profile),
+    canCreatePublic,
+  });
 }
 
 /** POST /api/me — создать кабинет; в ответе одноразовый личный код. */

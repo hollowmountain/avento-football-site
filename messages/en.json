@@ -153,7 +153,11 @@
       "cancelGame": "Cancel game",
       "cancelConfirm": "The game will be cancelled for everyone. This cannot be undone. Continue?",
       "cancelled": "Game cancelled",
-      "notEnoughForShuffle": "At least two confirmed players required"
+      "notEnoughForShuffle": "At least two confirmed players required",
+      "edit": "Edit",
+      "kick": "Remove from the roster",
+      "kickConfirm": "Remove {nickname} from the roster?",
+      "kicked": "{nickname} removed from the roster"
     },
     "teams": {
       "title": "Teams",
@@ -166,7 +170,22 @@
     "weather": {
       "rainHint": "rain ☔ — bring spare boots"
     },
-    "matchDay": "Match day"
+    "matchDay": "Match day",
+    "private": "Private",
+    "edit": {
+      "title": "Edit the game",
+      "name": "Title",
+      "description": "Description",
+      "startsAt": "Kick-off",
+      "venue": "Venue",
+      "city": "City",
+      "address": "Address",
+      "addressHint": "If you change the address, the map coordinates are recalculated",
+      "maxPlayers": "Max players",
+      "price": "Pitch price, ₽",
+      "save": "Save",
+      "saved": "Changes saved"
+    }
   },
   "matchday": {
     "title": "Match day",
@@ -229,7 +248,22 @@
       "durationFlex": "Open-ended",
       "teamCount": "Teams",
       "teamCountOption": "{count} teams",
-      "teamCountHint": "With 3–4 teams the extras wait their turn and rotate in, like in the quick game",
+      "teamCountHint": "One team is just a gathering without matches. With 3–4 the extras wait their turn and rotate in, like in the quick game",
+      "teamCountGathering": "Gathering",
+      "visibility": "Who can join",
+      "visibilityOptions": {
+        "PUBLIC": "Public",
+        "PRIVATE_LINK": "By link",
+        "PRIVATE_PASSWORD": "By password"
+      },
+      "visibilityHints": {
+        "PUBLIC": "Anyone from the feed can join",
+        "PRIVATE_LINK": "Only people you send the link to can join. The game is still listed, marked «private»",
+        "PRIVATE_PASSWORD": "Only people who know the password can join. The game is still listed, marked «private»"
+      },
+      "publicLocked": "Public games are created by arrangement with the site owner for now",
+      "joinPassword": "Join password",
+      "joinPasswordPlaceholder": "at least 4 characters",
       "joinAsPlayer": "I'm playing too",
       "joinAsPlayerHint": "Takes a slot in the roster right away. Uncheck it if you only organise the game"
     },
@@ -245,7 +279,9 @@
       "codeLabel": "Game code",
       "managedByProfile": "The game is linked to your profile: edit and cancel it from any device where you are logged in.",
       "goToGame": "Open game page",
-      "copyLink": "Copy invite link"
+      "copyLink": "Copy invite link",
+      "privateLinkHint": "The game is private: only people you send this link to can join — the key is part of it.",
+      "privatePasswordHint": "The game is private: only people you tell the password can join."
     }
   },
   "joinForm": {
@@ -262,7 +298,10 @@
     "submit": "Sign up",
     "submitting": "Signing up…",
     "joined": "You're in!",
-    "waitlisted": "No slots left — you're on the waitlist"
+    "waitlisted": "No slots left — you're on the waitlist",
+    "password": "Game password",
+    "passwordHint": "The game is private — the host knows the password",
+    "linkOnly": "This game is private: you can only join via the host's link"
   },
   "welcome": {
     "title": "Welcome!",
@@ -315,6 +354,16 @@
       "issuedTitle": "New personal code",
       "issuedHint": "Save it now: the code is shown once and the old one no longer works."
     },
+    "logout": {
+      "title": "Sign out",
+      "lead": "Unlink the profile from this browser — for example, to sign in to another account.",
+      "action": "Sign out",
+      "confirmTitle": "Sign out for sure?",
+      "confirmText": "The profile stays, but this browser forgets it. You can only come back with the personal code.",
+      "warnTitle": "Save your personal code",
+      "warnText": "Without the code the account is gone for good — we have no way to restore it. If you have not saved it, close this window and issue a new one under «Personal code» first.",
+      "done": "Signed out"
+    },
     "form": {
       "name": "Full name",
       "namePlaceholder": "Alex Petrov",
@@ -330,6 +379,7 @@
       "level": "Skill level",
       "levelHint": "Shown in rosters and used to balance teams in the shuffle",
       "club": "Favourite club",
+      "clubNone": "No club",
       "clubHint": "The club badge is shown next to your name in rosters",
       "age": "Age",
       "agePlaceholder": "18",

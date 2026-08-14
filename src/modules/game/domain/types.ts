@@ -23,6 +23,9 @@ export type Attendance = 'CONFIRMED' | 'MAYBE';
 
 export type ParticipantRole = 'MAIN' | 'WAITLIST';
 
+/** Публичная игра или приватная — по ссылке с ключом либо по паролю. */
+export type GameVisibility = 'PUBLIC' | 'PRIVATE_LINK' | 'PRIVATE_PASSWORD';
+
 export interface TeamMember {
   participantId: string;
   nickname: string;
@@ -61,6 +64,11 @@ export interface GameEntity {
   latitude: number;
   longitude: number;
   city: string;
+  visibility: GameVisibility;
+  /** Хеш ключа записи (ссылка или пароль); null — игра публичная. */
+  joinKeyHash: string | null;
+  /** Ключ-приглашение (только PRIVATE_LINK) — наружу отдаётся лишь организатору. */
+  inviteKey: string | null;
   hostName: string;
   hostTokenHash: string;
   /** Кабинет создателя (null — старые игры до кабинетов). */

@@ -9,6 +9,8 @@ export interface GameViewData {
     isHost: boolean;
     isParticipant: boolean;
   };
+  /** Ключ-приглашение приватной игры «по ссылке» — только организатору. */
+  inviteKey: string | null;
 }
 
 export interface GamesListData {

@@ -33,6 +33,8 @@ const joinFormSchema = z.object({
     .max(24, 'максимум 24 симв.')
     .regex(/^[\p{L}\p{N} _.-]+$/u, 'только буквы, цифры, пробел и _ . -'),
   attendance: z.enum(ATTENDANCE),
+  /** Пароль приватной игры; для «по ссылке» ключ берётся из адреса. */
+  password: z.string().optional(),
   website: z.string().optional(),
 });
 
@@ -41,11 +43,13 @@ type JoinFormValues = z.infer<typeof joinFormSchema>;
 interface JoinDialogProps {
   gameCode: string;
   isFull: boolean;
+  /** PUBLIC | PRIVATE_LINK | PRIVATE_PASSWORD. */
+  visibility: string;
   formToken: z.infer<typeof formTokenSchema>;
   onJoined: () => void;
 }
 
-export function JoinDialog({ gameCode, isFull, formToken, onJoined }: JoinDialogProps) {
+export function JoinDialog({ gameCode, isFull, visibility, formToken, onJoined }: JoinDialogProps) {
   const t = useTranslations('joinForm');
   const tGame = useTranslations('game');
   const [open, setOpen] = useState(false);
@@ -84,6 +88,7 @@ export function JoinDialog({ gameCode, isFull, formToken, onJoined }: JoinDialog
         ) : (
           <JoinForm
             gameCode={gameCode}
+            visibility={visibility}
             formToken={formToken}
             profile={me.data?.profile ?? null}
             onJoined={() => {
@@ -99,11 +104,13 @@ export function JoinDialog({ gameCode, isFull, formToken, onJoined }: JoinDialog
 
 function JoinForm({
   gameCode,
+  visibility,
   formToken,
   profile,
   onJoined,
 }: {
   gameCode: string;
+  visibility: string;
   formToken: z.infer<typeof formTokenSchema>;
   profile: ProfileDto | null;
   onJoined: () => void;
@@ -111,6 +118,13 @@ function JoinForm({
   const t = useTranslations('joinForm');
   const tAttendance = useTranslations('attendance');
   const tCommon = useTranslations('common');
+  // Ключ приватной игры «по ссылке» лежит в адресе — читаем один раз,
+  // при рендере обращаться к window нельзя (гидратация)
+  const [linkKey] = useState(() =>
+    typeof window === 'undefined'
+      ? ''
+      : (new URLSearchParams(window.location.search).get('key') ?? ''),
+  );
 
   const {
     register,
@@ -123,6 +137,7 @@ function JoinForm({
       name: profile?.displayName ?? '',
       nickname: profile?.tag ?? '',
       attendance: 'CONFIRMED',
+      password: '',
       website: '',
     },
   });
@@ -131,10 +146,12 @@ function JoinForm({
 
   const onSubmit = handleSubmit(async (values) => {
     try {
+      // Приватная игра: ключ из ссылки либо пароль от организатора
+      const joinKey = visibility === 'PRIVATE_PASSWORD' ? (values.password ?? '').trim() : linkKey;
       // У владельца кабинета имя и ник берёт сервер из профиля
       const body = hasProfile
-        ? { attendance: values.attendance, website: values.website, formToken }
-        : { ...values, formToken };
+        ? { attendance: values.attendance, joinKey, website: values.website, formToken }
+        : { ...values, joinKey, formToken };
       const data = await apiFetch<{ participant: ParticipantDto }>(
         `/api/games/${gameCode}/participants`,
         { method: 'POST', body: JSON.stringify(body) },
@@ -187,6 +204,20 @@ function JoinForm({
           </div>
         </>
       )}
+      {/* Приватная игра: пароль спрашиваем, ключ из ссылки уже в адресе */}
+      {visibility === 'PRIVATE_PASSWORD' ? (
+        <div className="space-y-1.5">
+          <Label htmlFor="join-password">{t('password')}</Label>
+          <Input id="join-password" type="password" autoComplete="off" {...register('password')} />
+          <p className="text-muted-foreground text-xs">{t('passwordHint')}</p>
+        </div>
+      ) : null}
+      {visibility === 'PRIVATE_LINK' && linkKey === '' ? (
+        <p role="alert" className="text-destructive text-xs">
+          {t('linkOnly')}
+        </p>
+      ) : null}
+
       <div className="space-y-1.5">
         <Label>{t('attendance')}</Label>
         <Controller

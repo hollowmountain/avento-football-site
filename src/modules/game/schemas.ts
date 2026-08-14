@@ -86,6 +86,9 @@ const antiAbuseFields = {
   turnstileToken: z.string().optional(),
 };
 
+/** Видимость игры: публичная или приватная (по ссылке / по паролю). */
+export const GAME_VISIBILITIES = ['PUBLIC', 'PRIVATE_LINK', 'PRIVATE_PASSWORD'] as const;
+
 export const createGameBodySchema = z.object({
   title: singleLine(3, 80),
   description: multiLine(2000).optional().default(''),
@@ -94,8 +97,12 @@ export const createGameBodySchema = z.object({
   startsAt: z.coerce.date(),
   /** null — «как получится»: длительность заранее не фиксируется. */
   durationMinutes: z.coerce.number().int().min(30).max(480).nullable(),
-  /** Сколько команд играет (лишние ждут очереди, как в быстрой игре). */
-  teamCount: z.coerce.number().int().min(2).max(4).default(2),
+  /** Сколько команд играет: 1 — «сбор» без матчей, 2–4 — матч-день. */
+  teamCount: z.coerce.number().int().min(1).max(4).default(2),
+  /** Публичные — только по согласованию (PUBLIC_GAME_TAGS), сервер проверит. */
+  visibility: z.enum(GAME_VISIBILITIES).default('PUBLIC'),
+  /** Пароль для PRIVATE_PASSWORD; для остальных режимов игнорируется. */
+  joinPassword: singleLine(4, 32).optional(),
   timezone: timezoneSchema,
   minPlayers: z.coerce.number().int().min(2).max(30),
   maxPlayers: z.coerce.number().int().min(4).max(30),
@@ -112,6 +119,12 @@ export const createGameBodySchema = z.object({
 });
 
 export type CreateGameBody = z.infer<typeof createGameBodySchema>;
+
+/** Пароль обязателен только для игры «по паролю». */
+export const createGameBodyWithPassword = createGameBodySchema.refine(
+  (body) => body.visibility !== 'PRIVATE_PASSWORD' || (body.joinPassword ?? '').length >= 4,
+  { path: ['joinPassword'], message: 'пароль — минимум 4 символа' },
+);
 
 export const joinGameBodySchema = z.object({
   // У владельца кабинета имя и ник берутся из профиля — клиент их не шлёт;
@@ -131,6 +144,8 @@ export const joinGameBodySchema = z.object({
   // Позицию и уровень при записи не спрашиваем: уровень берётся из
   // кабинета участника (у гостей — «не указан»)
   attendance: z.enum(ATTENDANCE).default('CONFIRMED'),
+  /** Ключ записи приватной игры: код из ссылки или пароль от организатора. */
+  joinKey: z.string().trim().max(64).optional(),
   ...antiAbuseFields,
 });
 

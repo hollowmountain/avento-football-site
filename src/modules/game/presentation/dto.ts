@@ -31,6 +31,8 @@ export interface GameDto {
   title: string;
   description: string | null;
   status: string;
+  /** PUBLIC | PRIVATE_LINK | PRIVATE_PASSWORD — приватные помечаются в ленте. */
+  visibility: string;
   format: string;
   skillLevel: string;
   startsAt: string;
@@ -68,6 +70,7 @@ export function gameToDto(game: GameEntity): GameDto {
     title: game.title,
     description: game.description,
     status: game.status,
+    visibility: game.visibility,
     format: game.format,
     skillLevel: game.skillLevel,
     startsAt: game.startsAt.toISOString(),
