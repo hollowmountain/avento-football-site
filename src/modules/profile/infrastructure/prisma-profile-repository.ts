@@ -25,6 +25,17 @@ function toEntity(row: UserProfile): ProfileEntity {
 export class PrismaProfileRepository implements ProfileRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
+  async findById(profileId: string): Promise<ProfileEntity | null> {
+    const row = await this.prisma.userProfile.findUnique({ where: { id: profileId } });
+    return row === null ? null : toEntity(row);
+  }
+
+  async remove(profileId: string): Promise<void> {
+    // Устройства уходят каскадом; у участников и игр ссылка на профиль
+    // обнуляется (onDelete: SetNull), поэтому составы не рассыпаются
+    await this.prisma.userProfile.delete({ where: { id: profileId } });
+  }
+
   async listPlayers(limit: number): Promise<PlayerListItem[]> {
     // Одним запросом: и игры, и голы с передачами считает СУБД, а не память.
     // Гости без кабинета в рейтинг не попадают — всё сводится по profileId.

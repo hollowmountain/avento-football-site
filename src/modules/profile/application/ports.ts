@@ -54,6 +54,12 @@ export interface ProfileRepository {
   /** Выход: устройство отвязывается, профиль остаётся ждать входа по коду. */
   detachDevice(tokenHash: string): Promise<void>;
   countDevices(profileId: string): Promise<number>;
+  findById(profileId: string): Promise<ProfileEntity | null>;
+  /**
+   * Удаление профиля (модерация). Игры и записи в составах остаются:
+   * ссылки на профиль обнуляются, участник становится гостем.
+   */
+  remove(profileId: string): Promise<void>;
 }
 
 export interface TokenService {

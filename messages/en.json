@@ -346,6 +346,13 @@
     "lead": "Everyone with a profile. Ranked by goals plus assists from match days.",
     "empty": "Nobody yet: be the first to create a profile.",
     "player": "Player",
+    "remove": {
+      "action": "Delete profile: {name}",
+      "title": "Delete the profile?",
+      "lead": "{name} (@{tag}) disappears from the players list. Their games and roster entries stay but become guest ones. This cannot be undone.",
+      "confirm": "Delete",
+      "done": "Profile {name} deleted"
+    },
     "scoreLabel": "G+A",
     "breakdown": "{goals} + {assists}",
     "played": "{count, plural, one {# game} other {# games}}"

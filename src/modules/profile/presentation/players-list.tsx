@@ -3,6 +3,7 @@ import type { PlayerListItem } from '../application/ports';
 import { Card, CardContent } from '@/shared/ui/card';
 import { ClubBadge } from './clubs';
 import { FlagIcon } from './country-flag';
+import { RemovePlayerButton } from './remove-player-button';
 
 const ROW_GRID = 'grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-center gap-3';
 
@@ -10,7 +11,16 @@ const ROW_GRID = 'grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-center gap-3
  * Рейтинг игроков: место, ФИО, флаг, клуб, тег и сумма «гол + пас»
  * из протоколов матч-дней. Порядок задаёт СУБД (listPlayers).
  */
-export async function PlayersList({ players }: { players: PlayerListItem[] }) {
+export async function PlayersList({
+  players,
+  isAdmin = false,
+  viewerId = null,
+}: {
+  players: PlayerListItem[];
+  /** Владельцу сайта показываем удаление кабинетов. */
+  isAdmin?: boolean;
+  viewerId?: string | null;
+}) {
   const t = await getTranslations('players');
   const tLevels = await getTranslations('levels');
 
@@ -56,14 +66,23 @@ export async function PlayersList({ players }: { players: PlayerListItem[] }) {
             </span>
 
             {/* Сумма «гол + пас» — по ней и построен порядок */}
-            <span className="shrink-0 text-right">
-              <span className="display digits text-lamp block text-xl leading-none">
-                {player.goals + player.assists}
+            <span className="flex shrink-0 items-center gap-1">
+              <span className="text-right">
+                <span className="display digits text-lamp block text-xl leading-none">
+                  {player.goals + player.assists}
+                </span>
+                <span className="text-muted-foreground digits block text-[0.7rem]">
+                  {t('breakdown', { goals: player.goals, assists: player.assists })}
+                  {player.played > 0 ? ` · ${t('played', { count: player.played })}` : ''}
+                </span>
               </span>
-              <span className="text-muted-foreground digits block text-[0.7rem]">
-                {t('breakdown', { goals: player.goals, assists: player.assists })}
-                {player.played > 0 ? ` · ${t('played', { count: player.played })}` : ''}
-              </span>
+              {isAdmin && player.id !== viewerId ? (
+                <RemovePlayerButton
+                  playerId={player.id}
+                  playerName={player.displayName}
+                  playerTag={player.tag}
+                />
+              ) : null}
             </span>
           </div>
         ))}
