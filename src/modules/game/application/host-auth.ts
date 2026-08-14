@@ -21,3 +21,16 @@ export function isHostAuthorized(
   if (auth.hostToken !== null && tokens.verify(auth.hostToken, game.hostTokenHash)) return true;
   return auth.viewerProfileId !== null && auth.viewerProfileId === game.creatorProfileId;
 }
+
+/**
+ * Протокол матч-дня ведёт организатор или назначенный им менеджер —
+ * кто-то из записавшихся, кому передали таймер и счёт.
+ */
+export function isMatchDayManager(
+  tokens: TokenService,
+  game: { hostTokenHash: string; creatorProfileId: string | null; managerProfileId: string | null },
+  auth: HostAuth,
+): boolean {
+  if (isHostAuthorized(tokens, game, auth)) return true;
+  return auth.viewerProfileId !== null && auth.viewerProfileId === game.managerProfileId;
+}

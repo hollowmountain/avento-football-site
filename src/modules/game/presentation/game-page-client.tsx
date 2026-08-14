@@ -1,7 +1,8 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarPlus, MapPin, Share2, Shuffle, XCircle } from 'lucide-react';
+import { CalendarPlus, MapPin, Share2, Shuffle, Timer, XCircle } from 'lucide-react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -17,6 +18,7 @@ import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Pill } from '@/shared/ui/pill';
 import { Progress } from '@/shared/ui/progress';
+import { MATCHDAY_START_WINDOW_MINUTES } from '../domain/matchday';
 import type { TeamMember, TeamsSnapshot } from '../domain/types';
 import type { formTokenSchema } from '../schemas';
 import type { GameViewData } from './api-types';
@@ -62,6 +64,12 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
   const isHost = data.viewer.isHost;
   const you = [...data.participants, ...data.waitlist].find((p) => p.isYou) ?? null;
   const started = new Date(game.startsAt).getTime() <= openedAt;
+  // Протокол матч-дня открывается за два часа до начала — то же окно,
+  // что проверяет сервер (domain/matchday.ts)
+  const matchDayOpen =
+    game.status !== 'CANCELLED_BY_HOST' &&
+    game.status !== 'CANCELLED_NOT_ENOUGH' &&
+    new Date(game.startsAt).getTime() - MATCHDAY_START_WINDOW_MINUTES * 60_000 <= openedAt;
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['game', code] });
 
@@ -176,6 +184,15 @@ export function GamePageClient({ code, initialData, formToken }: GamePageClientP
           {game.venueName} · {game.city}
         </p>
       </section>
+
+      {/* Матч-день: протокол открыт всем, вести его может менеджер */}
+      {matchDayOpen ? (
+        <Button asChild size="lg" className="display text-base tracking-wide">
+          <Link href={`/games/${code}/day`}>
+            <Timer className="size-4" aria-hidden /> {t('matchDay')}
+          </Link>
+        </Button>
+      ) : null}
 
       {/* Состав */}
       <Card>

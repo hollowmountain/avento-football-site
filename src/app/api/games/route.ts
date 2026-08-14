@@ -188,12 +188,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!result.ok) return jsonDomainError(result.error);
 
   // Игра создана — только теперь тратим квоту (админ квоту не тратит)
+  // Последовательно, а не Promise.all: параллельные запросы по одному
+  // соединению pg ругаются депрекейшеном, а три вставки того не стоят
   if (!isAdmin) {
-    await Promise.all([
-      limiter.consume(`cg10:${profile.id}`, env.RATE_CREATE_GAME_PER_10MIN, 600, 'closed'),
-      limiter.consume(`cgday:${profile.id}`, env.RATE_CREATE_GAME_PER_DAY, 86_400, 'closed'),
-      limiter.consume(`cgip:${ipHash}`, env.RATE_CREATE_GAME_IP_PER_DAY, 86_400, 'closed'),
-    ]);
+    await limiter.consume(`cg10:${profile.id}`, env.RATE_CREATE_GAME_PER_10MIN, 600, 'closed');
+    await limiter.consume(`cgday:${profile.id}`, env.RATE_CREATE_GAME_PER_DAY, 86_400, 'closed');
+    await limiter.consume(`cgip:${ipHash}`, env.RATE_CREATE_GAME_IP_PER_DAY, 86_400, 'closed');
   }
 
   // Организатор обычно и сам играет: без записи состав остаётся «0 / N»,

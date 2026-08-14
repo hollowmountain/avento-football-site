@@ -11,7 +11,15 @@ export type DomainErrorCode =
   | 'DUPLICATE_GAME'
   | 'HOST_GAME_LIMIT'
   | 'NOT_ENOUGH_PLAYERS'
-  | 'CODE_GENERATION_FAILED';
+  | 'CODE_GENERATION_FAILED'
+  // Матч-день
+  | 'MATCHDAY_NOT_YET'
+  | 'MATCHDAY_NOT_ENOUGH'
+  | 'MATCHDAY_NOT_STARTED'
+  | 'MATCHDAY_FINISHED'
+  | 'MATCH_IN_PROGRESS'
+  | 'NO_LIVE_MATCH'
+  | 'DRAW_LOSER_REQUIRED';
 
 export interface DomainError {
   code: DomainErrorCode;

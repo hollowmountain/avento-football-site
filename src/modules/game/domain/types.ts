@@ -65,6 +65,8 @@ export interface GameEntity {
   hostTokenHash: string;
   /** Кабинет создателя (null — старые игры до кабинетов). */
   creatorProfileId: string | null;
+  /** Менеджер матч-дня из записавшихся (null — протокол ведёт создатель). */
+  managerProfileId: string | null;
   teamsSnapshot: TeamsSnapshot | null;
   createdAt: Date;
   updatedAt: Date;

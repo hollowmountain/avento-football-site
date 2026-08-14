@@ -34,10 +34,13 @@ export default defineConfig({
       IP_HASH_SALT: 'e2e-ip-salt-0123456789abcd',
       CRON_SECRET: 'e2e-cron-secret-0123456789',
       APP_URL: `http://localhost:${E2E_PORT}`,
-      // Лимиты создания подняты: сценарии создают несколько игр с одного IP,
-      // сам rate limiting покрыт integration-тестами
+      // Лимиты подняты: сценарии идут с одного IP и делают много записей
+      // подряд (протокол матч-дня — это десяток запросов за полминуты),
+      // а сам rate limiting покрыт integration-тестами
       RATE_CREATE_GAME_PER_10MIN: '100',
       RATE_CREATE_GAME_PER_DAY: '100',
+      RATE_CREATE_GAME_IP_PER_DAY: '100',
+      RATE_GLOBAL_WRITES_PER_MIN: '500',
       // Без сети: координаты считает детерминированная заглушка
       GEOCODER: 'stub',
     },

@@ -10,8 +10,10 @@ import type {
   TokenService,
   UnitOfWork,
 } from './application/ports';
+import type { MatchDayRepository } from './application/matchday-ports';
 import { getEventBus } from './infrastructure/event-bus';
 import { PrismaGameRepository } from './infrastructure/prisma-game-repository';
+import { PrismaMatchDayRepository } from './infrastructure/prisma-matchday-repository';
 import { PrismaUnitOfWork } from './infrastructure/prisma-unit-of-work';
 
 /**
@@ -20,6 +22,7 @@ import { PrismaUnitOfWork } from './infrastructure/prisma-unit-of-work';
  */
 export interface GameModuleDeps {
   games: GameRepository;
+  days: MatchDayRepository;
   uow: UnitOfWork;
   tokens: TokenService;
   codes: GameCodeGenerator;
@@ -38,6 +41,7 @@ export function getGameDeps(): GameModuleDeps {
   if (!globalForDeps.kickoffGameDeps) {
     globalForDeps.kickoffGameDeps = {
       games: new PrismaGameRepository(prisma),
+      days: new PrismaMatchDayRepository(prisma),
       uow: new PrismaUnitOfWork(prisma),
       tokens: createTokenService(env.TOKEN_PEPPER),
       codes: { nextCode: generateGameCode },

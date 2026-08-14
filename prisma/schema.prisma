@@ -79,7 +79,8 @@ model UserProfile {
 
   devices      ProfileDevice[]
   participants Participant[]
-  createdGames Game[]
+  createdGames Game[]        @relation("createdGames")
+  managedGames Game[]        @relation("managedGames")
 }
 
 // Устройство = анонимный cookie kickoff_pid; один профиль — много устройств.
@@ -121,14 +122,19 @@ model Game {
   createdIpHash   String // хеш IP + соль, сам IP не хранится (GDPR)
   // Хеш анонимного identity-токена создателя (лимит одновременных игр на организатора)
   creatorTokenHash String?
-  // Кабинет создателя: с ним связаны права организатора и будущий матч-день
+  // Кабинет создателя: с ним связаны права организатора и матч-день
   creatorProfileId String?
-  creatorProfile   UserProfile? @relation(fields: [creatorProfileId], references: [id], onDelete: SetNull)
+  creatorProfile   UserProfile? @relation("createdGames", fields: [creatorProfileId], references: [id], onDelete: SetNull)
+  // Менеджер матч-дня: создатель может передать протокол кому-то из
+  // записавшихся. null — ведёт сам создатель.
+  managerProfileId String?
+  managerProfile   UserProfile? @relation("managedGames", fields: [managerProfileId], references: [id], onDelete: SetNull)
   teamsSnapshot   Json? // результат жеребьёвки
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
   participants Participant[]
+  matchDay     MatchDay?
 
   @@index([startsAt, status])
   @@index([city, startsAt])
@@ -156,10 +162,124 @@ model Participant {
   profileId     String?
   profile       UserProfile?    @relation(fields: [profileId], references: [id], onDelete: SetNull)
 
+  // Матч-день: команда дня и голы, записанные на этого участника
+  dayMember     MatchDayMember?
+  goalsScored   DayGoal[]       @relation("goalScorer")
+  goalsAssisted DayGoal[]       @relation("goalAssist")
+
   @@unique([gameId, nickname])
   @@index([gameId, role, waitlistOrder])
   @@index([tokenHash])
   @@index([profileId])
+}
+
+// ─── Матч-день обычной игры ────────────────────────────────────────────────
+// Тот же протокол, что в «Быстрой игре», но на сервере: его ведёт менеджер,
+// видят все, а голы привязаны к участникам (и через них — к кабинетам).
+
+enum MatchDayStatus {
+  LIVE
+  FINISHED
+}
+
+enum DayMatchStatus {
+  LIVE
+  FINISHED
+}
+
+model MatchDay {
+  id         String         @id @default(cuid())
+  gameId     String         @unique
+  game       Game           @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  status     MatchDayStatus @default(LIVE)
+  startedAt  DateTime       @default(now())
+  finishedAt DateTime?
+  // Очередь команд: { playing: [teamId, teamId], waiting: [teamId, ...] }
+  rotation   Json?
+  updatedAt  DateTime       @updatedAt
+
+  teams   MatchDayTeam[]
+  members MatchDayMember[]
+  matches DayMatch[]
+}
+
+model MatchDayTeam {
+  id      String   @id @default(cuid())
+  dayId   String
+  day     MatchDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  name    String
+  // Пресет палитры «Быстрой игры»: amber | green | coral | sky | violet | paper
+  colorId String
+  order   Int
+
+  members     MatchDayMember[]
+  homeMatches DayMatch[]       @relation("homeTeam")
+  awayMatches DayMatch[]       @relation("awayTeam")
+  goals       DayGoal[]
+
+  @@index([dayId, order])
+}
+
+// Кто за какую команду играет сегодня. Участник может быть без команды —
+// например, пришёл поздно и ждёт, куда его поставят.
+model MatchDayMember {
+  id            String        @id @default(cuid())
+  dayId         String
+  day           MatchDay      @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  participantId String        @unique
+  participant   Participant   @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  teamId        String?
+  team          MatchDayTeam? @relation(fields: [teamId], references: [id], onDelete: SetNull)
+
+  @@index([dayId])
+  @@index([teamId])
+}
+
+model DayMatch {
+  id     String         @id @default(cuid())
+  dayId  String
+  day    MatchDay       @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  // Номер матча в дне, с единицы
+  order  Int
+  status DayMatchStatus @default(LIVE)
+
+  homeTeamId String
+  homeTeam   MatchDayTeam @relation("homeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
+  awayTeamId String
+  awayTeam   MatchDayTeam @relation("awayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+
+  // Таймер: накопленное до паузы время плюс отсчёт от timerStartedAt
+  timerRunning   Boolean   @default(true)
+  accumulatedMs  Int       @default(0)
+  timerStartedAt DateTime?
+
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  goals DayGoal[]
+
+  @@index([dayId, order])
+}
+
+// Гол: счёт матча считается по этим строкам, отдельного поля счёта нет.
+// Автор и ассистент — участники игры (null у гола «без автора»).
+model DayGoal {
+  id      String       @id @default(cuid())
+  matchId String
+  match   DayMatch     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  teamId  String
+  team    MatchDayTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  scorerParticipantId String?
+  scorer              Participant? @relation("goalScorer", fields: [scorerParticipantId], references: [id], onDelete: SetNull)
+  assistParticipantId String?
+  assist              Participant? @relation("goalAssist", fields: [assistParticipantId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([matchId, createdAt])
+  @@index([scorerParticipantId])
+  @@index([assistParticipantId])
 }
 
 // Reliability score: живёт дольше одной игры, ключ — хеш participantToken.

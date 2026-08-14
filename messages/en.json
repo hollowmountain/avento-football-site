@@ -165,7 +165,35 @@
     },
     "weather": {
       "rainHint": "rain ☔ — bring spare boots"
-    }
+    },
+    "matchDay": "Match day"
+  },
+  "matchday": {
+    "title": "Match day",
+    "backToGame": "Back to the game",
+    "matchNumber": "Match {number}",
+    "notYet": "The protocol opens two hours before kick-off",
+    "notStarted": "The match day has not started — the host or the manager starts it",
+    "startLead": "Time to start: teams are built from the roster, then the timer and the score",
+    "start": "Start the match day",
+    "watchHint": "The manager keeps the score — it updates on its own",
+    "roster": "Who plays for whom",
+    "rosterHint": "Tap a player to move them to the next team",
+    "noTeam": "No team",
+    "emptyTeam": "Nobody yet",
+    "kickoff": "Next match",
+    "startMatch": "Start the match",
+    "queue": "Waiting: {teams}",
+    "journal": "Played matches",
+    "managerPanel": "Match day controls",
+    "managerNow": "Kept by: {name}",
+    "managerHost": "Host",
+    "managerAssign": "Assign a manager",
+    "managerTitle": "Who keeps the protocol",
+    "managerHint": "A manager must have a profile: they get the timer, the score and the goals",
+    "finishDay": "Finish the day",
+    "resumeDay": "Back to the day",
+    "close": "Close"
   },
   "createForm": {
     "title": "New game",

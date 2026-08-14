@@ -27,6 +27,7 @@ export function toGameEntity(row: Game): GameEntity {
     hostName: row.hostName,
     hostTokenHash: row.hostTokenHash,
     creatorProfileId: row.creatorProfileId,
+    managerProfileId: row.managerProfileId,
     teamsSnapshot: (row.teamsSnapshot as unknown as TeamsSnapshot | null) ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

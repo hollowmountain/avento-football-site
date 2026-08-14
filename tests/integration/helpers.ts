@@ -4,6 +4,7 @@ import type { EventBus, GameEvent } from '@/modules/game/application/ports';
 import type { CreateGameInput } from '@/modules/game/application/create-game';
 import type { GameModuleDeps } from '@/modules/game/composition';
 import { PrismaGameRepository } from '@/modules/game/infrastructure/prisma-game-repository';
+import { PrismaMatchDayRepository } from '@/modules/game/infrastructure/prisma-matchday-repository';
 import { PrismaUnitOfWork } from '@/modules/game/infrastructure/prisma-unit-of-work';
 import { generateGameCode } from '@/shared/security/game-code';
 import { createTokenService } from '@/shared/security/tokens';
@@ -37,6 +38,7 @@ export function createTestDeps(
   const bus = new RecordingEventBus();
   return {
     games: new PrismaGameRepository(prisma),
+    days: new PrismaMatchDayRepository(prisma),
     uow: new PrismaUnitOfWork(prisma),
     tokens: createTokenService('integration-pepper-0123456789'),
     codes: { nextCode: generateGameCode },
@@ -53,7 +55,7 @@ export function createTestDeps(
 
 export async function truncateAll(prisma: PrismaClient): Promise<void> {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE "Game", "Participant", "ParticipantProfile", "RateLimitEvent", "AuditLog", "WeatherCache" CASCADE',
+    'TRUNCATE "Game", "Participant", "ParticipantProfile", "RateLimitEvent", "AuditLog", "WeatherCache", "MatchDay" CASCADE',
   );
 }
 

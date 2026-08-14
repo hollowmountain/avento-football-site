@@ -89,6 +89,94 @@ test('создание игры → приглашение → вступлен�
 });
 
 /**
+ * Матч-день внутри обычной игры: организатор запускает протокол,
+ * записывает гол на конкретного игрока, завершает матч и день.
+ * Второй участник видит тот же протокол, но без кнопок управления.
+ */
+test('матч-день: протокол, гол на игрока, таблица дня', async ({ browser }) => {
+  const soon = new Date(Date.now() + 30 * 60 * 1000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const startsAtLocal = `${soon.getFullYear()}-${pad(soon.getMonth() + 1)}-${pad(
+    soon.getDate(),
+  )}T${pad(soon.getHours())}:${pad(soon.getMinutes())}`;
+
+  const hostContext = await browser.newContext();
+  await hostContext.addInitScript(() => localStorage.setItem('avento_welcome_v2_never', '1'));
+  const hostPage = await hostContext.newPage();
+
+  await hostPage.goto('/me');
+  await hostPage.locator('#profile-name').fill('Менеджер Дня');
+  await hostPage.locator('#profile-tag').fill('e2e_day_host');
+  await hostPage.getByRole('button', { name: 'Создать профиль' }).click();
+  await expect(hostPage.getByText('Ваш личный код')).toBeVisible();
+
+  await hostPage.goto('/games/new');
+  await hostPage.getByLabel('Название').fill('E2E: матч-день');
+  await hostPage.getByLabel('Площадка').fill('Манеж Матч-дня');
+  await hostPage.getByLabel('Адрес').fill('Протокольная улица, 7');
+  await hostPage.locator('#cg-starts').fill(startsAtLocal);
+  await hostPage.waitForTimeout(2300);
+  await hostPage.getByRole('button', { name: 'Создать игру' }).click();
+  await expect(hostPage.getByText('Игра создана!')).toBeVisible();
+  const code = (await hostPage
+    .getByText(/^AVA-[A-HJ-NP-Z2-9]{4}$/)
+    .first()
+    .textContent())!;
+
+  // Второй игрок: без него в дне будет одна команда
+  const playerContext = await browser.newContext();
+  await playerContext.addInitScript(() => localStorage.setItem('avento_welcome_v2_never', '1'));
+  const playerPage = await playerContext.newPage();
+  await playerPage.goto(`/games/${code}`);
+  await playerPage.getByRole('button', { name: 'Я иду!' }).click();
+  await playerPage.getByLabel('Имя', { exact: true }).fill('Игрок Дня');
+  await playerPage.getByLabel('Никнейм').fill('e2e-day-player');
+  await playerPage.waitForTimeout(2300);
+  await playerPage.getByRole('button', { name: 'Записаться' }).click();
+  await expect(playerPage.getByText('Вы записаны', { exact: true })).toBeVisible();
+
+  // --- Организатор ведёт протокол ---
+  await hostPage.goto(`/games/${code}/day`);
+  await hostPage.getByRole('button', { name: 'Начать матч-день' }).click();
+  await expect(hostPage.getByText('Кто за кого играет')).toBeVisible();
+
+  await hostPage.getByRole('button', { name: 'Начать матч', exact: true }).click();
+  // Таймер идёт — матч начался
+  await expect(hostPage.locator('time')).toBeVisible();
+
+  // Гол хозяев с выбором автора из записавшихся
+  await hostPage
+    .getByRole('button', { name: /^Гол: / })
+    .first()
+    .click();
+  await expect(hostPage.getByText('Кто забил?')).toBeVisible();
+  const scorers = hostPage.locator('fieldset').first().locator('button');
+  await scorers.nth((await scorers.count()) > 1 ? 1 : 0).click();
+  await hostPage.getByRole('button', { name: 'Записать гол' }).click();
+
+  // Счёт живёт на сервере: второй участник видит тот же гол, но кнопок нет.
+  // Селекторы ограничены main: React оставляет копию разметки в скрытом
+  // буфере стриминга (div#S:0) вне main, а Playwright считает и скрытое
+  await playerPage.goto(`/games/${code}/day`);
+  await expect(playerPage.locator('main').getByText('Голы', { exact: true })).toBeVisible();
+  await expect(
+    playerPage.locator('main').getByRole('button', { name: 'Завершить матч' }),
+  ).toHaveCount(0);
+
+  await hostPage.getByRole('button', { name: 'Завершить матч' }).click();
+  await expect(hostPage.getByText('Подтвердить результат?')).toBeVisible();
+  await hostPage.getByRole('button', { name: 'Подтвердить' }).click();
+
+  // Таблица дня: победитель забрал три очка
+  await expect(hostPage.getByText('Таблица дня')).toBeVisible();
+  await expect(hostPage.getByText('Сыгранные матчи')).toBeVisible();
+  await expect(hostPage.getByText('1:0').first()).toBeVisible();
+
+  await hostContext.close();
+  await playerContext.close();
+});
+
+/**
  * Карта в ленте: те же игры, что и в списке, но точками на карте города.
  * Тайлы OSM здесь не нужны — проверяем переключатель и маркеры,
  * их число должно совпадать с числом карточек списка.
@@ -97,7 +185,10 @@ test('лента переключается между списком и кар�
   await page.addInitScript(() => localStorage.setItem('avento_welcome_v2_never', '1'));
   await page.goto('/');
 
-  const cards = await page.locator('a[href^="/games/AVA-"]').count();
+  // Только main: копия разметки в скрытом буфере стриминга (div#S:0)
+  // лежит вне main, но в подсчёт локатора попадает
+  const cardLink = 'main a[href^="/games/AVA-"]';
+  const cards = await page.locator(cardLink).count();
 
   await page.getByRole('button', { name: 'Карта', exact: true }).click();
   await expect(page.locator('.leaflet-container')).toBeVisible();
@@ -105,7 +196,7 @@ test('лента переключается между списком и кар�
 
   await page.getByRole('button', { name: 'Список', exact: true }).click();
   await expect(page.locator('.leaflet-container')).toHaveCount(0);
-  await expect(page.locator('a[href^="/games/AVA-"]')).toHaveCount(cards);
+  await expect(page.locator(cardLink)).toHaveCount(cards);
 });
 
 test('несуществующая игра показывает 404-страницу', async ({ page }) => {

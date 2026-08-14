@@ -159,6 +159,45 @@ export const patchGameBodySchema = z
 
 export type PatchGameBody = z.infer<typeof patchGameBodySchema>;
 
+// ─── Матч-день ─────────────────────────────────────────────────────────────
+
+/** Палитра команд — та же, что в «Быстрой игре» (QuickTeamColorId). */
+export const TEAM_COLOR_IDS = ['amber', 'green', 'coral', 'sky', 'violet', 'paper'] as const;
+
+const teamNameSchema = singleLine(1, 24);
+const idSchema = z.string().min(1).max(40);
+
+export const startMatchDayBodySchema = z.object({
+  // Названия команд приходят с клиента: там живут переводы next-intl
+  teams: z
+    .array(z.object({ name: teamNameSchema, colorId: z.enum(TEAM_COLOR_IDS) }))
+    .min(2)
+    .max(4),
+});
+
+/** Одна ручка на все действия протокола: разбор — по полю kind. */
+export const matchDayCommandSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('renameTeam'), teamId: idSchema, name: teamNameSchema }),
+  z.object({ kind: z.literal('assign'), participantId: idSchema, teamId: idSchema.nullable() }),
+  z.object({ kind: z.literal('startMatch'), homeTeamId: idSchema, awayTeamId: idSchema }),
+  z.object({ kind: z.literal('timer'), running: z.boolean() }),
+  z.object({
+    kind: z.literal('goal'),
+    teamId: idSchema,
+    scorerParticipantId: idSchema.nullable(),
+    assistParticipantId: idSchema.nullable(),
+  }),
+  z.object({ kind: z.literal('undoGoal') }),
+  z.object({ kind: z.literal('finishMatch'), drawLoserTeamId: idSchema.nullable().default(null) }),
+  z.object({ kind: z.literal('finishDay') }),
+  z.object({ kind: z.literal('resumeDay') }),
+]);
+
+export type MatchDayCommandBody = z.infer<typeof matchDayCommandSchema>;
+
+/** Кому вести протокол: участник основного состава или null — снова создателю. */
+export const setManagerBodySchema = z.object({ participantId: idSchema.nullable() });
+
 export const listGamesQuerySchema = z.object({
   city: z.string().trim().min(1).max(60).optional(),
   format: z.enum(GAME_FORMATS).optional(),

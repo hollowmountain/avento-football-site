@@ -28,7 +28,11 @@ export interface GameCodeGenerator {
 }
 
 export type GameEventType =
-  'participants_changed' | 'game_updated' | 'teams_shuffled' | 'game_cancelled';
+  | 'participants_changed'
+  | 'game_updated'
+  | 'teams_shuffled'
+  | 'game_cancelled'
+  | 'matchday_changed';
 
 export interface GameEvent {
   type: GameEventType;
@@ -88,6 +92,8 @@ export interface GamePatch {
   city?: string;
   status?: GameStatus;
   teamsSnapshot?: TeamsSnapshot;
+  /** Менеджер матч-дня: null — вернуть протокол создателю. */
+  managerProfileId?: string | null;
 }
 
 export interface GameListFilters {
